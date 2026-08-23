@@ -5,6 +5,12 @@ programs. The dedicated home installation is the archival and editorial
 primary. Azure provides public access, elastic document analysis, model
 inference, workflow coordination, and off-site replicas.
 
+The initial home installation is the existing Linux ARM64 `watershop` machine.
+Its concrete NFS, MinIO, systemd, security, and Terraform integration is
+described in the [watershop deployment profile](../deploy/watershop/README.md).
+Host-level provisioning remains in `jmacd/caspar.water`; Observatory
+application code remains in this monorepo.
+
 ## Major programs
 
 | Program | Responsibility |

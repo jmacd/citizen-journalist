@@ -6,3 +6,6 @@ agents/.pytest_cache/
 agents/**/__pycache__/
 agents/.env
 /-.png
+observatory/.venv/
+observatory/.pytest_cache/
+observatory/**/__pycache__/

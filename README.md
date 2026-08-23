@@ -20,6 +20,10 @@ Commission appeals, CEQA documents, and the August 20, 2026 hearing:
 - [UM_2025-0004 case inventory](cases/UM_2025-0004/README.md)
 - [Machine-readable manifest](cases/UM_2025-0004/manifest.yaml)
 
+The new [Observatory preservation services](observatory/README.md) implement
+content-addressed NFS ingestion, immutable corpus events, integrity checks, and
+rebuildable global Parquet catalogs.
+
 Build a local SQLite corpus from the case manifest, question records,
 water-authority map, and captured PDFs:
 
@@ -51,7 +55,9 @@ authority, agent workflow, public-chat boundary, CIO gates, and current Azure
 deployment. The [home-primary cloud architecture](docs/home-cloud-design.md)
 defines the target monorepo programs, NFS preservation boundary, Watertown pond
 evaluation, PostgreSQL workflow plane, immutable Blob releases, and cloud-local
-Casebook deployment.
+Casebook deployment. The [watershop deployment profile](deploy/watershop/README.md)
+maps that design onto the existing Linux ARM64 host, NFS mount, MinIO service,
+and user-level systemd conventions.
 
 Run the first read-only public utility locally:
 

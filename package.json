@@ -19,7 +19,8 @@
     "query:case": "node --no-warnings scripts/query-case.mjs",
     "search:pra": "node scripts/search-nextrequest.mjs",
     "test:agents": "agents/.venv/bin/pytest agents/tests",
-    "test:all": "npm test && npm run test:agents",
+    "test:observatory": "observatory/.venv/bin/pytest observatory/tests",
+    "test:all": "npm test && npm run test:agents && npm run test:observatory",
     "trace:section": "node scripts/trace-section-history.mjs",
     "test": "node --test"
   },

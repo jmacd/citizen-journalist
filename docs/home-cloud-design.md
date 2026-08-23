@@ -11,6 +11,12 @@ described in the [watershop deployment profile](../deploy/watershop/README.md).
 Host-level provisioning remains in `jmacd/caspar.water`; Observatory
 application code remains in this monorepo.
 
+Observatory has two software deployments: watershop staging and Azure
+production. GitHub Actions promotes the exact immutable artifact accepted in
+staging; production does not rebuild it. The NFS Archive remains the
+preservation primary even though the software running beside it is the staging
+deployment.
+
 ## Major programs
 
 | Program | Responsibility |

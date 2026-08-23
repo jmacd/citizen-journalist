@@ -6,6 +6,11 @@ the Observatory programs, schemas, and service definitions. The
 `caspar.water` repository remains the authority for shared-host Terraform,
 including host access, NFS mounts, MinIO, Caddy, and common system packages.
 
+Watershop runs the **staging software deployment**. Azure runs the promoted
+**production software deployment**. The NFS Archive on watershop remains the
+preservation primary; staging does not mean the original records are
+disposable.
+
 ## Existing host conventions
 
 The initial deployment follows the patterns already used on watershop:
@@ -36,6 +41,13 @@ directory is provisioned:
   collections/
   exports/
 
+/home/shared/observatory/staging/archive/
+  archive.json
+  objects/
+  events/
+  catalog/
+  releases/
+
 /home/jmacd/observatory/
   config/
   env/
@@ -47,6 +59,11 @@ directory is provisioned:
 The NFS tree is the preservation boundary. Local runtime state, temporary
 downloads, virtual environments, sockets, and materialized releases stay under
 `/home/jmacd/observatory` and must be reconstructible.
+
+The preservation primary and staging archive are distinct. New builds run
+against `/home/shared/observatory/staging/archive`, never directly against
+`/home/shared/observatory/archive`. Import or snapshot records into staging
+deliberately; keep synthetic fixtures out of the preservation primary.
 
 ## MinIO bootstrap buckets
 
@@ -95,6 +112,48 @@ Every unit must:
 - tolerate temporary loss of MinIO, PostgreSQL, Azure, or Foundry; and
 - resume work using stable event and job identifiers.
 
+Only the first manual units currently exist:
+
+- `mendo-corpus-staging.service` creates and pushes the staging release;
+- `mendo-corpus-smoke.service` materializes that MinIO channel into a clean,
+  retained directory.
+
+Install them from a watershop checkout:
+
+```sh
+deploy/watershop/install-staging.sh
+```
+
+The first invocation creates
+`/home/jmacd/observatory/env/staging.env` and exits until its image digest and
+MinIO credentials are configured. Initialize the staging archive explicitly:
+
+```sh
+podman run --rm \
+  --userns=keep-id \
+  --user "$(id -u):$(id -g)" \
+  --volume /home/shared/observatory/staging/archive:/archive:rw \
+  <observatory-image-by-digest> \
+  mendo-archive init --root /archive --birthplace watershop-staging
+```
+
+Copy the resulting `archive_id` into `MENDO_STAGING_ARCHIVE_ID` in
+`staging.env`. Both runners require the canonical staging path and this exact
+identity. A missing mount, substituted archive, or accidental preservation
+primary path fails the unit instead of being reported as a skipped success.
+
+Then run the loop manually:
+
+```sh
+systemctl --user start mendo-corpus-staging.service
+systemctl --user start mendo-corpus-smoke.service
+journalctl --user -u mendo-corpus-staging.service \
+  -u mendo-corpus-smoke.service --since today
+```
+
+No timer is installed yet. Scheduling begins only after repeated manual runs
+show correct failure, retry, and no-change behavior.
+
 ## Deployment ownership
 
 Changes are split deliberately:
@@ -121,3 +180,50 @@ capture fixture
 
 Only after that loop is reproducible should Azure analysis return paths or
 public Casebook releases depend on it.
+
+The current `mendo-release push-s3` and `materialize-s3` commands implement the
+MinIO portion of this loop using the standard AWS environment credential
+chain. Terraform remains responsible for provisioning `mendo-releases` and
+supplying its credentials through a generated mode-`0600` environment file.
+
+## Staging-to-production promotion
+
+Follow the deployment pattern already used by `caspar.water`:
+
+```text
+pull-request build
+  -> multi-architecture immutable artifact
+  -> deploy artifact to watershop staging
+  -> exercise NFS -> MinIO -> clean materialization
+  -> approve GitHub Actions promotion
+  -> retag the same artifact as production
+  -> deploy by digest to Azure
+```
+
+Production must not rebuild source code after staging acceptance. GitHub
+Actions promotes the tested image or package digest so watershop and Azure run
+identical program bytes with different environment configuration.
+
+| Concern | Watershop staging | Azure production |
+| --- | --- | --- |
+| Runtime architecture | Linux ARM64 | Container Apps supported architecture |
+| Corpus source | NFS Archive | Approved Azure corpus release |
+| Object transport | Local MinIO | Azure Blob Storage |
+| Workflow database | Staging PostgreSQL database/schema | Production Azure PostgreSQL |
+| Model calls | Foundry staging configuration | Foundry production deployment |
+| User interface | Private Workbench and staging Casebook | Public production Casebook |
+| Secrets | Generated local environment files | Managed identity and Azure secret configuration |
+| Deployment | Automatic staging convergence | Manual GitHub Actions promotion |
+
+Staging and production must have separate:
+
+- PostgreSQL databases or schemas;
+- MinIO/Azure containers and channel pointers;
+- service identities and credentials;
+- conversation and research-lead queues;
+- telemetry resources or environment labels; and
+- public hostnames.
+
+Only explicit release promotion crosses the boundary. Staging workflow state,
+test conversations, synthetic records, and agent checkpoints never enter
+production.

@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Home-primary preservation and corpus services for Mendo Observatory"
 requires-python = ">=3.11"
 dependencies = [
+  "boto3>=1.40,<2",
   "pyarrow>=25,<26",
   "pydantic>=2.11,<3",
 ]
@@ -16,6 +17,7 @@ dependencies = [
 dev = [
   "pip-tools>=7.5,<8",
   "pytest>=8.3,<9",
+  "PyYAML>=6.0,<7",
 ]
 
 [project.scripts]

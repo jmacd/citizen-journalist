@@ -105,6 +105,58 @@ updates the optional channel pointer. Materialization requires a new
 destination, verifies every source and copied file, and renames the completed
 temporary directory into place. A failure leaves no partial destination.
 
+## Push to and materialize from MinIO
+
+The S3 transport uses the standard AWS credential environment chain. On
+watershop, credentials belong in the existing mode-`0600` generated environment
+file, not in command arguments:
+
+```sh
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+
+observatory/.venv/bin/mendo-release push-s3 \
+  --root /home/shared/observatory/archive \
+  --channel private \
+  --bucket mendo-releases \
+  --endpoint-url http://localhost:9000
+```
+
+The bucket must already exist. Push verifies local files, reuses remote
+immutable keys only when length and recorded SHA-256 match, uploads the
+manifest after all entries, and publishes the mutable channel pointer last.
+Keys are isolated beneath the archive UUID.
+
+Add `--verify-reused` for a slower audit push that downloads and hashes every
+existing immutable key before reusing it. Without that option, reuse trusts
+MinIO's object length and stored SHA-256 metadata; a later materialization
+still downloads and verifies every byte.
+
+Materialize a remote channel into a new local directory:
+
+```sh
+archive_id=$(
+  python -c \
+    'import json; print(json.load(open("/home/shared/observatory/archive/archive.json"))["archive_id"])'
+)
+
+observatory/.venv/bin/mendo-release materialize-s3 \
+  --archive-id "$archive_id" \
+  --channel private \
+  --destination /home/jmacd/observatory/releases/private-current \
+  --bucket mendo-releases \
+  --endpoint-url http://localhost:9000
+```
+
+Every downloaded file is hashed before the completed temporary tree becomes
+visible. MinIO transports a release; it does not replace the NFS Archive.
+
+Materializing directly by `--release-id` also requires
+`--expected-manifest-sha256`; the release ID alone is not an integrity anchor.
+The MinIO credential needs bucket access plus `HeadBucket`, `HeadObject`,
+`GetObject`, and `PutObject`. Missing-key checks intentionally fail rather than
+treating `AccessDenied` as absence.
+
 ## Tests
 
 ```sh

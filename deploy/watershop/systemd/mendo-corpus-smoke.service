@@ -1,0 +1,14 @@
+[Unit]
+Description=Mendo Observatory staging release smoke test
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/home/jmacd/observatory/env/staging.env
+ExecStart=/home/jmacd/observatory/bin/smoke-corpus-staging.sh
+TimeoutStartSec=2h
+MemoryAccounting=yes
+MemoryHigh=1536M
+MemoryMax=2048M
+NoNewPrivileges=yes

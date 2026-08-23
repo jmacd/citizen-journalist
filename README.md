@@ -46,6 +46,10 @@ hashes the repository skills in force, stages public records without bypassing
 access controls, validates citations deterministically, and pauses for CIO
 approval before canonical knowledge changes or external communication.
 
+See the [high-level design diagram](docs/high-level-design.md) for the evidence
+authority, agent workflow, public-chat boundary, CIO gates, and current Azure
+deployment.
+
 Run the first read-only public utility locally:
 
 ```sh

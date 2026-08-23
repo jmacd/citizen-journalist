@@ -48,7 +48,10 @@ approval before canonical knowledge changes or external communication.
 
 See the [high-level design diagram](docs/high-level-design.md) for the evidence
 authority, agent workflow, public-chat boundary, CIO gates, and current Azure
-deployment.
+deployment. The [home-primary cloud architecture](docs/home-cloud-design.md)
+defines the target monorepo programs, NFS preservation boundary, Watertown pond
+evaluation, PostgreSQL workflow plane, immutable Blob releases, and cloud-local
+Casebook deployment.
 
 Run the first read-only public utility locally:
 

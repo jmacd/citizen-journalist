@@ -4,6 +4,12 @@ This diagram describes the current evidence-first architecture. Solid lines are
 implemented data or control paths. Dashed lines are planned cloud retrieval
 paths that must pass parity checks before they can replace SQLite.
 
+The accepted target decomposition is documented separately in the
+[home-primary cloud architecture](home-cloud-design.md). That design keeps all
+programs in this monorepo, uses an NFS-backed Archive and immutable Blob
+releases initially, and leaves Watertown as a compatible shadow implementation
+to improve and evaluate without making it the sole preservation copy.
+
 ```mermaid
 flowchart LR
     CIO["CIO<br/>policy and approval authority"]

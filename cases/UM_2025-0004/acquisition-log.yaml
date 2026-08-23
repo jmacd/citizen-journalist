@@ -1,0 +1,545 @@
+schema_version: 1
+case_id: UM_2025-0004
+updated_at: 2026-08-22T02:54:11Z
+principles:
+  - Search the issuing agency first, then official recipients and meeting packets, then public archives.
+  - Record an agenda reference separately from the underlying instrument and governing-body action.
+  - Treat blocked or missing files as identified_unretrieved, not reviewed evidence.
+  - Validate MIME type, byte count, and SHA-256 before registering a capture.
+  - Preserve Internet Archive timestamps and original URLs; use the id_ replay form for original binaries.
+  - Record negative searches and false matches so they are not repeated as if they were new work.
+
+attempts:
+  - id: mccsd-water-shortage-plan-capture-2026-08-22
+    target_id: mccsd_2020_water_shortage_plan
+    attempted_at: 2026-08-22T15:42:26Z
+    repository: Mendocino City Community Services District
+    method: direct_official_document_capture
+    query: MCCSD Water Shortage Contingency Plan adopted May 11, 2020
+    url: https://www.mccsd.com/files/ce188b244/4-17-2020+Water+Shortage+Contingency+Plan.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Captured the official 31-page standalone plan, distinct from Ordinance
+      2020-2. The plan includes quantitative rainfall and indicator-well stage
+      criteria and management actions.
+    note: >-
+      The title page states "Adopted May 11, 2020," although the hosted filename
+      begins 4-17-2020. Resolution 2020-269 remains missing, and no conclusion
+      is made yet about later amendments. SHA-256:
+      1a249d1d36c8719044c968e58f5b121830fed58ab865427e4ecce85278001001;
+      838762 bytes.
+
+  - id: california-water-code-13198-capture-2026-08-22
+    target_id: ca_water_code_13198_2026
+    attempted_at: 2026-08-22T15:42:26Z
+    repository: California Legislative Information
+    method: direct_official_section_capture
+    query: California Water Code section 13198
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=13198.&lawCode=WAT
+    status: captured
+    http_status: 200
+    result: >-
+      Captured the current official section text. Subdivision (a) defines a
+      drought scenario; subdivision (c), not subdivision (a), enumerates forms
+      of interim or immediate relief.
+    note: >-
+      Captured as official HTML for immutable provenance and local full-text
+      indexing. SHA-256:
+      5c497ef2df869f97f3279b271b884452ad0cf36e26332bb993460b9b3a2bd465;
+      165975 bytes.
+
+  - id: county-coastal-groundwater-guidelines-recovery-2026-08-22
+    target_id: county_1989_coastal_groundwater_guidelines
+    attempted_at: 2026-08-22T15:37:44Z
+    repository: Mendocino County Environmental Health and Internet Archive
+    method: official_page_link_resolution_and_exact_original_url_replay
+    query: >-
+      County of Mendocino Coastal Groundwater Development Guidelines; statement
+      by Matt Kennedy near 01:16 in the August 20, 2026 Planning Commission hearing
+    url: >-
+      https://web.archive.org/web/20250217151229id_/https://www.mendocinocounty.gov/home/showpublisheddocument/2700/636232201594400000
+    status: captured
+    http_status: 200
+    result: >-
+      Recovered the official 31-page County PDF prepared by Questa Engineering,
+      dated July 1989 and marked as adopted by the Board of Supervisors on
+      November 21, 1989. Page 13 of the PDF states the adverse-effect test read
+      during the hearing: more than 10 percent of existing drawdown under
+      maximum-day pumping demand, or well yield below 90 percent of maximum-day
+      demand for the adjoining property.
+    note: >-
+      The live official document returned 403 from this environment. An archived
+      2026 County land-use page identifies official published-document URLs 2700
+      and 2780 for the guideline. CDX records assign both archived PDFs the same
+      content digest. Captured SHA-256:
+      8cb2308c4279d2da0629512621fe7658ae95cc954c9e25210f1edd1605d22a62;
+      405098 bytes.
+
+  - id: mccsd-legacy-pdf-cdx-2026-08-22
+    target_id: historic_mccsd_authority
+    attempted_at: 2026-08-22T02:54:11Z
+    repository: Internet Archive CDX
+    method: legacy_directory_inventory
+    query: >-
+      url=mccsd.com/pdf/*; statuscode=200; mimetype=application/pdf;
+      collapse=digest
+    url: >-
+      https://web.archive.org/cdx/search/cdx?url=mccsd.com/pdf/*&output=json&filter=statuscode:200&filter=mimetype:application/pdf&fl=timestamp,original,digest,length&collapse=digest&limit=5000
+    status: partial_success
+    result: >-
+      Recovered the legacy PDF directory inventory. It includes Ordinance 07-1
+      and Resolution 2012-225 but does not expose filenames matching Ordinance
+      90-1, Ordinance 91-3, Measure A, or Joint Resolution 97-1.
+    note: >-
+      Resolution 2012-225 was inspected and rejected as unrelated because it
+      concerns delinquent sewer charges.
+
+  - id: county-2012-plan-wayback-recovery
+    target_id: historic_mccsd_authority
+    repository: Internet Archive
+    method: exact_original_url_replay
+    query: MCCSD_Groundwater_Management_Plan_and_Programs_2012.pdf
+    url: >-
+      https://web.archive.org/web/20150908040618id_/http://www.co.mendocino.ca.us/planning/pdf/MCCSD_Groundwater_Management_Plan_and_Programs_2012.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Recovered the complete 114-page County-hosted plan. Its appendices embed
+      Resolution 113, the AB 786 chapter law, Agreement 90-113, Ordinance 07-1,
+      the 1997 recycled-water MOU, Joint Resolution 97-1, and a 1990 County
+      minute order.
+    note: >-
+      This capture predates the structured ledger; the exact local retrieval
+      time was not preserved. The archive timestamp, original URL, bytes, and
+      hash are registered in manifest.yaml.
+
+  - id: mccsd-ordinance-07-1-wayback-recovery
+    target_id: historic_mccsd_authority
+    repository: Internet Archive
+    method: exact_original_url_replay
+    query: ORD 07-1 Groundwater Extraction Permit.pdf
+    url: >-
+      https://web.archive.org/web/20161118142853id_/http://mccsd.com/pdf/ORD%2007-1%20Groundwater%20Extraction%20Permit.pdf
+    status: captured
+    http_status: 200
+    result: Recovered the 27-page official ordinance from MCCSD's former site.
+    note: >-
+      This capture predates the structured ledger; the exact local retrieval
+      time was not preserved. Capture metadata and OCR hashes are in manifest.yaml.
+
+  - id: mccsd-2024-mou-board-action
+    target_id: musd_mccsd_mou_authorization
+    attempted_at: 2026-08-22T02:20:00Z
+    repository: Mendocino City Community Services District meeting archive
+    method: meeting_page_attachment_inventory
+    query: 2024-11-25 Board of Directors Meeting
+    url: https://www.mccsd.com/2024-11-25-board-of-directors-meeting
+    status: captured
+    http_status: 200
+    result: >-
+      Located the official packet and action minutes. The minutes record
+      separate 4-0 votes, with one director absent, to rescind the April 20,
+      2023 MOU and adopt the revised MOU.
+    note: >-
+      The packet proves what was presented; the approved action minutes prove
+      MCCSD's governing-body action. MUSD authorization remains a separate target.
+
+  - id: mccsd-2012-225-false-match
+    target_id: historic_mccsd_authority
+    attempted_at: 2026-08-22T02:20:00Z
+    repository: Internet Archive
+    method: exact_original_url_replay_and_ocr
+    query: Resolution No. 2012-225
+    url: >-
+      https://web.archive.org/web/20161118142909id_/http://mccsd.com/pdf/Resolution%20No.%202012-225.pdf
+    status: rejected_false_match
+    http_status: 200
+    result: >-
+      The resolution establishes delinquent sewer-fee collection procedures
+      and is unrelated to Resolution 2012-224 or groundwater-plan adoption.
+    note: The local false-match capture was deleted and was not registered.
+
+  - id: legislative-information-host-prior-failure
+    target_id: ab_786_legislative_history
+    repository: California Legislative Information
+    method: official_host_lookup
+    query: AB 786 Hauser 1987 Chapter 472 legislative history
+    status: temporarily_unreachable
+    result: >-
+      The official host intermittently failed DNS lookup from this environment.
+      The enacted chapter law was recovered independently from the official
+      2012 MCCSD plan, but bill analyses, votes, amendments, and enrolled-bill
+      materials remain targets.
+    note: Retry the official host and then search official legislative archives and receiving-agency packets.
+
+  - id: ddw-ceqanet-project-inventory-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: California State Clearinghouse CEQAnet
+    method: project_document_and_attachment_inventory
+    query: SCH 2020080439 documents and attachments
+    url: https://ceqanet.lci.ca.gov/Project/2020080439
+    status: cited_record_only
+    http_status: 200
+    result: >-
+      Reviewed the eleven public project entries. Document 12 supplies the
+      signed one-page DDW Notice of Determination confirming approval on
+      November 26, 2025; no CEQAnet attachment is the permit instrument.
+    note: >-
+      Azure attachment headers classify the file as a Notice of Determination.
+      The NOD says permit-approval records are available on request from DDW.
+
+  - id: ddw-pdww-ca2300584-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: California Drinking Water Watch
+    method: public_water_system_record_review
+    query: CA2300584 / tinwsys_is_number 2882
+    url: >-
+      https://sdwis.waterboards.ca.gov/PDWW/JSP/WaterSystemDetail.jsp?tinwsys_is_number=2882&tinwsys_st_code=CA
+    status: system_identity_verified_permit_not_posted
+    http_status: 200
+    result: >-
+      Verified the active MENDOCINO SCHOOL DISTRICT - MENDOCINO system record.
+      The public interface exposes monitoring, water-quality, violation,
+      inspection, and site-visit data but no permit instrument.
+
+  - id: ddw-edt-library-ca2300584-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: State Water Board DDW Electronic Document Library
+    method: directory_and_bulk-export_inventory
+    query: CA2300584 and Mendocino School District
+    url: https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/edtlibrary/
+    status: not_found
+    http_status: 200
+    result: >-
+      The library exposes bulk data exports and archives, not individual
+      CA2300584 permit PDFs. No matching filename was present.
+
+  - id: ddw-mendocino-district-directory-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: State Water Board DDW Mendocino District documents
+    method: official_directory_inventory
+    query: CA2300584 and nearby system-number filenames
+    url: https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/mendocino/
+    status: not_found
+    http_status: 200
+    result: >-
+      Located permit-application templates and records for other systems, but
+      no CA2300584 permit or amendment.
+
+  - id: dfa-appstat-ca2300584-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: State Water Board Division of Financial Assistance
+    method: project_portal_and_document_directory_search
+    query: D2202005; C-06-2300584-001C; 2300584-001C; CA2300584
+    url: https://public.waterboards.ca.gov/dfaAppSTAT/
+    status: not_found_expected_for_executed_agreement
+    http_status: 200
+    result: >-
+      The portal reports applications under review and states that applicants
+      with executed funding agreements are omitted. No project-specific permit
+      file was found in the public DWSRF document directory.
+
+  - id: ddw-musd-board-window-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: Mendocino Unified School District
+    method: adjacent_board_packet_and_legacy_file_search
+    query: November 20 and December 18, 2025 board records; permit; CA2300584
+    status: not_found
+    result: >-
+      The board records adjacent to permit issuance contain no permit item.
+      Legacy MUSD file paths expose CEQA documents but no DDW permit.
+
+  - id: ddw-wayback-ca2300584-2026-08-21
+    target_id: ddw_2025_amended_permit
+    attempted_at: 2026-08-21
+    repository: Internet Archive CDX
+    method: cross-domain_identifier_and_filename_search
+    query: >-
+      *.waterboards.ca.gov/*2300584*; waterboards.ca.gov/drinking_water/*mendocino*school*;
+      mendocinousd.org/*permit*
+    status: not_found
+    result: No archived permit copy or matching permit URL was identified.
+    note: >-
+      Public online routes are exhausted. The operative permit and prior permit
+      chain remain identified_unretrieved and require production by DDW.
+
+  - id: musd-mccsd-board-authorization-sweep-2026-08-21
+    target_id: musd_mccsd_mou_authorization
+    attempted_at: 2026-08-21
+    repository: MUSD and MCCSD official board archives
+    method: meeting_index_packet_minutes_and_attachment_review
+    query: >-
+      MOU; MCCSD; potable water storage; Water Supply and Storage Project;
+      August-October 2022; April 2023; November 2024
+    status: captured
+    result: >-
+      Reconstructed votes by both boards for all three agreement generations:
+      MCCSD draft and final approvals in 2022, both boards' April 2023
+      approvals, and both boards' November 2024 rescission/replacement votes.
+      The unsigned 2022 MOU was recovered from MUSD's September 8 packet.
+    note: >-
+      No reviewed agenda, packet, minutes, or instrument cites Government Code
+      section 6500 or labels the arrangement a JPA. This is a bounded negative
+      finding over the public records reviewed, not proof that no internal
+      legal analysis exists.
+
+  - id: musd-wayback-board-records-2026-08-21
+    target_id: musd_mccsd_mou_authorization
+    attempted_at: 2026-08-21
+    repository: Internet Archive CDX
+    method: official_board_pdf_url_history
+    query: MUSD board PDF paths for September 2022, April 2023, and November 2024
+    status: limited_coverage
+    result: >-
+      Only one later snapshot of the September 2022 packet was found; no
+      contemporaneous archived alternatives or version history were available.
+
+  - id: assembly-final-history-ab786-2026-08-21
+    target_id: ab_786_legislative_history
+    attempted_at: 2026-08-21
+    repository: Chief Clerk of the California State Assembly
+    method: official_session_history_download_and_targeted_ocr
+    query: AB 786 (Hauser), 1987-88 Assembly Final History
+    url: https://clerk.assembly.ca.gov/sites/clerk.assembly.ca.gov/files/archive/FinalHistory/1987/Volumes/878vol1_2ahr.PDF
+    status: captured_partially_ocr_indexed
+    http_status: 200
+    result: >-
+      PDF page 586 records referral to Assembly Water, Parks and Wildlife;
+      unanimous Assembly passage 74-0; Senate Agriculture and Water Resources
+      review and amendments; unanimous Senate passage 38-0; Assembly
+      concurrence 74-0; enrollment; approval by the Governor; and chaptering as
+      Chapter 472 on September 9, 1987.
+    note: >-
+      The 3,170-page official scan has no text layer. Only responsive PDF page
+      586 was OCRed and is labeled as a finding aid.
+
+  - id: gomes-ab786-author-letter-2026-08-21
+    target_id: ab_786_legislative_history
+    attempted_at: 2026-08-21
+    repository: California Courts official opinions archive
+    method: published_opinion_retrieval
+    query: Gomes v. Mendocino City Community Services District, A153078
+    url: https://www.courts.ca.gov/opinions/archive/A153078.PDF
+    status: captured
+    http_status: 200
+    result: >-
+      The published opinion quotes Assemblymember Hauser's signing letter,
+      explains the vetoed 1986 AB 792 predecessor, describes Ordinance 90-1,
+      and holds later Ordinance 07-1, Resolution 200, and Ordinance 07-4 void
+      for failure to follow Water Code sections 10703-10706.
+    note: >-
+      The legacy California Courts URL redirects to
+      https://www4.courts.ca.gov/opinions/archive/A153078.PDF. The official
+      305,290-byte file differs from the re-encoded Justia mirror, which was
+      removed after verification.
+
+  - id: county-measure-a-online-search-2026-08-21
+    target_id: measure_a_1985
+    attempted_at: 2026-08-21
+    repository: Mendocino County Elections, Legistar, Secretary of State, and public archives
+    method: cross_repository_election_record_search
+    query: November 5, 1985 MCCSD Measure A water powers canvass
+    status: identified_unretrieved
+    result: >-
+      No contemporaneous digital canvass, ballot, or certification was found.
+      Later official records report that Measure A passed 141-76.
+    note: >-
+      County election pages returned 403 in this environment; Legistar does not
+      cover records this old. A targeted request to County Elections is drafted.
+
+  - id: mccsd-pre2007-ordinance-search-2026-08-21
+    target_id: mccsd_ordinance_90_1_lineage
+    attempted_at: 2026-08-21
+    repository: MCCSD current site, legacy site CDX, board packets, and County recipient records
+    method: exact_identifier_filename_and_full_text_search
+    query: Ordinance 90-1; 91-3; 92-2; 00-1; 01-1; 04-1
+    status: identified_unretrieved
+    result: >-
+      No original pre-2007 ordinance was found online. Ordinance 07-1 and later
+      official narratives identify the amendment chain; Gomes describes the
+      substance of Ordinance 90-1 but is not a substitute for the ordinance.
+    note: Certified copies must be requested from MCCSD.
+
+  - id: lafco-public-record-sweep-2026-08-21
+    target_id: lafco_project_correspondence
+    attempted_at: 2026-08-21
+    repository: Mendocino LAFCo public website and meeting archive
+    method: full_packet_docket_and_work_plan_search
+    query: >-
+      MCCSD; Mendocino City Community; MUSD; CA2300584; U_2023-0004;
+      UM_2024-0008; UM_2025-0004; Emergency Water Service Area;
+      Slaughterhouse Gulch; 56133; outside agency service; hauled water
+    url: https://www.mendolafco.org/
+    status: no_project_specific_public_record_found
+    http_status: 200
+    result: >-
+      Searched public Commission and Executive Committee packets from 2020
+      through July 2026, FY reports, active-project tables, and current-proposal
+      page snapshots. No project-specific MCCSD/MUSD OAS application,
+      annexation, boundary change, latent-power proceeding, or determination
+      appeared in the public records searched.
+    note: >-
+      This bounded negative result does not exclude informal correspondence,
+      pre-application consultation, or internal draft records.
+
+  - id: lafco-current-proposals-cdx-2026-08-21
+    target_id: lafco_project_correspondence
+    attempted_at: 2026-08-21
+    repository: Internet Archive CDX
+    method: chronological_webpage_snapshot_review
+    query: >-
+      https://www.mendolafco.org/current-application-proposals snapshots,
+      April 2021 through May 2026
+    url: https://www.mendolafco.org/current-application-proposals
+    status: no_matching_public_application_found
+    result: >-
+      Seventeen HTTP-200 snapshots were inventoried and representative
+      snapshots reviewed. None identified an MCCSD/MUSD water-project matter.
+
+  - id: lafco-emergency-oas-precedents-2026-08-21
+    target_id: lafco_project_correspondence
+    attempted_at: 2026-08-21
+    repository: Mendocino LAFCo commission packets
+    method: comparable_matter_review
+    query: O-2025-02; O-2025-04; Policy 12.2.5; Government Code 56133(d)
+    status: captured_comparators
+    result: >-
+      Recovered 2025 Fort Bragg internet and sewer OAS materials showing the
+      documented emergency approval and later Commission-ratification process.
+      No analogous MCCSD project entry appears in the public docket searched.
+    note: >-
+      Government Code 56036 excludes school districts from LAFCA's definition
+      of district. The absence is therefore relevant to possible MCCSD
+      extraterritorial service, not proof that MUSD itself required LAFCo approval.
+
+  # -----------------------------------------------------------------------
+  # acquire-grant-records task entries (2026-08-22)
+  # -----------------------------------------------------------------------
+
+  - id: grant-records-existing-captures-review-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: Existing case captures
+    method: OCR text review of 2023-response-to-comments-and-agreements.pdf and 2026-project-status-and-dwr-letter.pdf
+    query: >-
+      Work completion dates, grant amounts, DocuSign IDs, amendment references
+    status: baseline_established
+    result: >-
+      Confirmed DWR Amendment 1 (May 2023) sets work completion March 31, 2025.
+      Confirmed March 5, 2026 DWR letter identifies the "latest amendment" as setting
+      the March 31, 2026 deadline and April 14, 2026 no-funds-after date, proving at
+      least one post-Amendment-1 DWR amendment exists. Confirmed D2202005 original
+      sets July 1, 2026 construction completion, while the March 2026 GHD memo says
+      the current agreement requires October 30, 2026. The mechanism for that
+      D2202005 schedule change remains unidentified.
+
+  - id: grant-records-mccsd-board-minutes-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: MCCSD board minutes, mccsd.com
+    method: PDF download and pdftotext extraction, May 2024 through June 2026
+    query: DWR grant amendment; Agreement 4600014624; grant agreement
+    status: negative
+    result: >-
+      Action-only minutes format; no DWR amendment authorization in any month reviewed.
+      October 2024 mentions tank project MOU revision; July 2024 notes project on pause
+      for CDP process; March 2026 focuses on recycled water.
+    note: Board packets are scanned image PDFs; pdftotext returns empty for packet body.
+
+  - id: grant-records-musd-board-minutes-2026-08-22
+    target_id: d2202005_later_amendment
+    attempted_at: 2026-08-22
+    repository: MUSD board meeting agendas and minutes
+    method: PDF download and pdftotext extraction for available 2023–2026 meeting documents
+    query: D2202005; SWRCB; grant amendment; construction completion
+    status: negative
+    result: >-
+      No D2202005 amendment authorization found in June 28, 2023 special meeting
+      (Resolution 2023-15 for MND/project approval), November 2024 board packet, or
+      June 2025 special meeting. MUSD board backup materials page returns
+      binary/compressed content in Internet Archive snapshots for 2024–2025.
+
+  - id: grant-records-dwr-program-page-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: DWR UMBDR program page and Tableau funded-projects dashboard
+    url: https://water.ca.gov/Water-Basics/Projects-and-Programs/UMBDR
+    method: Page review; Tableau dashboard inspection
+    status: negative
+    result: >-
+      No public registry of individual agreement amendments; funded-projects link
+      leads to JavaScript-only Tableau dashboard with no agreement-level document links.
+      Phase 1 award table PDF is scanned with no text layer.
+
+  - id: grant-records-dfa-portal-2026-08-22
+    target_id: d2202005_later_amendment
+    attempted_at: 2026-08-22
+    repository: State Water Resources Control Board DFA portal; FAAST system
+    method: Direct URL probe for D2202005.pdf; FAAST portal inspection
+    status: negative
+    result: >-
+      D2202005.pdf direct URL returns 404. DFA directory has no project-specific
+      amendment files accessible without login. FAAST is login-gated.
+
+  - id: grant-records-caleprocure-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: CaleProcure (California Department of General Services)
+    url: https://caleprocure.ca.gov/
+    method: Direct URL access
+    http_status: 403
+    status: access_blocked
+    result: Returns 403 Forbidden; no public search possible.
+
+  - id: grant-records-ia-cdx-dwr-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: Internet Archive CDX
+    method: CDX API wildcard query
+    query: "url=water.ca.gov/*4600014624*"
+    status: negative
+    result: >-
+      Zero matching captures returned for this query. This does not establish that
+      DWR never published the agreement or amendments.
+
+  - id: grant-records-ia-cdx-mccsd-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: Internet Archive CDX
+    method: CDX API query for mccsd.com/* board packet snapshots 2025
+    status: negative
+    result: Only older documents (2022–2024) archived; no 2025 board packets captured.
+
+  - id: grant-records-ia-cdx-musd-2026-08-22
+    target_id: d2202005_later_amendment
+    attempted_at: 2026-08-22
+    repository: Internet Archive CDX
+    method: CDX API and snapshot retrieval for mendocinousd.org board backup materials
+    status: negative
+    result: >-
+      Board backup materials page snapshots return binary/compressed content.
+      July 2025 board items archived (bond/superintendent/LCAP); no water project items.
+
+  - id: grant-records-data-ca-gov-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: data.ca.gov California Open Data Portal
+    method: Dataset search for drought relief grants and DWSRF agreements
+    status: negative
+    result: No drought relief grant or DWSRF agreement datasets with amendment-level detail found.
+
+  - id: grant-records-bing-search-2026-08-22
+    target_id: dwr_4600014624_amendment_2plus
+    attempted_at: 2026-08-22
+    repository: Bing web search
+    method: Exact-phrase web search
+    query: '"4600014624 amendment"'
+    status: negative
+    result: Zero matching results.

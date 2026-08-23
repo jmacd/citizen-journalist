@@ -1,0 +1,73 @@
+identity:
+  type: SystemAssigned
+properties:
+  managedEnvironmentId: /subscriptions/ba5902ce-669f-479b-adc2-eab1afa1d398/resourceGroups/rg-mendo-observatory-prod/providers/Microsoft.App/managedEnvironments/mendo-observatory-env
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      allowInsecure: false
+      targetPort: 4173
+      transport: auto
+    registries:
+      - server: mendoobservatoryacr.azurecr.io
+        identity: system
+  template:
+    containers:
+      - name: chat
+        image: mendoobservatoryacr.azurecr.io/mendo-case-chat@sha256:1dbdf00ccba28570c183c43a99130f5593e832a06f681d3b9b2e2b93dea8ead5
+        env:
+          - name: MENDO_MODEL_PROVIDER
+            value: foundry
+          - name: FOUNDRY_OPENAI_BASE_URL
+            value: https://mendoobservatoryai.openai.azure.com/openai/v1/
+          - name: FOUNDRY_MODEL
+            value: gpt-5-6-sol
+          - name: FOUNDRY_REASONING_EFFORT
+            value: low
+          - name: FOUNDRY_VERBOSITY
+            value: low
+          - name: FOUNDRY_MAX_OUTPUT_TOKENS
+            value: "4000"
+          - name: MENDO_CHECKPOINT_ROOT
+            value: /data/checkpoints
+          - name: MENDO_RUN_ROOT
+            value: /data/runs
+          - name: MENDO_RESEARCH_QUEUE_PATH
+            value: /data/research-queue.json
+          - name: ENABLE_SENSITIVE_DATA
+            value: "false"
+          - name: OTEL_SERVICE_NAME
+            value: mendo-government-observatory
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+        volumeMounts:
+          - volumeName: state
+            mountPath: /data
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /api/health
+              port: 4173
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          - type: Readiness
+            httpGet:
+              path: /api/health
+              port: 4173
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+    scale:
+      minReplicas: 1
+      maxReplicas: 1
+    volumes:
+      - name: state
+        storageType: AzureFile
+        storageName: mendo-state

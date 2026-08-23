@@ -1,0 +1,28 @@
+schema_version: 1
+fixture: true
+monitor_id: ceqanet
+observed_at: "2026-08-21T12:00:00Z"
+snapshot:
+  scope: CEQAnet project 2020080439
+  complete: false
+  cursor:
+    sch_number: "2020080439"
+    maximum_entry_id: "15"
+  limitation: Fixture is abbreviated and does not contain all project entries.
+records:
+  - repository_id: "2020080439:12"
+    canonical_url: https://ceqanet.lci.ca.gov/2020080439/12
+    title: State Water Board Water-Supply Permit Amendment
+    identifiers:
+      sch_number: "2020080439"
+      entry_id: "12"
+      attachment_id: aSsaxb
+      water_system_number: CA2300584
+    fingerprints:
+      identity: "2020080439:12"
+      metadata: fixture-not-a-computed-hash
+      content: 4cb6e921a5d23caa0e4c7ffa5921e9f99e9bd2265ef91e58ab403b341a8bc7d5
+    state: downloadable
+    first_seen_at: "2026-08-21T12:00:00Z"
+    last_seen_at: "2026-08-21T12:00:00Z"
+    notes: The attachment is a Notice of Determination, not the amended permit instrument.

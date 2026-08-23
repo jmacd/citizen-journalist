@@ -1,0 +1,338 @@
+schema_version: 1
+case_id: UM_2025-0004
+task_id: acquire-grant-records
+prepared_at: 2026-08-22T00:00:00Z
+status: blocked
+
+summary: >-
+  Targeted multi-source search for (a) the post-Amendment-1 version of DWR Agreement
+  4600014624 expressly identified by the March 5, 2026 DWR letter and (b) the
+  instrument or approval that changed D2202005's controlling construction deadline.
+  The DWR amendment is confirmed to exist. The changed D2202005 deadline is confirmed,
+  but the public evidence does not establish whether it resulted from an executed
+  amendment or another approved schedule modification. Neither underlying record was
+  recovered from the searched public sources. Both targets remain
+  identified_unretrieved and are covered by existing draft Public Records Act requests.
+
+blocker: >-
+  Neither underlying record was found in the public sources searched. The reviewed
+  MCCSD and MUSD minutes did not disclose an approval, and the searched DWR, DFA,
+  archival, procurement, and open-data routes did not return the records. Production
+  from DWR and the State Water Resources Control Board is the remaining identified
+  acquisition route.
+
+targets:
+
+  - id: dwr_4600014624_amendment_2plus
+    instrument: "DWR Agreement 4600014624 – post-Amendment-1 version (\"latest amendment\")"
+    agency: California Department of Water Resources
+    program: Drought-SGMA Relief Program (UMBDR / B23-007)
+    grantee: Mendocino City Community Services District (MCCSD)
+    status: identified_unretrieved
+    search_date: 2026-08-22
+
+    proven_by:
+      - document: >-
+          March 5, 2026 DWR letter, DocuSign Envelope ID
+          75679030-C389-42F3-930D-2CB1A6557B22
+        captured_path: >-
+          captures/cases/UM_2025-0004/water-law/2026-project-status-and-dwr-letter.pdf
+        manifest_id: musd_2026_project_status
+        key_text: >-
+          "According to the latest amendment of the Funding Agreement, all work shall be
+          completed by March 31, 2026, and no funds may be requested after April 14, 2026"
+
+    baseline_for_comparison:
+      - instrument: DWR Agreement 4600014624 Amendment 1 (executed May 2023)
+        docusign_ids:
+          - 59EBA809-7302-4198-AFD7-C10EAFCBBFD7
+          - 25F37511-53E6-4A7C-A3CA-C363C2A8CED6
+        captured_in: captures/cases/UM_2025-0004/water-law/2023-response-to-comments-and-agreements.pdf
+        manifest_id: musd_2023_response_and_funding_agreements
+        amendment_1_deadlines:
+          work_completion: "2025-03-31"
+          no_funds_after: "2025-06-30"
+          grant_amount: "$4,932,000"
+
+    known_terms_of_missing_instrument:
+      work_completion: "2026-03-31"
+      no_funds_after: "2026-04-14"
+      source_expires: "2026-06-30"
+      basis: >-
+        Paragraph 2 text quoted verbatim in the March 5, 2026 DWR letter.
+        These dates differ from Amendment 1 (March 31, 2025 / June 30, 2025),
+        confirming at least one additional amendment intervened.
+
+    dwr_contacts:
+      - name: Yuliya Osetrova
+        title: Project Manager, DWR Division of Regional Assistance
+        email: Yuliya.Osetrova@water.ca.gov
+        phone: "(916) 326-9938"
+      - name: Arthur Hinojosa
+        title: Manager, Division of Regional Assistance, DWR
+        role: Signed the March 5, 2026 letter
+
+    pra_draft:
+      recipient: California Department of Water Resources – Public Records Officer
+      subject: >-
+        PRA Request – DWR Agreement 4600014624, All Amendments
+        (Mendocino City Community Services District)
+      body: |
+        Pursuant to the California Public Records Act (Gov. Code § 7920 et seq.), I request:
+
+        All executed amendments to California Department of Water Resources Agreement
+        No. 4600014624 with the Mendocino City Community Services District (MCCSD),
+        including but not limited to any amendment executed after Amendment 1 (May 2023)
+        that extended the work-completion deadline to March 31, 2026 and the no-funds-after
+        date to April 14, 2026, as quoted in the DWR letter of March 5, 2026
+        (DocuSign Envelope ID: 75679030-C389-42F3-930D-2CB1A6557B22).
+
+        Please include the complete executed counterpart, all exhibits, and any transmittal
+        correspondence.
+      note: >-
+        Reference the March 5, 2026 letter (DocuSign 75679030) to identify the amendment
+        with precision; it quotes Paragraph 2 of the "latest amendment" verbatim.
+
+  - id: d2202005_later_amendment
+    instrument: "SWRCB DWSRF Agreement D2202005 – instrument or approval setting construction completion at Oct 30, 2026"
+    agency: California State Water Resources Control Board – Division of Financial Assistance (DFA)
+    program: Drinking Water State Revolving Fund (DWSRF)
+    borrower: Mendocino Unified School District (MUSD)
+    status: identified_unretrieved
+    search_date: 2026-08-22
+
+    proven_by:
+      - document: >-
+          March 6, 2026 GHD project status memo (within
+          2026-project-status-and-dwr-letter.pdf), states "the grant agreement
+          currently requires all project construction to be completed by October 30, 2026"
+        captured_path: >-
+          captures/cases/UM_2025-0004/water-law/2026-project-status-and-dwr-letter.pdf
+        manifest_id: musd_2026_project_status
+        key_text: >-
+          "the grant agreement currently requires all project construction to be completed
+          by October 30, 2026"
+
+    baseline_for_comparison:
+      - instrument: D2202005 original agreement (ca. June 2022)
+        captured_in: captures/cases/UM_2025-0004/water-law/2023-response-to-comments-and-agreements.pdf
+        manifest_id: musd_2023_response_and_funding_agreements
+        original_deadlines:
+          construction_completion: "2026-07-01"
+          final_reimbursement: "2027-02-01"
+          principal_forgiveness: "$4,500,000"
+
+    known_terms_of_missing_instrument:
+      construction_completion: "2026-10-30"
+      source: March 6, 2026 GHD memo
+      basis: >-
+        Original D2202005 sets July 1, 2026 as construction completion (Exhibit A).
+        March 2026 GHD memo states current requirement is October 30, 2026.
+        The later controlling schedule differs from the original, but the GHD memo
+        does not identify whether the change was made by executed amendment, revised
+        exhibit, or another written DFA approval.
+
+    dfa_contacts:
+      - name: Gary Chan
+        title: Project Manager, Division of Financial Assistance
+        email: gary.chan@waterboards.ca.gov
+        phone: "(916) 650-6874"
+
+    pra_draft:
+      recipient: California State Water Resources Control Board – Public Records Office
+      subject: >-
+        PRA Request – DWSRF Agreement D2202005, All Amendments
+        (Mendocino Unified School District)
+      body: |
+        Pursuant to the California Public Records Act (Gov. Code § 7920 et seq.), I request:
+
+        All executed amendments, revised exhibits, and written schedule-change
+        approvals for SWRCB Drinking Water State Revolving Fund Agreement No. D2202005
+        with the Mendocino Unified School District (MUSD), including the record that
+        changed the construction-completion deadline from the original July 1, 2026
+        date to October 30, 2026 (as referenced in a March 2026 GHD project status
+        memorandum prepared for MUSD).
+
+        Please include the complete executed counterpart, all exhibits, and any transmittal
+        or approval correspondence from DFA project manager Gary Chan.
+      note: >-
+        The original Agreement D2202005 is already in hand; only the amendment(s) are needed.
+
+search_attempts:
+
+  - id: existing-captures-review
+    date: 2026-08-22
+    source: Case manifest and existing captures
+    method: Review OCR text of 2023-response-to-comments-and-agreements.pdf and 2026-project-status-and-dwr-letter.pdf
+    result: >-
+      Confirmed Amendment 1 terms (work completion March 31, 2025).  Confirmed
+      that March 5, 2026 DWR letter identifies the "latest amendment" as setting
+      the March 31, 2026 deadline, proving at least one additional DWR amendment.
+      Confirmed D2202005 original sets July 1, 2026 construction completion and
+      the GHD memo states the current agreement requires October 30, 2026. The
+      mechanism used to change the D2202005 schedule remains unidentified.
+    status: baseline_established
+
+  - id: mccsd-board-minutes-2024-2026
+    date: 2026-08-22
+    source: MCCSD board minutes, May 2024 through June 2026
+    method: >-
+      Retrieved monthly board minutes PDFs from MCCSD website and pdftotext extraction.
+      Searched all months for DWR grant amendment authorization, water project votes, or
+      grant agreement actions.
+    result: >-
+      MCCSD uses action-only minute format.  No DWR Amendment 2 or D2202005 amendment
+      authorization appears as a formal action item in any month reviewed.
+      October 2024 minutes mention Superintendent Rhoades referencing tank project MOU
+      revision; July 2024 minutes state project "on pause while navigating CDP process."
+      March 2026 minutes focus on recycled water contracts, MUSD recycled water agreement.
+    note: >-
+      MCCSD board packets are scanned image PDFs (Xerox); pdftotext returns empty.
+      OCR unavailable in current environment for packet body review.
+      The available minutes therefore do not establish whether staff acted under
+      delegated authority or whether relevant backup material exists in the packets.
+    status: negative
+
+  - id: musd-board-minutes-2024-2026
+    date: 2026-08-22
+    source: MUSD board meeting agendas and minutes, 2023–2026
+    method: >-
+      Retrieved available MUSD board PDFs: June 28, 2023 special meeting (MND adoption),
+      Nov 2024 board packet (already in manifest), June 2025 special meeting (MCN).
+      Searched for D2202005 amendment authorization or grant agreement action items.
+    result: >-
+      No MUSD board item authorizing a D2202005 amendment found in any accessible meeting
+      document.  June 28, 2023 special meeting adopted Resolution 2023-15 (Subsequent MND
+      and project approval) but contained no grant amendment action.
+      November 2024 board packet references MOU language requiring DWR approval for
+      amendments but does not include any D2202005 amendment.
+    note: >-
+      MUSD board backup materials page returns binary/compressed content in Internet Archive
+      snapshots for 2024–2025; no accessible board items for water project during that window.
+    status: negative
+
+  - id: dwr-umbdr-program-page
+    date: 2026-08-22
+    source: DWR UMBDR / Drought-SGMA Relief Program web page
+    url: https://water.ca.gov/Water-Basics/Projects-and-Programs/UMBDR
+    method: Page review and funded-projects Tableau dashboard inspection
+    result: >-
+      Program page provides no public registry of individual agreement amendments.
+      Funded Projects link leads to JavaScript-only Tableau dashboard; no
+      agreement-level document links present.  DWR Phase 1 award table PDF
+      is scanned (no text layer) and does not include amendment instruments.
+    status: negative
+
+  - id: state-water-board-dfa-portal
+    date: 2026-08-22
+    source: State Water Resources Control Board Division of Financial Assistance portal
+    method: Direct URL probe for D2202005.pdf; DFA FAAST portal inspection
+    result: >-
+      D2202005.pdf direct URL returns 404.  DFA directory has no project-specific
+      amendment files accessible without login.  FAAST login-gated; no public access
+      to executed amendment instruments.
+    status: negative
+
+  - id: caleprocure-dgs
+    date: 2026-08-22
+    source: California Department of General Services CaleProcure
+    url: https://caleprocure.ca.gov/
+    method: Direct URL access
+    result: Returns 403 Forbidden; no public search possible.
+    status: access_blocked
+
+  - id: internet-archive-cdx-dwr
+    date: 2026-08-22
+    source: Internet Archive CDX
+    query: "url=water.ca.gov/*4600014624*"
+    method: CDX API wildcard query
+    result: >-
+      Zero matching captures returned for this query. This does not establish that
+      DWR never published the agreement or amendments.
+    status: negative
+
+  - id: internet-archive-cdx-mccsd-2025
+    date: 2026-08-22
+    source: Internet Archive CDX
+    query: mccsd.com board packets 2025
+    method: CDX API query for mccsd.com/* snapshots
+    result: >-
+      Only older documents (2022–2024) archived; no 2025 board packets captured.
+      No DWR amendment authorization accessible.
+    status: negative
+
+  - id: internet-archive-cdx-musd-2025
+    date: 2026-08-22
+    source: Internet Archive CDX
+    query: mendocinousd.org board backup materials 2024–2026
+    method: CDX API and snapshot retrieval for MUSD board materials page
+    result: >-
+      Board backup materials page snapshots return binary/compressed content.
+      July 2025 board items archived (bond program, superintendent contract, LCAP)
+      no water project materials found.
+    status: negative
+
+  - id: data-ca-gov-search
+    date: 2026-08-22
+    source: data.ca.gov (California Open Data Portal)
+    method: Dataset search for drought relief grants and DWSRF agreements
+    result: No drought relief grant or DWSRF agreement datasets with amendment-level detail found.
+    status: negative
+
+  - id: bing-search-agreement-number
+    date: 2026-08-22
+    source: Bing web search
+    method: Exact-phrase web search
+    query: '"4600014624 amendment"'
+    result: Zero matching results.
+    status: negative
+
+  - id: musd-june-2023-special-meeting
+    date: 2026-08-22
+    source: MUSD Special Board Meeting June 28, 2023
+    url: https://www.mendocinousd.org/files/user/160/file/6-28-23-Special-Meeting(4).pdf
+    method: PDF text extraction (text-based PDF, Microsoft Word 2016 generated)
+    result: >-
+      Agenda for Resolution 2023-15 (Subsequent MND adoption and project approval).
+      No D2202005 amendment on agenda; no grant agreement action item present.
+      D2202005 mentioned only in the attached staff report as background context.
+    status: negative
+
+next_steps:
+
+  - action: submit_pra_to_dwr
+    priority: high
+    description: >-
+      File PRA request to DWR for all executed amendments to Agreement 4600014624
+      with MCCSD.  Reference the March 5, 2026 letter (DocuSign 75679030) and the
+      specific deadline change (March 31, 2025 to March 31, 2026) to identify
+      the target instrument precisely.
+    contact: "Yuliya Osetrova, Yuliya.Osetrova@water.ca.gov, (916) 326-9938"
+    canonical_draft: "cases/UM_2025-0004/records-requests.yaml#dwr-4600014624"
+
+  - action: submit_pra_to_swrcb_dfa
+    priority: high
+    description: >-
+      File PRA request to SWRCB Division of Financial Assistance for all executed
+      amendments, revised exhibits, and written schedule approvals for DWSRF Agreement
+      D2202005 with MUSD. Reference the October 30, 2026 construction-completion date
+      stated in the March 2026 GHD memo.
+    contact: "Gary Chan, gary.chan@waterboards.ca.gov, (916) 650-6874"
+    canonical_draft: "cases/UM_2025-0004/records-requests.yaml#dfa-c-06-2300584-001c"
+
+  - action: ocr_mccsd_board_packets
+    priority: medium
+    description: >-
+      Install pdf2image + tesseract and OCR MCCSD board packets from 2024–2025 to search
+      for any DWR amendment authorization buried in consent calendars or superintendent
+      reports.
+    note: >-
+      The packet bodies have not yet been searched, so the negative minutes result
+      does not establish that authorization or discussion is absent from the packets.
+
+  - action: check_eol_approval_status
+    priority: low
+    description: >-
+      Monitor DOF decision on DWR Extension of Liquidation (EOL) request submitted
+      March 2026.  If approved, a further DWR Amendment 3 extending the UMBDR program
+      two years would follow, creating yet another instrument to acquire.

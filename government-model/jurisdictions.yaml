@@ -1,0 +1,106 @@
+schema_version: 1
+entity_type: jurisdiction
+records:
+  - id: jurisdiction.ddw.public-water-system
+    name: Public water system permitting and supervision
+    holder_ids: [office.ca.swrcb.ddw]
+    action: issue_or_amend_domestic_water_supply_permit
+    subject_scope: Public water system sources, treatment, storage, distribution, and operation.
+    geographic_scope: The facilities and service description governed by the applicable permit.
+    assertions:
+      - id: jurisdiction-ddw.scope
+        statement: DDW regulates whether and how CA2300584 may operate and change its system.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [ca_drinking_water_lawbook_2026, ceqanet_water_supply_amendment]
+        limits: >-
+          This jurisdiction does not establish County zoning, MCCSD service
+          activation, or the extent of MUSD's school-district powers.
+  - id: jurisdiction.mccsd.groundwater
+    name: MCCSD groundwater extraction management
+    holder_ids: [agency.mccsd]
+    action: regulate_groundwater_extraction
+    subject_scope: Extraction permits, studies, meters, allotments, reductions, and enforcement.
+    geographic_scope: MCCSD jurisdictional boundary, subject to statutory conditions.
+    assertions:
+      - id: jurisdiction-mccsd.groundwater-scope
+        statement: >-
+          The special groundwater authority applies within MCCSD's existing
+          boundaries and is implemented through the captured ordinance.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_water_code_10700_10717, mccsd_ordinance_2020_01]
+        limits: >-
+          It is not public-water-system operating authority. Water Code
+          section 10717 contains a municipal-central-system termination trigger.
+  - id: jurisdiction.mccsd.water-service
+    name: MCCSD water service
+    holder_ids: [agency.mccsd]
+    action: supply_water_for_beneficial_use
+    subject_scope: Active district water-service classes.
+    geographic_scope: Within the MCCSD jurisdictional boundary unless another approval applies.
+    assertions:
+      - id: jurisdiction-mccsd.water-service-scope
+        statement: MCCSD possesses active, but not unlimited, water-service powers.
+        evidence_status: supported_interpretation
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [lafco_2005_csd_powers, lafco_2022_groundwater_authority, mccsd_2020_msr_soi]
+        limits: >-
+          A municipal central system and some replenishment activities may be
+          new or different service classes requiring LAFCo activation.
+  - id: jurisdiction.lafco.mccsd-boundary-services
+    name: MCCSD boundary and service-class oversight
+    holder_ids: [agency.mendocino-lafco]
+    action: approve_applicable_boundary_or_service_changes
+    subject_scope: Sphere, annexation, latent or new service classes, and district outside-area service.
+    geographic_scope: MCCSD and proposed changes affecting its service or territory.
+    assertions:
+      - id: jurisdiction-lafco.scope
+        statement: LAFCo controls applicable MCCSD boundary and service-class approvals.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - lafco_2005_csd_powers
+          - lafco_2020_resolution_2020_21_01
+          - lafco_2025_07_07_packet
+        limits: It does not determine DDW permit terms or MUSD's underlying powers.
+  - id: jurisdiction.county.land-use-coastal
+    name: County land-use and coastal permitting
+    holder_ids: [agency.mendocino-county, office.mendocino-county.planning-commission]
+    action: issue_land_use_and_coastal_approval
+    subject_scope: Physical development and conditions under County land-use law and the certified LCP.
+    geographic_scope: The County permit site and applicable certified LCP area.
+    assertions:
+      - id: jurisdiction-county.scope
+        statement: The County can approve development and impose legally supportable conditions.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019, ccc_2017_town_lcp_report]
+        limits: >-
+          A coastal or land-use permit is additional to, not a replacement for,
+          independent water-system, district, or funding approvals.
+  - id: jurisdiction.musd.water-operation
+    name: MUSD operation of CA2300584
+    holder_ids: [agency.musd]
+    action: own_and_operate_permitted_public_water_system
+    subject_scope: CA2300584 facilities and customers allowed by applicable law and permit.
+    geographic_scope: Operative DDW permit scope, which is not present in the corpus.
+    assertions:
+      - id: jurisdiction-musd.scope-unresolved
+        statement: >-
+          MUSD's current authority for community emergency dispensing, tanker
+          filling, and customer scope cannot be determined without the
+          November 26, 2025 amended permit.
+        evidence_status: unresolved
+        acceptance_status: unknown
+        missing_record: November 26, 2025 CA2300584 amended domestic water supply permit
+        case_id: UM_2025-0004
+        source_ids: [ceqanet_water_supply_amendment, ddw_dfa_2023_comment_letter]
+        limits: >-
+          The registry classification, project approvals, and MOU do not
+          substitute for the missing operative permit.

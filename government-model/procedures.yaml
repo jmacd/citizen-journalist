@@ -1,0 +1,108 @@
+schema_version: 1
+entity_type: procedure
+records:
+  - id: procedure.ddw.permit-amendment
+    name: Amend a domestic water supply permit
+    action: amend_public_water_system_source_treatment_or_distribution
+    actor_ids: [office.ca.swrcb.ddw, agency.musd]
+    steps:
+      - Operator submits the applicable amendment application and supporting information.
+      - DDW reviews the proposed source, treatment, distribution, and operating conditions.
+      - DDW issues or denies an amended permit.
+    assertions:
+      - id: ddw-amendment.required
+        statement: >-
+          Changes to source, treatment, or the permitted distribution system
+          generally require DDW review and an amended permit.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - ca_drinking_water_lawbook_2026
+          - ddw_amended_permit_application
+          - ddw_dfa_2023_comment_letter
+        limits: >-
+          Permit issuance does not supply County land-use approval or activate
+          an MCCSD service class.
+  - id: procedure.mccsd.groundwater-program-adoption
+    name: Adopt or materially expand the MCCSD groundwater program
+    action: adopt_or_expand_groundwater_management_program
+    actor_ids: [agency.mccsd]
+    steps:
+      - Follow Water Code sections 10703-10706.
+      - Complete the statutory hearing and adoption process.
+      - Adopt implementing measures within the resulting authority.
+    assertions:
+      - id: groundwater-adoption.procedure
+        statement: >-
+          New or materially expanded groundwater programs require the statutory
+          adoption process; failure to follow it invalidated the measures at
+          issue in Gomes.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_water_code_10700_10717, gomes_v_mccsd_2019]
+        limits: >-
+          Gomes did not invalidate Ordinance 90-1 or decide current potable
+          service authority.
+  - id: procedure.lafco.activate-service
+    name: Activate a latent or new district service class
+    action: activate_district_service
+    actor_ids: [agency.mccsd, agency.mendocino-lafco]
+    steps:
+      - District initiates an application and service plan.
+      - District and LAFCo conduct required hearings.
+      - LAFCo evaluates service and financing information and approves or denies activation.
+    assertions:
+      - id: lafco-activation.applies-to-new-class
+        statement: >-
+          A latent or new class of district service requires the applicable
+          LAFCo activation process.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [lafco_2005_csd_powers, lafco_2022_groundwater_authority, mccsd_2020_msr_soi]
+        limits: The process does not issue a DDW permit.
+  - id: procedure.lafco.emergency-outside-agency-service
+    name: Approve emergency outside-agency service
+    action: approve_urgent_service_outside_city_or_district_boundary
+    actor_ids: [office.mendocino-lafco.executive-officer, agency.mendocino-lafco]
+    steps:
+      - An eligible city or district requests urgent outside service.
+      - The Executive Officer determines whether the public-health or safety criteria are met.
+      - The Commission subsequently ratifies the administrative approval.
+    assertions:
+      - id: emergency-oas.policy
+        statement: This sequence is documented in Mendocino LAFCo Policy 12.2.5 and later matters.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - lafco_2025_07_07_packet
+          - lafco_2025_11_03_packet
+          - lafco_2025_12_01_packet
+        limits: >-
+          School districts are excluded from the relevant LAFCo definition of
+          district, so this policy alone does not answer MUSD's authority.
+  - id: procedure.cooperation.adopt-bilateral-mou
+    name: Adopt a bilateral cooperative MOU
+    action: approve_interagency_cooperation_agreement
+    actor_ids: [agency.musd, agency.mccsd]
+    steps:
+      - Each governing board receives the proposed instrument.
+      - Each governing board acts on the same agreement.
+      - The parties execute and implement the accepted instrument subject to independent approvals.
+    assertions:
+      - id: bilateral-mou.2024-adoption
+        statement: Both MUSD and MCCSD boards approved the replacement MOU in November 2024.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids:
+          - musd_2024_11_21_board_minutes
+          - mccsd_2024_11_25_board_minutes
+          - mccsd_musd_2024_mou
+        limits: >-
+          Board acceptance does not establish that the agreement is a JPA,
+          prove a common power, or satisfy separate DDW, LAFCo, County, or
+          funding requirements.

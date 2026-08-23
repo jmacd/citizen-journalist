@@ -1,0 +1,170 @@
+
+
+As noted in the memo, the only zoning types that currently allow off-site solar farms are AG, RL, FL, TP and I.  In my mind, the Industrial district is off the table due to the significant differences in uses between that and the existing area.  TPZ would require a timber harvest plan and approval of the State Board of Forestry so that’s also not realistic, which leaves us with AG, RL or FL.  I had recommended FL simply due to the proximity of adjacent TPZ lands to the south, and staff could easily support an FL zoning on that site as a ‘buffer’ to the TPZ.  I’ll note here your concern about preventing future residential development; while limiting development is not a goal of the LCP, well-sited development is, and there are additional policies that recommend limited development adjacent to TPZ lands in order to reduce development pressure on those resources.  So in this case, FL would likely be the easiest proposal for staff to support but ultimately any of those three zones would accomplish the goal.  However, due to the density limitations of those zonings, a reduction in potential homesite development will be a side-effect of any of them.
+
+
+
+Staff recommendations for rezones are always a bit tricky, because zoning is a policy decision.  I was glad to see that you’ve included Supervisor Norvell in your outreach, and encourage you to have a dialogue with him regarding future uses of the site.  Coastal Commission review is also a significant factor, both in time required for approving the requested updates as well as any concerns they may have.  A Coastal Development Use Permit would also be required for construction of the array, but that could come at a later date if a developer is secured.
+
+
+---
+
+I was able to dig up my correspondence with the CCC from last year, which I’ve attached here.  I’ve also attached Ordinance 3857 which is referenced in that email chain.  For context, “IP” as used in the emails means ‘implementation plan’, and refers to the County’s Division II zoning code.
+
+
+
+As the General Plan (and by extension the LCP) is the County’s governing document with regard to land uses, it will take precedence over the zoning district, which is how I arrived at that conclusion in the PAC memo.  As you noted, there is a possibility that a correction or modification to either the LCP or IP could be included as part of the ongoing LCP update, and the Department is certainly willing to explore that discussion.  I do think that a zone change is ultimately a slightly easier lift when compared to amending the policy, because it would allow the Department to sidestep the analysis that would be required if we wanted to allow commercial solar arrays in every RR zone along the coast. But I also understand the desire to keep residential zonings available, and while there wouldn’t be a huge change in development potential in this case, there would be a difference; the current lot is 50± acres and zoned for one unit per 10 acres.  Assuming a successful subdivision into 5 lots, we’d be looking at a maximum of 10 dwelling units (pending water and septic availability, and not including JADUs) under the current RR-10 zoning.  By contrast, the FL zone would reduce that potential to just 2 units.  Since at least one of the subdivision lots would likely be needed for the array itself, I don’t think maximum buildout of 10 units is realistic so we’re probably looking at something closer to 2 units versus 8 units.  Still a loss of potential housing, but likely not as significant as the benefits from additional renewable energy would be.
+
+
+
+---
+
+From: Russell Ford
+To: Gedik, Tamara@Coastal; Kraemer, Melissa@Coastal; Jansen, Bente@Coastal; Yuwiler, Robert@Coastal; Leavitt,
+
+Amber@Coastal
+Subject: RE: LCP/Zoning Inconsistency
+Date: Wednesday, March 12, 2025 5:16:00 PM
+Attachments: image001.png
+image002.png
+image003.png
+
+Melissa: Exactly right. I had begun writing my memo from the perspective of only a use permit being
+required, but it sounds like I may need to pivot to include an LCPA/rezone if they’re really interested in the
+site.
+Tamara: Appreciate the historical info and research. I wasn’t able to find an LCP draft handy, but given the
+direction of this conversation as well as my earlier one with Julia, I doubt the Department would be able to
+find that the use in an RR zone is consistent with the LCP goals.
+Thanks for the assist!
+-R
+From: Gedik, Tamara@Coastal <Tamara.Gedik@coastal.ca.gov>
+Sent: Tuesday, March 11, 2025 9:46 PM
+To: Kraemer, Melissa@Coastal <Melissa.Kraemer@coastal.ca.gov>; Russell Ford
+<fordr@mendocinocounty.gov>; Jansen, Bente@Coastal <bente.jansen@coastal.ca.gov>; Yuwiler,
+Robert@Coastal <robert.yuwiler@coastal.ca.gov>; Leavitt, Amber@Coastal
+<amber.leavitt@coastal.ca.gov>
+Subject: RE: LCP/Zoning Inconsistency
+
+Here’s some additional info/observations:
+The Commission’s findings for certifying the IP acknowledge that the Zoning Districts
+mirror the LUP categories. The LUP includes off-site alternative energy facilities as a
+conditional permitted use for lands designated I, AG and RL, but not RR. So, the
+controlling land uses of the land use plan do not list off-site energy facilities as an
+allowable use in RR classifications.
+Ordinance 3857 that was attached in Russ’ email was associated with Minor
+Amendment 1-92 which added fire and police services as conditional uses in the RR
+district. Even though the LCPA included other changes to the IP, it didn’t add any
+other conditional uses in the RR district. So, even though as Russ points out, it
+illustrates a point in time where the alternative energy use type was listed in the LCP,
+it isn’t clear whether that specific use was ever certified in the RR district.
+Russ, in terms of tracking when the use first shows up in the ordinance, I do see in
+
+our records a letter dated 12/4/1986 to Jerry Heath, commenting on the Draft
+Mendocino County Ordinances, which at that point in time the ordinance numbers
+were different than what was ultimately adopted so it’s hard to track how it correlates
+to today’s sections (I don’t have a copy of the early draft onsite- but maybe you do?).
+Here’s a couple of comments from our staff at that time:
+
+~Tamara L. Gedik
+Supervising Analyst
+California Coastal Commission
+1385 8th Street, Suite 130, Arcata, CA 95521
+Phone: (707) 826-8950, extension 9 (currently teleworking; voice mail only)
+Tamara.Gedik@coastal.ca.gov
+~To purchase a whale tail license plate or access Coastal Commission information, go to www.coastal.ca.gov
+The Commission remains open for business and in-person appointments are available
+upon request. The best way to contact me is by email. In addition to the regular means
+of mailing documents (please, no UPS or FEDEX at this time) as required by the
+regulations or statute, please make sure that you also send a copy of all
+correspondence or other documents electronically to me via email.
+From: Kraemer, Melissa@Coastal <Melissa.Kraemer@coastal.ca.gov>
+Sent: Tuesday, March 11, 2025 8:41 PM
+To: fordr@mendocinocounty.gov; Gedik, Tamara@Coastal <Tamara.Gedik@coastal.ca.gov>; Jansen,
+Bente@Coastal <bente.jansen@coastal.ca.gov>; Yuwiler, Robert@Coastal
+<robert.yuwiler@coastal.ca.gov>; Leavitt, Amber@Coastal <amber.leavitt@coastal.ca.gov>
+Subject: RE: LCP/Zoning Inconsistency
+Got it. So you’re thinking about advising the applicants that their proposed facility wouldn’t be
+allowed on this site without an LCP amendment to rezone the property to Agriculture, Forest Lands,
+Industrial Land or Range Land? But you want us to first double check that our records confirm that in
+fact this use is not actually allowed in the RR zone?
+From: Russell Ford <fordr@mendocinocounty.gov>
+Sent: Tuesday, March 11, 2025 1:00 PM
+To: Kraemer, Melissa@Coastal <Melissa.Kraemer@coastal.ca.gov>; Gedik, Tamara@Coastal
+<Tamara.Gedik@coastal.ca.gov>; Jansen, Bente@Coastal <bente.jansen@coastal.ca.gov>; Yuwiler,
+Robert@Coastal <robert.yuwiler@coastal.ca.gov>; Leavitt, Amber@Coastal
+
+Caution: This email originated from outside of the organization. Do not click links or open
+attachments unless you recognize the sender and know the content is safe.
+<amber.leavitt@coastal.ca.gov>
+Subject: RE: LCP/Zoning Inconsistency
+Hi Melissa.
+Given the overarching authority of the LCP, I think the most appropriate correction would be to remove
+offsite energy facilities from the RR zone as an allowed use, unless we were somehow able to demonstrate
+that its inclusion demonstrated consistency with the LCP.
+-R
+From: Kraemer, Melissa@Coastal <Melissa.Kraemer@coastal.ca.gov>
+Sent: Tuesday, March 11, 2025 12:56 PM
+To: Russell Ford <fordr@mendocinocounty.gov>; Gedik, Tamara@Coastal
+<Tamara.Gedik@coastal.ca.gov>; Jansen, Bente@Coastal <bente.jansen@coastal.ca.gov>; Yuwiler,
+Robert@Coastal <robert.yuwiler@coastal.ca.gov>; Leavitt, Amber@Coastal
+<amber.leavitt@coastal.ca.gov>
+Subject: RE: LCP/Zoning Inconsistency
+
+Hi Russ
+So to clarify, the potential correction that you think might need to be made is to allow offsite
+alternative energy facilities in the RR zone, and to do so fixing the various sections with
+discrepancies?
+We can check our files on this and get back to you.
+Thanks
+Melissa
+From: Russell Ford <fordr@mendocinocounty.gov>
+Sent: Tuesday, March 11, 2025 9:07 AM
+To: Gedik, Tamara@Coastal <Tamara.Gedik@coastal.ca.gov>; Kraemer, Melissa@Coastal
+<Melissa.Kraemer@coastal.ca.gov>; Jansen, Bente@Coastal <bente.jansen@coastal.ca.gov>; Yuwiler,
+Robert@Coastal <robert.yuwiler@coastal.ca.gov>; Leavitt, Amber@Coastal
+<amber.leavitt@coastal.ca.gov>
+Subject: LCP/Zoning Inconsistency
+Good morning State team.
+I was working on a Pre-Application Conference (PAC) memo yesterday and discovered an inconsistency in
+our Coastal documents that we’re hoping you may have some additional information on. For context, the
+PAC is for a proposal to create a 2 megawatt commercial solar array in the Caspar area. APN 118-090-12,
+at 44661 Caspar Orchard Road. It’s the lot right near the southeast corner of Highway 1 and Fern Creek
+
+Road in Caspar.
+The project type would likely be classified as Alternative Energy Facilities: Off-site, a Coastal Civic Use
+type. The site is zoned RR-10. MCC §20.376.015(B) for the RR district lists Alternative Energy Facilities:
+Off-site as a conditional use for the RR zone. However, §20.320.020 provides a definition for that use type
+and indicates that off-site use “...shall be permitted as a conditional use in AG, RL, FL, TP and I
+Districts”, notably omitting RR zones. Additionally, LCP Policy 3.11-12 discusses alternative energy
+facilities, and says:
+“For off-site use, alternative energy facilities shall be considered as a conditional use in the
+Agriculture, Forest Lands, Industrial Land and Range Land categories.”
+To compound things, we discovered Ordinance 3857 (attached) which amended Chapter 20.376 for the
+Coastal RR classification in 1993. That ordinance clearly includes Alternative Energy Facilities: Off-site
+as a conditional use, and it appears that this inconsistency has been on the books since at least 1987.
+As the original LCP, the ordinance update in 1993, and any subsequent updates would have required State
+approval, I was hoping there may be some notes in your files that could shed light on this. It sounds like
+we’ll need to add this correction into our pending LCP update, but more pressingly, I want to be correct in
+the information I’m giving to the PAC applicants. If it turns out the site would require an LCP amendment,
+then it’s probably not going to be worth their investment.
+Appreciate any info you have, and let me know if you have any questions.
+-Russ
+Russell D. Ford
+Senior Planner
+Mendocino County Planning & Building Services
+860 N. Bush Street
+Ukiah, CA 95482
+707-234-6650
+
+
+
+----
+
+IMAGE CONTENT QUOTED ABOVE TRANSCRIBED:
+
+1. "Section C-20.208.35(A) Alternative energy facilities are not included in all land use
+    categories under Conditional Uses."
+
+2. "Section C-20.068.10(B)(4) LUP refers to alternative energy facilities"
+
+3. "Section C-20.100.10(A)(2) LUP lists Alternative Energy Sources as a conditional use."

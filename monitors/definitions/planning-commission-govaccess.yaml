@@ -1,0 +1,95 @@
+schema_version: 1
+id: planning-commission-govaccess
+name: Mendocino County Planning Commission GovAccess publications
+agency_owner:
+  name: Mendocino County
+  jurisdiction: Mendocino County, California
+  unit: Planning and Building Services / Planning Commission
+official_repository:
+  name: Mendocino County GovAccess meeting archive
+  kind: meeting_archive
+  base_url: https://www.mendocinocounty.gov/government/planning-building-services/meeting-agendas/planning-commission
+  publisher_is_authority: true
+  notes: Meeting-centered publication feed; GovAccess document IDs are site-wide CMS identities.
+discovery:
+  method: meeting_archive_inventory
+  seeds:
+    - purpose: planning_commission_archive
+      url: https://www.mendocinocounty.gov/government/planning-building-services/meeting-agendas/planning-commission
+    - purpose: published_document
+      url: https://www.mendocinocounty.gov/home/showpublisheddocument/{document_id}/{revision_token}
+      template_variables: [document_id, revision_token]
+  enumeration_unit: meeting
+  query_terms: [permit identifier, applicant, APN, project name, predecessor identifier]
+  notes: Crawl all hearing cycles matching any expected identifier; link labels alone do not establish content.
+cursor:
+  mode: full_snapshot
+  checkpoint_fields: [meeting_date, document_id, revision_token]
+  ordering: Meeting date, page order, then numeric GovAccess document ID.
+  overlap: Re-enumerate the complete visible archive because old meeting pages may be edited.
+  snapshot_scope: Visible Planning Commission meetings and their attachment links.
+  absence_semantics: Missing links are removal candidates, not proof that a document was withdrawn or never existed.
+fingerprints:
+  - name: cms_identity
+    scope: identity
+    algorithm: tuple
+    fields: [document_id]
+  - name: posting_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, agenda_item, link_label, canonical_url, revision_token, page_order]
+    notes: Revision token encodes CMS publication time, not hearing, adoption, execution, or legal-effect time.
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P1D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily around published hearing cycles; retain full-archive comparisons.
+  jitter: PT2H
+  rationale: Agenda attachments and revised resolutions can change shortly before a hearing.
+expected_identifiers:
+  - name: planning_case
+    pattern: "^(?:U|UM|CDP)_\\d{4}-\\d{4}$"
+    examples: [U_2023-0004, UM_2025-0004]
+    required: false
+  - name: planning_commission_resolution
+    pattern: "^PC_\\d{4}-\\d{4}$"
+    examples: [PC_2024-0019]
+    required: false
+  - name: govaccess_document_id
+    pattern: "^\\d+$"
+    examples: ["79046"]
+    required: true
+status:
+  state: active_with_constraints
+  verified_at: "2026-08-21"
+  notes: Automated clients may receive Akamai 403 responses even when public links are intended for anonymous access.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: not_supported
+  constraints:
+    - Do not bypass Akamai or other access controls.
+    - Preserve a public 403 link as identified_unretrieved.
+    - Rate-limit full archive inventory and avoid concurrent binary downloads.
+  failure_policy: Record HTTP status, retrieval time, URL, and page label; route blocked documents without inferring their contents.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - harvest-govaccess-meeting-archive
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Keep first-seen hearing, CMS revision time, governing-body action, and legal effect separate.

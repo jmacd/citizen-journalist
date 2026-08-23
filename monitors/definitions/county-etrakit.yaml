@@ -1,0 +1,102 @@
+schema_version: 1
+id: county-etrakit
+name: Mendocino County eTRAKiT planning records
+agency_owner:
+  name: Mendocino County
+  jurisdiction: Mendocino County, California
+  unit: Planning and Building Services
+official_repository:
+  name: eTRAKiT / Sungard-Superion
+  kind: case_portal
+  base_url: https://etrakit.mendocinocounty.org/eTRAKiT3/
+  publisher_is_authority: true
+  notes: Case-centered source for public U_, UM_, and linked PC_ records.
+discovery:
+  method: case_record_inventory
+  seeds:
+    - purpose: project_record
+      url: https://etrakit.mendocinocounty.org/eTRAKiT3/Search/project.aspx?activityNo={record_number}
+      template_variables: [record_number]
+    - purpose: current_attachment_index
+      url: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo={record_number}&showCurrent=true&postbackid=nothing
+      template_variables: [record_number]
+    - purpose: attachment_download
+      url: https://etrakit.mendocinocounty.org/eTRAKiT3/viewAttachment.aspx?Group=PROJECT&key={attachment_key}&ActivityNo={record_number}
+      template_variables: [attachment_key, record_number]
+  enumeration_unit: case_record
+  query_terms: [target case IDs, linked parent IDs, linked child IDs, PC_ resolution IDs]
+  notes: Follow predecessor, modification, parent, child, and resolution records.
+cursor:
+  mode: per_target_full_snapshot
+  checkpoint_fields: [record_number, attachment_key, observed_at]
+  ordering: Record identity followed by displayed attachment order; do not infer chronology from order.
+  overlap: Re-read every tracked record and all linked records on each observation.
+  snapshot_scope: Public project metadata and showCurrent=true attachment set for each tracked record.
+  absence_semantics: showCurrent=true is not version history; absence may mean deleted, superseded, inactive, replaced, or staff-only.
+fingerprints:
+  - name: attachment_identity
+    scope: identity
+    algorithm: tuple
+    fields: [record_number, attachment_key]
+  - name: attachment_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [displayed_filename, mime_type, byte_length, direct_url]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+  - name: current_attachment_set
+    scope: collection
+    algorithm: sha256_canonical_yaml
+    fields: [sorted_record_number_and_attachment_key_pairs]
+cadence:
+  interval: P1D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily while a tracked case is pending or within 30 days after decision.
+  jitter: PT2H
+  rationale: Current attachments and linked resolution records can change during hearing preparation.
+expected_identifiers:
+  - name: project_record
+    pattern: "^(?:U|UM|CDP)_\\d{4}-\\d{4}$"
+    examples: [U_2023-0004, UM_2024-0008, UM_2025-0004]
+    required: true
+  - name: resolution_record
+    pattern: "^PC_\\d{4}-\\d{4}$"
+    examples: [PC_2024-0019]
+    required: false
+  - name: attachment_key
+    pattern: "^[A-Za-z0-9]+:\\d+$"
+    examples: ["JFE:2501030815526995"]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Anonymous read-only case and current-attachment endpoints are available.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Use GET only; do not attempt upload actions despite the attachmentUpload.aspx name.
+    - Public current attachments are not a complete administrative file.
+    - Avoid parallel downloads and retain portal errors as observations.
+  failure_policy: Record incomplete and empty attachment sets without treating them as evidence that no administrative record exists.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - harvest-etrakit-case-record
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Register native and rendered forms separately and compare condition-bearing records semantically.

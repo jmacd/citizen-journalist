@@ -1,0 +1,105 @@
+schema_version: 1
+id: mendocino-lafco
+name: Mendocino LAFCo meetings and active proposals
+agency_owner:
+  name: Mendocino Local Agency Formation Commission
+  jurisdiction: Mendocino County, California
+  unit: Commission and Executive Committee
+official_repository:
+  name: Mendocino LAFCo public website
+  kind: agency_website
+  base_url: https://www.mendolafco.org/
+  publisher_is_authority: true
+  notes: Official meeting packets, current proposals, MSR/SOI documents, work plans, and outside-agency-service matters.
+discovery:
+  method: meeting_and_project_archive_inventory
+  seeds:
+    - purpose: current_proposals
+      url: https://www.mendolafco.org/current-application-proposals
+    - purpose: meeting_archive
+      url: https://www.mendolafco.org/meetings
+    - purpose: official_file
+      url: https://www.mendolafco.org/files/{file_token}/{filename}
+      template_variables: [file_token, filename]
+  enumeration_unit: agenda_packet
+  query_terms:
+    - MCCSD and MUSD
+    - tracked County case IDs
+    - water system numbers
+    - outside agency service and Government Code 56133
+    - annexation, boundary change, and latent power
+  notes: Search Commission and Executive Committee packets plus current-proposal and active-project tables.
+cursor:
+  mode: full_snapshot
+  checkpoint_fields: [meeting_date, file_token, proposal_identifier, observed_at]
+  ordering: Meeting date and agenda order; proposal tables are normalized by explicit matter ID when present.
+  overlap: Revisit current proposals and recent packets; compare the full visible active-project set.
+  snapshot_scope: Public meeting records, current proposals, active-project tables, MSR/SOI publications, and annual work plans.
+  absence_semantics: No public docket match is a bounded negative observation, not proof that no informal or internal correspondence exists.
+fingerprints:
+  - name: file_identity
+    scope: identity
+    algorithm: tuple
+    fields: [file_token, canonical_url]
+  - name: publication_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, agenda_item, title, matter_id, canonical_url]
+  - name: active_project_set
+    scope: collection
+    algorithm: sha256_canonical_yaml
+    fields: [normalized_active_project_rows]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily during the week before a posted Commission meeting involving a tracked entity.
+  jitter: PT6H
+  rationale: Project tables and packets can expose new boundary or outside-agency-service actions.
+expected_identifiers:
+  - name: outside_agency_service
+    pattern: "^O-\\d{4}-\\d{2}$"
+    examples: [O-2025-04]
+    required: false
+  - name: lafco_resolution
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+    examples: ["2020-21-01"]
+    required: false
+  - name: related_case
+    pattern: "^(?:U|UM|PC)_\\d{4}-\\d{4}$"
+    examples: [UM_2025-0004]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Public website, packets, and proposal pages are anonymously readable.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Distinguish Commission action, Executive Officer action, active-project tracking, and general policy.
+    - Avoid treating absence from a public table as proof no consultation occurred.
+    - Prefer official file links and retain stable file tokens.
+  failure_policy: Record the bounded scope and date of a negative inventory; route missing cited instruments for targeted acquisition.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+    - request-missing-record
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/water-law/lafco-recovery/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Route project-specific records separately from comparator matters and general policies.

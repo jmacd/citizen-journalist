@@ -1,0 +1,97 @@
+schema_version: 1
+entity_type: proposal
+records:
+  - id: proposal.musd-mccsd.2022-water-project-mou
+    name: 2022 MUSD-MCCSD water supply and storage arrangement
+    proponent_ids: [agency.musd, agency.mccsd]
+    acceptance_status: superseded
+    assertions:
+      - id: proposal-2022.content
+        statement: >-
+          The packet version proposed MCCSD ownership and operation of the new
+          tank and wells and MCCSD emergency water provision to eligible customers.
+        evidence_status: proposal
+        acceptance_status: proposed
+        case_id: UM_2025-0004
+        source_ids: [musd_2022_09_08_board_packet]
+        limits: The recovered instrument is unsigned and does not prove execution.
+      - id: proposal-2022.board-actions
+        statement: >-
+          Both boards approved versions of the arrangement, and MCCSD later
+          rescinded its August draft approval before approving a final MOU.
+        evidence_status: verified_fact
+        acceptance_status: superseded
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_2022_08_29_board_minutes
+          - musd_2022_09_08_board_minutes
+          - mccsd_2022_10_03_board_minutes
+        limits: The signed final 2022 instrument is not in the present corpus.
+  - id: proposal.musd-mccsd.2023-water-project-mou
+    name: 2023 MUSD-MCCSD water project MOU
+    proponent_ids: [agency.musd, agency.mccsd]
+    acceptance_status: superseded
+    assertions:
+      - id: proposal-2023.acceptance-and-supersession
+        statement: >-
+          Both boards accepted the April 2023 MOU; both replaced or rescinded it
+          in November 2024.
+        evidence_status: verified_fact
+        acceptance_status: superseded
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2023_mou
+          - mccsd_2023_04_19_board_minutes
+          - musd_2023_04_20_board_minutes
+          - mccsd_2024_11_25_board_minutes
+          - musd_2024_11_21_board_minutes
+        limits: It is not the current project agreement.
+  - id: proposal.musd-mccsd.2024-water-shortage-mou
+    name: 2024 MUSD-MCCSD Water Shortage Project MOU
+    proponent_ids: [agency.musd, agency.mccsd]
+    acceptance_status: accepted
+    assertions:
+      - id: proposal-2024.board-acceptance
+        statement: Both governing boards adopted the replacement MOU in November 2024.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2024_mou
+          - musd_2024_11_21_board_minutes
+          - mccsd_2024_11_25_board_minutes
+        limits: Acceptance does not prove legal sufficiency or completion of independent approvals.
+      - id: proposal-2024.emergency-access
+        statement: >-
+          The accepted MOU contemplates non-MUSD, non-fire access only during
+          declared drought emergencies, when neighboring districts cannot
+          provide hauled water, through a future application process.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [mccsd_musd_2024_mou]
+        limits: >-
+          The MOU does not itself establish DDW authorization, customer
+          eligibility implementation, or LAFCo approval.
+  - id: proposal.project.community-emergency-delivery
+    name: Community emergency water delivery from CA2300584
+    proponent_ids: [agency.musd, agency.mccsd]
+    acceptance_status: unknown
+    assertions:
+      - id: community-delivery.layered-status
+        statement: >-
+          Project and County records support a proposed emergency-delivery
+          model, but the operative DDW permit and final operating plan needed
+          to establish its authorized implementation are missing.
+        evidence_status: supported_interpretation
+        acceptance_status: unknown
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2024_mou
+          - county_pc_2024_0019
+          - ddw_dfa_2023_comment_letter
+          - ceqanet_water_supply_amendment
+        limits: >-
+          County acceptance of a permit condition and board acceptance of an
+          MOU must not be treated as DDW acceptance or proof of MUSD's general
+          area-wide supply authority.

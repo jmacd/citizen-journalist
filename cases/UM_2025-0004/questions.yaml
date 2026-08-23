@@ -1,0 +1,287 @@
+schema_version: 1
+questions:
+  - id: august-20-recent-conditions
+    asked_at: 2026-08-20T23:37:06-07:00
+    question: What are the 20 recent conditions placed by County commissioners at the last meeting?
+    status: premise_corrected_partial_answer
+    short_answer: >-
+      The Commission did not impose twenty new conditions on August 20. The
+      existing December 2024 approval had twenty-one conditions. On August 20,
+      staff and commissioners discussed several proposed revisions, including a
+      newly numbered Special Condition 20, but unanimously continued the case to
+      September 3 without approving the modification or adopting conditions.
+    findings:
+      - claim: The August 20 action was a unanimous continuance to September 3, 2026.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:48:05-01:48:32
+        confidence: verified_from_recording
+      - claim: >-
+          The December 2024 UM_2024-0008 approval was subject to twenty-one
+          conditions, not twenty.
+        source_id: ccc_appeal_report
+        pages: 3, 10
+        confidence: verified_from_official_report
+      - claim: >-
+          Staff's proposed Special Condition 20 would retain third-party
+          certification of the hydrological study by Environmental Health before
+          permit issuance, allowing that review to run in parallel with appeal
+          periods.
+        source_id: hearing_video_2026_08_20
+        timestamp: 00:11:23-00:14:44
+        confidence: supported_by_recording
+      - claim: >-
+          Coastal Commission staff requested language more directly requiring
+          the hydrological study review before issuance.
+        source_id: hearing_video_2026_08_20
+        timestamp: 00:11:29-00:11:56
+        confidence: supported_by_staff_presentation
+      - claim: >-
+          Commissioners also discussed Condition 14 (tributary restoration),
+          tank-filling restrictions identified as Condition 16 in the current
+          draft, emergency water language identified as Condition 17, drought
+          monitoring, and preservation of an earlier pump-test condition.
+        source_id: hearing_video_2026_08_20
+        timestamp: 00:52:26-01:45:48
+        confidence: supported_by_recording_numbering_requires_document_check
+    unresolved:
+      - Obtain County documents 79046 and 79272 to compare the initial and revised resolutions line by line.
+      - Obtain the exact Coastal Commission proposed wording shown during the presentation.
+      - Reconcile the two provisions described during the hearing as Special Condition 20.
+      - Review the September 3 packet and action after that meeting occurs.
+  - id: coastal-groundwater-guideline-reference
+    asked_at: 2026-08-22T08:29:03-07:00
+    question: What County groundwater guideline did the MUSD representative cite around 1:16 in the August 20 hearing, and what does it say?
+    status: answered_with_scope_limit
+    short_answer: >-
+      GHD's Matt Kennedy cited the County of Mendocino Coastal Groundwater
+      Development Guidelines, a Questa Engineering document dated July 1989
+      and marked as adopted by the Board of Supervisors on November 21, 1989.
+      Its adjoining-well test treats pumping as an adverse effect if projected
+      drawdown exceeds 10 percent of existing drawdown under maximum-day
+      pumping conditions, or if adjoining well yield falls below 90 percent of
+      that property's maximum-day demand. The guideline then requires
+      mitigation. This technical threshold does not, by itself, decide whether
+      MUSD may serve emergency water, what its DDW permit authorizes, or which
+      later permit conditions govern the project.
+    findings:
+      - claim: >-
+          At approximately 01:15:47-01:16:29, Matt Kennedy read the adjoining-well
+          criteria and named the County of Mendocino Coastal Groundwater
+          Development Guidelines.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:15:47-01:16:29
+        confidence: verified_from_recording
+      - claim: >-
+          The official guideline was prepared for Mendocino County Environmental
+          Health by Questa Engineering Corporation, is dated July 1989, and is
+          marked as adopted by the Board of Supervisors on November 21, 1989.
+        source_id: county_1989_coastal_groundwater_guidelines
+        pages: 1
+        confidence: verified_from_official_record
+      - claim: >-
+          The guideline defines an adverse adjoining-well effect as more than
+          10 percent of existing drawdown under maximum-day pumping demand or a
+          decline below 90 percent of maximum-day demand for the adjoining
+          property, and states that mitigation is required if either occurs.
+        source_id: county_1989_coastal_groundwater_guidelines
+        pages: 18
+        confidence: verified_from_official_record
+    unresolved:
+      - Determine how the 1989 guideline interacts with current County code, the certified LCP, and later MCCSD hydrological-study standards.
+      - Obtain Environmental Health's review of the 2025 MUSD hydrological study and any written application of the guideline to Test Well 7.
+      - Compare the 1989 County criterion with the different wording in MCCSD Ordinance 2020-01 before treating the standards as interchangeable.
+  - id: drought-trigger-authorities
+    asked_at: 2026-08-22T08:41:00-07:00
+    question: How do Water Code section 13198(a) and MCCSD's Water Shortage Contingency Plan relate to the project's drought and overpumping conditions?
+    status: answered_with_authority_limit
+    short_answer: >-
+      They are alternative event triggers, not a grant of water-service
+      authority. Water Code §13198(a) defines a state drought scenario as a
+      Governor's drought emergency or a State Water Board determination made
+      through the specified notice and hearing process. The MCCSD plan uses
+      local rainfall and indicator-well measurements to support Board
+      declarations of Stages 1-4; Stage 3 brings mandatory conservation,
+      a 20-percent allotment reduction, and possible moratoria on new extraction
+      permits, drilling, and pump testing. The County permit tied emergency-water
+      conditions to either §13198(a) or an MCCSD Stage 3 declaration. Neither
+      trigger expands MUSD's DDW permit, proves authority to serve every parcel,
+      or resolves who may receive hauled water.
+    findings:
+      - claim: >-
+          Water Code §13198(a) defines a drought scenario through either a
+          Governor's drought emergency proclamation or a State Water Board
+          determination following the specified notice and, where feasible,
+          public-hearing process.
+        source_id: ca_water_code_13198_2026
+        pages: 1
+        confidence: verified_from_current_official_code
+      - claim: >-
+          MCCSD's adopted plan uses rainfall and indicator-well levels to classify
+          Stages 1-4.
+        source_id: mccsd_2020_water_shortage_plan
+        pages: 18
+        confidence: verified_from_official_plan
+      - claim: >-
+          The plan's Stage 3 management response includes mandatory conservation
+          and a 20-percent reduction in groundwater allotments.
+        source_id: mccsd_2020_water_shortage_plan
+        pages: 22
+        confidence: verified_from_official_plan
+      - claim: >-
+          The County's approved project analysis describes Water Code §13198(a)
+          and an MCCSD Stage 3 Emergency as alternative triggers for the
+          emergency-water condition.
+        source_id: ccc_appeal_report
+        pages: 27
+        confidence: verified_from_official_commission_report
+    unresolved:
+      - Obtain Resolution 2020-269 and any later amendments or replacements to establish the complete operative version history of the MCCSD plan.
+      - Obtain the operative November 26, 2025 DDW permit to determine what emergency withdrawal, filling, dispensing, customers, and service geography it authorizes.
+      - Determine whether either statutory or local drought trigger was formally in effect on any date when MUSD or MCCSD supplied project water.
+  - id: um2025-resolution-version-timeline
+    asked_at: 2026-08-22T08:58:18-07:00
+    question: What did "most recently posted resolution" mean at the August 20 hearing, and what is the version timeline for UM_2025-0004?
+    status: answered_with_missing_version
+    short_answer: >-
+      It referred to an August 18 revised draft, not an adopted resolution. The
+      operative captured predecessor is signed Resolution PC 2024-0019, adopted
+      December 19, 2024 with 21 conditions. County document 79046 is a captured
+      August 2026 initial draft with 19 conditions. County document 79272 was
+      posted August 18 and was treated at the hearing as the latest 20-condition
+      draft, but its PDF has not been retrieved. The hearing itself demonstrates
+      why numbering alone is unsafe: stream restoration was called Condition 14,
+      displayed hydrological-review language was called proposed Condition 20,
+      and the signed 2024 resolution had a different Condition 20 requiring
+      seasonal pump testing. Staff also said Coastal Commission wording arrived
+      after the latest draft was posted. The Commission continued the hearing
+      without adopting any 2026 resolution, so PC 2024-0019 remains the captured
+      adopted condition set.
+    findings:
+      - claim: >-
+          Signed Resolution PC 2024-0019 was adopted December 19, 2024 with 21
+          conditions; its Condition 20 requires pump testing during the MCCSD
+          hydrological testing period.
+        source_id: county_pc_2024_0019
+        pages: 5, 7
+        confidence: verified_from_signed_resolution
+      - claim: >-
+          County document 79046 is the captured August 2026 initial draft. Its
+          conditions begin on page 4 and end with Condition 19 on page 6.
+        source_id: county_draft_resolution
+        pages: 4, 6
+        confidence: verified_from_captured_draft
+      - claim: >-
+          Staff described proposed Condition 20 hydrological-review language as
+          appearing in a memo posted Tuesday, then said Coastal Commission staff
+          requested different wording after that posting.
+        source_id: hearing_video_2026_08_20
+        timestamp: 00:11:23-00:11:56
+        confidence: verified_from_recording
+      - claim: >-
+          A commissioner said two resolutions were being tracked, requested
+          tracked changes, and asked staff to ensure the correct resolution was
+          ultimately adopted.
+        source_id: hearing_video_2026_08_20
+        timestamp: 00:51:22-00:52:25
+        confidence: verified_from_recording
+      - claim: >-
+          During discussion, speakers distinguished the original resolution's
+          pump-test Condition 20 from the new resolution and warned that adopting
+          the new draft as then understood would lose that provision.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:23:39-01:24:07
+        confidence: verified_from_recording
+      - claim: >-
+          Staff called the stream-restoration provision Condition 14 in the
+          "most recently posted resolution" and said that posting omitted a
+          Coastal Commission rewording request received after publication.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:27:33-01:27:55
+        confidence: verified_from_recording
+      - claim: >-
+          The Planning Commission unanimously continued the matter to September
+          3, 2026 and adopted no 2026 resolution on August 20.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:48:05-01:48:32
+        confidence: verified_from_recording
+    unresolved:
+      - Obtain and hash County document 79272, the August 18 revised resolution, before treating its exact wording or numbering as verified.
+      - Obtain County document 79268, the Tuesday staff memo containing proposed Condition 20 language.
+      - Obtain a native redline or tracked-changes comparison between documents 79046 and 79272.
+      - Obtain every later draft and the final signed UM_2025-0004 resolution after the continued hearing.
+  - id: emergency-water-layered-authority
+    asked_at: 2026-08-22T09:06:12-07:00
+    question: How do the Planning Commission's "can" or "shall" emergency-water condition, Water Board requirements, and LAFCo boundaries fit together?
+    status: answered_with_missing_operating_permit
+    short_answer: |-
+      The agencies are regulating different acts, so the County condition cannot be read as the complete authority to supply water. The Planning Commission may limit a coastal permit and define when the approved project is eligible to dispense emergency water. Its adopted wording says water "can" be supplied; County counsel said changing that to "shall" could compel MUSD to dedicate its water to others without an impact analysis or MUSD's agreement. But either word remains a County land-use condition: it does not amend MUSD's drinking-water permit, grant MUSD general retail-water powers, or enlarge MCCSD's territory.
+
+      The State Water Board had already identified the overlap. DDW said the new sources and facilities required a domestic-water-supply permit amendment. The Board's funding staff separately asked for an emergency-delivery plan covering triggers, available volume, allocations, number of users, source water, and effects on neighboring wells, and said the funded scope did not match the environmental project. Those are not minor details; they are the operating questions the County's "can" condition does not answer. Because the November 26, 2025 DDW permit is still missing, the corpus cannot yet tell whether emergency dispensing, tanker filling, eligible customers, and geography were actually authorized or conditioned by DDW.
+
+      LAFCo's records concern MCCSD, not an "MUSD zone of influence." LAFCo confirmed MCCSD's active water and groundwater-management powers, but those powers are exercised within the District. Its 2020 review said MCCSD's sphere should be coterminous with its boundary and that, apart from wastewater service to Russian Gulch State Park, MCCSD provided no other out-of-agency services. By contrast, the County-created Emergency Water Service Area includes MCCSD plus an extension to the Slaughterhouse Gulch watershed. That County eligibility map is not an annexation, sphere amendment, DDW service area, or LAFCo approval.
+
+      MUSD complicates the boundary question because it is a school district operating public-water system CA2300584, not MCCSD. The 2024 MOU says MUSD's source property is outside MCCSD's service area while MUSD distribution facilities extend into much of the village. The unresolved question is therefore not simply whether MCCSD crossed its boundary; it is what independent school-district authority and DDW permit terms allow MUSD to dispense water beyond its institutional users, and whether any MCCSD participation triggers LAFCo approval. No located public LAFCo record decides that project-specific question.
+    findings:
+      - claim: >-
+          Adopted Condition 18 says stored water "can be supplied" by MUSD during
+          specified drought conditions, subject to the Emergency Water Service
+          Area, a 315,000-gallon reserve, and a 40,000-gallon daily cap.
+        source_id: county_pc_2024_0019
+        pages: 7
+        confidence: verified_from_signed_resolution
+      - claim: >-
+          County counsel said "can" had appeared since the initial draft and in
+          the 2024 adoption; changing it to "shall" raised concern that the County
+          would require MUSD to dedicate its water to others without impact
+          analysis or MUSD agreement.
+        source_id: hearing_video_2026_08_20
+        timestamp: 01:10:03-01:10:49
+        confidence: verified_from_recording
+      - claim: >-
+          The State Water Board said MUSD needed a DDW domestic-water-supply
+          permit amendment for the new or modified sources and system components.
+        source_id: ddw_dfa_2023_comment_letter
+        pages: 1
+        confidence: verified_from_official_agency_letter
+      - claim: >-
+          Water Board funding staff said the financing scope and environmental
+          project did not match and requested an emergency-delivery plan covering
+          triggers, volume, allocation, users, sources, and neighboring-well
+          effects.
+        source_id: ddw_dfa_2023_comment_letter
+        pages: 2
+        confidence: verified_from_official_agency_letter
+      - claim: >-
+          LAFCo confirmed MCCSD's active water and groundwater-management powers,
+          including beneficial-use water service and the Water Code groundwater
+          program.
+        source_id: lafco_2022_groundwater_authority
+        pages: 1
+        confidence: verified_from_official_lafco_letter
+      - claim: >-
+          LAFCo's 2020 review reported that MCCSD provided no out-of-agency
+          service other than wastewater treatment for Russian Gulch State Park
+          and recommended a sphere coterminous with the District boundary.
+        source_id: mccsd_2020_msr_soi
+        pages: 63, 68
+        confidence: verified_from_adopted_msr_soi_record
+      - claim: >-
+          The County emergency-water condition extended eligibility beyond the
+          MCCSD boundary to the Slaughterhouse Gulch watershed; the Coastal
+          Commission staff treated that as the County's defined permit area.
+        source_id: ccc_appeal_report
+        pages: 27
+        confidence: verified_from_official_commission_report
+      - claim: >-
+          The 2024 MOU says MUSD water-system assets on Little Lake Road are
+          outside MCCSD's service area while MUSD distribution extends into the
+          village and through much of the MCCSD service area; it limits
+          non-MUSD/non-fire access to declared drought emergencies.
+        source_id: mccsd_musd_2024_mou
+        pages: 2, 3
+        confidence: verified_from_executed_mou
+    unresolved:
+      - Obtain the operative November 26, 2025 DDW permit and incorporated operating conditions for CA2300584.
+      - Obtain DDW's approved emergency-distribution, tanker-filling, customer-eligibility, and service-geography records.
+      - Obtain any project-specific LAFCo advice, pre-application review, or determination concerning MCCSD participation or out-of-area service.
+      - Determine the school-district authority MUSD relies on to provide potable water to non-MUSD users.

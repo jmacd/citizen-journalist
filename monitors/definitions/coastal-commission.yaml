@@ -1,0 +1,95 @@
+schema_version: 1
+id: coastal-commission
+name: California Coastal Commission document archive
+agency_owner:
+  name: California Coastal Commission
+  jurisdiction: State of California
+  unit: North Coast District and statewide meeting publications
+official_repository:
+  name: Coastal Commission reports and meeting documents
+  kind: document_archive
+  base_url: https://documents.coastal.ca.gov/
+  publisher_is_authority: true
+  notes: Official staff reports, addenda, exhibits, appeal materials, and certification records.
+discovery:
+  method: document_index_inventory
+  seeds:
+    - purpose: meetings
+      url: https://www.coastal.ca.gov/meetings/agenda/
+    - purpose: reports_archive
+      url: https://documents.coastal.ca.gov/reports/
+    - purpose: canonical_report
+      url: https://documents.coastal.ca.gov/reports/{year}/{month}/{item}/{filename}
+      template_variables: [year, month, item, filename]
+  enumeration_unit: document
+  query_terms: [county permit IDs, coastal appeal IDs, applicant, project address, LCP amendment identifiers]
+  notes: Preserve meeting item, agenda date, report label, and direct document URL separately.
+cursor:
+  mode: full_snapshot
+  checkpoint_fields: [meeting_date, agenda_item, canonical_url]
+  ordering: Meeting date and agenda item; filenames and URL paths are repository locators, not legal sequence.
+  overlap: Revisit tracked agenda items for addenda, exhibits, correspondence, and post-hearing records.
+  snapshot_scope: Relevant meeting agendas and official documents.coastal.ca.gov links.
+  absence_semantics: Missing index links may reflect archive reorganization; preserve prior canonical URLs and investigate.
+fingerprints:
+  - name: report_identity
+    scope: identity
+    algorithm: tuple
+    fields: [meeting_date, agenda_item, canonical_url]
+  - name: report_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [title, meeting_date, agenda_item, document_label, canonical_url]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily from agenda publication through seven days after a tracked hearing.
+  jitter: PT4H
+  rationale: Staff reports, addenda, exhibits, and correspondence are often posted in stages.
+expected_identifiers:
+  - name: coastal_appeal
+    pattern: "^A-\\d-[A-Z]{3}-\\d{2}-\\d{4}$"
+    examples: [A-1-MEN-24-0017]
+    required: false
+  - name: agenda_item
+    pattern: "^[A-Za-z]+\\d+[A-Za-z]?(?:-[A-Za-z]+\\d+[A-Za-z]?)?$"
+    examples: [W12a-W12b]
+    required: false
+  - name: county_case
+    pattern: "^(?:U|UM|CDP)_\\d{4}-\\d{4}$"
+    examples: [UM_2024-0008]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Public meeting and document archives are anonymously readable.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Use official meeting and documents.coastal.ca.gov repositories before mirrors.
+    - Treat agenda labels and staff summaries as distinct from underlying instruments.
+    - Avoid broad high-frequency crawling of historical report directories.
+  failure_policy: Record the index locator and failure; do not substitute a search snippet or third-party copy as reviewed official content.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Route appeal reports and later addenda as separate source/version candidates.

@@ -1,0 +1,109 @@
+schema_version: 1
+id: mendocino-city-community-services-district
+name: Mendocino City Community Services District publications
+agency_owner:
+  name: Mendocino City Community Services District
+  jurisdiction: Mendocino, California
+  unit: Board of Directors and district administration
+official_repository:
+  name: MCCSD board, ordinance, and groundwater publications
+  kind: agency_website
+  base_url: https://www.mccsd.com/
+  publisher_is_authority: true
+  notes: Official meeting pages, packets, minutes, ordinances, resolutions, plans, and agreements.
+discovery:
+  method: meeting_and_project_archive_inventory
+  seeds:
+    - purpose: district_home
+      url: https://www.mccsd.com/
+    - purpose: meeting_page
+      url: https://www.mccsd.com/{meeting_slug}
+      template_variables: [meeting_slug]
+    - purpose: official_file
+      url: https://www.mccsd.com/files/{file_token}/{filename}
+      template_variables: [file_token, filename]
+  enumeration_unit: agenda_packet
+  query_terms:
+    - MUSD and memorandum of understanding
+    - groundwater extraction permit and water shortage
+    - ordinance and resolution identifiers
+    - tracked County permit IDs and CA2300584
+  notes: Inventory meeting pages and permanent policy/ordinance publications; retain current and legacy official domains.
+cursor:
+  mode: full_snapshot
+  checkpoint_fields: [meeting_date, file_token, canonical_url, observed_at]
+  ordering: Meeting date and agenda order; file token is repository identity, not enactment chronology.
+  overlap: Revisit recent meetings, tracked permanent pages, and previously discovered official file URLs.
+  snapshot_scope: Public board records and district-hosted authority, groundwater, shortage, and project records.
+  absence_semantics: Missing current links may reflect site migration or supersession; absence does not repeal an instrument.
+fingerprints:
+  - name: hosted_file_identity
+    scope: identity
+    algorithm: tuple
+    fields: [file_token, canonical_url]
+  - name: publication_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, agenda_item, title, canonical_url]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+  - name: meeting_attachment_set
+    scope: collection
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, sorted_attachment_urls]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily around board meetings or declared water-shortage stage changes.
+  jitter: PT6H
+  rationale: Board actions, agreements, ordinances, and drought-stage publications have different update cycles.
+expected_identifiers:
+  - name: ordinance
+    pattern: "^(?:ORD(?:INANCE)?\\s*)?(?:NO\\.?\\s*)?\\d{2,4}-\\d{1,3}$"
+    examples: [ORD 2020-01, Ordinance 07-1]
+    required: false
+  - name: resolution
+    pattern: "^(?:RESOLUTION\\s*)?(?:NO\\.?\\s*)?\\d{3,4}(?:-\\d{1,3})?$"
+    examples: [Resolution 2012-224]
+    required: false
+  - name: county_case
+    pattern: "^(?:U|UM|PC|CDP)_\\d{4}-\\d{4}$"
+    examples: [UM_2024-0008]
+    required: false
+  - name: water_system_number
+    pattern: "^CA\\d{7}$"
+    examples: [CA2300584]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Current official site is anonymously readable; some historical records survive only through official citations or web archives.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Do not infer enactment from packet inclusion; pair proposed text with action minutes and signed copies.
+    - Preserve current and superseded ordinances or agreements separately.
+    - Do not silently replace an unavailable official record with an archive replay.
+  failure_policy: Record missing official files and route archive recovery or a targeted records request with original-URL provenance.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+    - request-missing-record
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/water-law/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Keep meeting action, instrument text, signature status, effective date, and later supersession distinct.

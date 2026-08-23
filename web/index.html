@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mendocino Coastal Code Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="site-switch">
+        <span>Coastal Code Explorer</span>
+        <a href="casebook.html">Planning Casebook</a>
+      </div>
+      <p class="eyebrow">Mendocino County Local Coastal Program</p>
+      <h1>Coastal Code Explorer</h1>
+      <p class="lede">
+        Navigate three records that must agree—but are maintained by different
+        institutions: County adoption, Coastal Commission certification, and
+        MuniCode publication.
+      </p>
+      <div class="status-key" aria-label="Evidence status legend">
+        <span><i class="dot verified"></i> Verified record</span>
+        <span><i class="dot missing"></i> Missing record</span>
+        <span><i class="dot publication"></i> Vendor publication</span>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Explorer views">
+      <button class="active" data-view="model">How it fits together</button>
+      <button data-view="hierarchy">Explore Division II</button>
+      <button data-view="timeline">Travel through time</button>
+      <button data-view="case">Ordinance 3857</button>
+    </nav>
+
+    <main>
+      <section id="model" class="view active">
+        <div class="section-heading">
+          <p class="eyebrow">The essential distinction</p>
+          <h2>One coastal program, three record systems</h2>
+          <p>
+            A County ordinance is not automatically the certified LCP, and
+            MuniCode is not itself the certification record.
+          </p>
+        </div>
+        <div class="relationship-map">
+          <article class="system-card county">
+            <span class="step">1</span>
+            <h3>County adoption</h3>
+            <p>Board ordinances enact local zoning text.</p>
+            <strong>Question answered:</strong>
+            <span>What did Mendocino County adopt?</span>
+          </article>
+          <div class="connector">
+            <span>submit LCP amendment</span>
+            <b>→</b>
+          </div>
+          <article class="system-card ccc">
+            <span class="step">2</span>
+            <h3>Commission certification</h3>
+            <p>The Coastal Commission reviews the LUP/IP amendment.</p>
+            <strong>Question answered:</strong>
+            <span>What became part of the certified LCP?</span>
+          </article>
+          <div class="connector">
+            <span>publish accepted text</span>
+            <b>→</b>
+          </div>
+          <article class="system-card vendor">
+            <span class="step">3</span>
+            <h3>MuniCode publication</h3>
+            <p>A vendor publishes the County's active code compilation.</p>
+            <strong>Question answered:</strong>
+            <span>What text can users read today?</span>
+          </article>
+        </div>
+        <aside class="callout">
+          <strong>A discrepancy can occur at either arrow.</strong>
+          A certified amendment may be missing from codification, or County
+          text may appear in codification without proof that it was certified.
+        </aside>
+      </section>
+
+      <section id="hierarchy" class="view">
+        <div class="section-heading">
+          <p class="eyebrow">Current MuniCode structure</p>
+          <h2>Title 20 → Division II → chapters → sections</h2>
+          <p id="hierarchy-summary"></p>
+        </div>
+        <div class="tree-path" aria-label="Code hierarchy">
+          <button class="tree-node root">Mendocino County Code</button>
+          <span>›</span>
+          <button class="tree-node">Title 20<br><small>Zoning Ordinance</small></button>
+          <span>›</span>
+          <button class="tree-node coastal">Division II<br><small>Coastal Zoning Code</small></button>
+          <span>›</span>
+          <button class="tree-node selected">69 chapters</button>
+        </div>
+        <div class="metrics" id="metrics"></div>
+        <label class="search">
+          <span>Find a chapter</span>
+          <input id="chapter-search" type="search" placeholder="Try 20.376, signs, floodplain…">
+        </label>
+        <div id="chapter-list" class="chapter-list"></div>
+      </section>
+
+      <section id="timeline" class="view">
+        <div class="section-heading">
+          <p class="eyebrow">Parallel histories</p>
+          <h2>The same code moves on three clocks</h2>
+          <p>
+            Filter lanes to see why a vendor version date cannot prove a
+            Coastal Commission certification date.
+          </p>
+        </div>
+        <div class="lane-controls">
+          <label><input type="checkbox" value="county" checked> County</label>
+          <label><input type="checkbox" value="ccc" checked> Coastal Commission</label>
+          <label><input type="checkbox" value="vendor" checked> MuniCode</label>
+          <label><input id="show-versions" type="checkbox"> Show all Division II vendor changes</label>
+        </div>
+        <div class="timeline" id="timeline-events"></div>
+        <aside class="callout compact" id="history-summary"></aside>
+      </section>
+
+      <section id="case" class="view">
+        <div class="section-heading">
+          <p class="eyebrow">Sentinel discrepancy</p>
+          <h2>Ordinance 3857 evidence chain</h2>
+          <p>Follow each claim to see what is proven and what remains missing.</p>
+        </div>
+        <div class="case-chain">
+          <article class="evidence verified">
+            <span class="badge">Verified</span>
+            <h3>County ordinance</h3>
+            <p>Adopted May 10, 1993. The scan expressly includes off-site facilities in §20.376.015.</p>
+          </article>
+          <div class="chain-arrow">→</div>
+          <article class="evidence missing">
+            <span class="badge">Missing</span>
+            <h3>Certification file</h3>
+            <p>The ordinance references a Commission Resolution of Certification, but that resolution and final certified text are not yet in hand.</p>
+          </article>
+          <div class="chain-arrow">→</div>
+          <article class="evidence verified">
+            <span class="badge">Verified</span>
+            <h3>Current MuniCode</h3>
+            <p>Supplement 75 includes “Alternative Energy Facilities: Off-site” and cites Ordinance 3857.</p>
+          </article>
+        </div>
+        <div class="diagnosis-grid">
+          <article>
+            <span>Present-day ingestion omission</span>
+            <strong class="no">Not supported</strong>
+            <p>The current API and rendered page both contain the provision.</p>
+          </article>
+          <article>
+            <span>Later legislative overwrite</span>
+            <strong class="no">Not found</strong>
+            <p>No later ordinance appears in §20.376.015's source note.</p>
+          </article>
+          <article>
+            <span>Retained MuniCode history</span>
+            <strong class="no" id="trace-result">Continuously present</strong>
+            <p id="trace-detail"></p>
+          </article>
+          <article>
+            <span>Certified LCP status</span>
+            <strong class="unknown">Unresolved</strong>
+            <p>Requires the Commission administrative record.</p>
+          </article>
+          <article>
+            <span>Pre-2011 vendor history</span>
+            <strong class="unknown">Unavailable</strong>
+            <p>CodeBank begins with Supplement 30 in December 2011.</p>
+          </article>
+        </div>
+        <aside class="callout">
+          <strong>The next decisive document</strong>
+          is the Coastal Commission Resolution of Certification referenced in
+          the ordinance, plus its staff report, findings, suggested
+          modifications, County acceptance, and final certified §20.376.015.
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <span id="generated-at"></span>
+      <span>Evidence explorer—not a legal determination.</span>
+    </footer>
+    <script src="generated-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

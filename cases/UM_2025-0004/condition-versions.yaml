@@ -1,0 +1,111 @@
+schema_version: 1
+logical_families:
+  - id: U_2023-0004_resolution
+    permit: U_2023-0004
+    versions:
+      - id: u2023_packet_draft
+        date: 2024-04-04
+        status: identified_public_copy_not_captured
+        condition_count: 11
+        evidence: direct_document_review
+        note: Initial posting-packet draft.
+      - id: pc_2024_0004_adopted
+        date: 2024-04-04
+        status: adopted
+        condition_count: 12
+        evidence: official_coastal_commission_reproduction_and_etrakit_record
+        note: >-
+          April 4 staff redline corrected the NOD condition and added the
+          neighboring-well hydrology and pump-test requirement as Condition 12.
+  - id: UM_2024-0008_resolution
+    permit: UM_2024-0008
+    versions:
+      - id: um2024_december_5_draft
+        date: 2024-12-05
+        status: draft
+        condition_count: 13
+        evidence: official_coastal_commission_reproduction
+      - id: um2024_december_19_redline
+        date: 2024-12-19
+        status: pre_adoption_redline
+        condition_count: 22
+        evidence: captured_source
+        source_id: county_2024_resolution_redline
+        changes:
+          - Added wildfire-buffer protection.
+          - Added a separate drought-only stored-water eligibility condition.
+          - Added pre-conversion hydrological-study approval.
+          - Added seasonal pumping limits.
+          - Added drought irrigation prohibition.
+          - Added Exhibit I eligibility and ten-truck daily limit.
+          - Added a separate 315,000-gallon reserve condition.
+          - Added future-development amendment requirement.
+          - Added seasonal pump-test requirement.
+      - id: pc_2024_0019_adopted
+        date: 2024-12-19
+        status: adopted_signed
+        condition_count: 21
+        evidence: captured_source
+        source_id: county_pc_2024_0019
+        supersedes: U_2023-0004
+        changes_from_previous:
+          - Removed the separate drought-only stored-water eligibility condition.
+          - Consolidated eligibility, 315,000-gallon reserve, and 40,000-gallon daily cap into Condition 18.
+          - Added Condition 21 restricting non-drought water use except on MUSD-owned properties.
+  - id: UM_2025-0004_resolution
+    permit: UM_2025-0004
+    versions:
+      - id: um2025_august_initial
+        date: 2026-08-10
+        status: draft_not_adopted
+        condition_count: 19
+        evidence: captured_source
+        source_id: county_draft_resolution
+        changes_from_adopted_2024:
+          - Dropped the symbolic-fence condition, shifting later base numbers.
+          - Added stream-restoration completion as Condition 14.
+          - Omitted the adopted pre-conversion hydrological-study condition.
+          - Omitted the adopted seasonal pump-test condition.
+          - Retained seasonal pumping, drought irrigation, emergency distribution, future-development, and non-drought-use provisions under new numbers.
+      - id: um2025_august_18_revision
+        date: 2026-08-18
+        status: draft_not_adopted_identified_unretrieved
+        condition_count: 20
+        evidence: strong_hearing_inference_direct_document_review_needed
+        source_id: county_revised_resolution
+        hearing_descriptions:
+          - Condition 14 concerned completion of stream restoration.
+          - >-
+            Staff displayed a proposed Condition 20 concerning Environmental
+            Health review of the hydrological study before permit issuance.
+          - >-
+            The captured 2024 adopted resolution also had a different Condition
+            20 concerning seasonal pump testing; speakers warned that provision
+            was absent from the new draft.
+        warning: >-
+          Document 79272 has not been directly reviewed. The hearing used the
+          same number for different provisions and also discussed wording
+          received after posting. Number matching would create a false semantic
+          alignment.
+      - id: um2025_august_19_oral_revision
+        date: 2026-08-19
+        status: proposed_wording_not_posted_not_adopted
+        condition_count: 20
+        evidence: hearing_record
+        note: >-
+          Coastal Commission staff sought exact pre-permit-issuance wording for
+          the proposed hydrological-study review condition. No third posted resolution has
+          been located.
+
+diagnostic:
+  summary: >-
+    The observed 19-, 20-, and 21-condition counts refer to different document
+    versions, not contradictory counts of one adopted resolution. PC 2024-0019
+    is the signed 21-condition predecessor. The August 2026 initial modification
+    draft has 19 conditions. Hearing references indicate that the August 18
+    revision has 20, but its exact text and semantic alignment remain unresolved
+    until document 79272 is reviewed. No resolution was adopted because the
+    hearing was continued.
+  current_legal_status: >-
+    PC 2024-0019 remains the captured adopted condition set unless and until a
+    later modification resolution is adopted and becomes effective.

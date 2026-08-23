@@ -1,0 +1,306 @@
+schema_version: 1
+task_id: recover-ddw-permit
+case_id: UM_2025-0004
+updated_at: 2026-08-22T06:00:00Z
+target:
+  description: >-
+    Operative amended domestic water supply permit for CA2300584
+    (Mendocino School District – Mendocino) approved November 26, 2025,
+    and the immediately preceding permit/amendment chain.
+  not_the_target:
+    - >-
+      CEQAnet document 12 / SCH 2020080439 – this is the signed Notice of
+      Determination (NOD) confirming permit approval, not the permit
+      instrument itself.  It states that permit-approval records are
+      available upon request at the DDW Santa Rosa office.
+    - >-
+      Any CEQA MND, addendum, or other environmental document filed under
+      SCH 2020080439.
+  key_identifiers:
+    water_system_number: CA2300584
+    water_system_name: MENDOCINO SCHOOL DISTRICT- MENDOCINO
+    tinwsys_is_number: 2882
+    district: DISTRICT 03 - MENDOCINO
+    ddw_office: >-
+      State Water Resources Control Board, Division of Drinking Water,
+      50 D Street, Suite 200, Santa Rosa, CA 95404
+    ddw_contact: "Zachary Rounds, (707) 576-2145"
+    nod_signatory: "Adrian Dela Calzada, Environmental Scientist"
+    nod_date: "2025-11-26"
+    ceqanet_nod_document: 2020080439/12
+    related_agreement: D2202005 / C-06-2300584-001C
+
+outcome: not_recovered
+status: blocked
+blocker: >-
+  The operative amended permit and preceding permit chain are not posted in
+  any discoverable public online repository.  Production by the Division of
+  Drinking Water is required.  A draft PRA request is in
+  cases/UM_2025-0004/records-requests.yaml (id: ddw-ca2300584-permit-file)
+  and has not yet been sent.
+
+search_conducted_at: 2026-08-22T05:00:00Z
+searches:
+
+  - id: ddw-pdww-fresh-2026-08-22
+    source: California Drinking Water Watch (PDWW / SDWIS)
+    url: >-
+      https://sdwis.waterboards.ca.gov/PDWW/JSP/WaterSystemDetail.jsp?tinwsys_is_number=2882&tinwsys_st_code=CA
+    method: public_water_system_record_and_tab_inventory
+    result: >-
+      Water system identity verified: CA2300584 active, NTNC, DISTRICT 03 –
+      MENDOCINO, 15 connections, 579 population.  Navigation tabs expose
+      monitoring schedules, monitoring results, lead-and-copper sampling,
+      violations, site visits, and Consumer Confidence Reports only.
+      No permit instrument or permit-documents tab is present.
+    status: not_found
+
+  - id: ddw-mendocino-district-dir-fresh-2026-08-22
+    source: DDW Mendocino District document directory
+    url: >-
+      https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/mendocino/
+    method: full_directory_listing_with_CA230xxxx_pattern_search
+    result: >-
+      Complete HTML directory listing retrieved (62.8 KB).  Files present
+      for CA2300541 (Heritage House), CA2300590 (Surfwood MWC), and
+      CA2300730 (Westport CWS).  No file matching CA2300584, mendocino_school,
+      musd, or school_district appears.  CA2300584 is entirely absent.
+    status: not_found
+
+  - id: ddw-santarosa-district-dir-fresh-2026-08-22
+    source: DDW Santa Rosa District document directory
+    url: >-
+      https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/santa_rosa/
+    method: full_directory_listing_inventory
+    result: >-
+      Full directory listing retrieved (262 hrefs).  No entry matches
+      CA2300584 or any Mendocino School District identifier.
+    status: not_found
+
+  - id: ddw-permits-dir-fresh-2026-08-22
+    source: DDW Permits document directory
+    url: >-
+      https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/permits/
+    method: directory_listing_inventory
+    result: >-
+      Directory contains five generic files: permit_application.pdf,
+      amended_permit_application.pdf, fee_schedule.pdf,
+      ptr_guidance_aug2021.pdf, and 170511_sb_1263_faq.pdf.
+      No system-specific permit files are stored here.
+    status: not_found_wrong_repository_type
+
+  - id: ddw-edt-library-fresh-2026-08-22
+    source: DDW Electronic Document Library (bulk monitoring data exports)
+    url: >-
+      https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/edtlibrary/
+    method: directory_inventory_and_csv_sampling
+    result: >-
+      Library serves bulk water-quality monitoring data exports (CSV/TAB/ZIP)
+      and SDWIS exports, not permit instruments.  The 20190101-to-present.csv
+      was sampled; it contains chemical analytical results for CA2300584 wells
+      1 and 2 (2021 samples) only – no permit, amendment, or project document
+      of any kind.
+    status: not_found_wrong_repository_type
+
+  - id: ddw-direct-url-probes-fresh-2026-08-22
+    source: Direct URL pattern testing on waterboards.ca.gov
+    method: http_status_probe_of_probable_filenames
+    urls_tested:
+      - https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/ca2300584_permit.pdf
+      - https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/mendocino/ca2300584_permit.pdf
+      - https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/mendocino/ca2300584_amended_permit.pdf
+      - https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/edtlibrary/ca2300584_permit.pdf
+      - https://www.waterboards.ca.gov/water_issues/programs/grants_loans/drinking_water/docs/dwsrf/c-06-2300584-001c/
+    result: All URLs returned HTTP 404.
+    status: not_found
+
+  - id: ddw-gis-portal-fresh-2026-08-22
+    source: State Water Board GIS – Drinking Water System Area Boundaries
+    url: >-
+      https://gispublic.waterboards.ca.gov/portalserver/rest/services/Drinking_Water/California_Drinking_Water_System_Area_Boundaries/FeatureServer/0/query?where=WATER_SYSTEM_NUMBER%3D'CA2300584'&outFields=*&f=json
+    method: feature_attribute_query
+    result: >-
+      Feature returned for CA2300584 confirming DISTRICT 03 – MENDOCINO,
+      15 connections, 579 population.  No permit URL, permit number, or
+      document link field is present in the attributes.
+    status: not_found_no_permit_field
+
+  - id: ceqanet-project-fresh-2026-08-22
+    source: California State Clearinghouse CEQAnet
+    url: https://ceqanet.lci.ca.gov/Project/2020080439
+    method: full_project_document_listing_and_attachment_review
+    result: >-
+      Project page lists 11 documents (IDs 2, 4, 5, 7, 8, 9, 10, 12, 13, 14,
+      15).  Document 12 (NOD, received 2025-12-01) is confirmed to be the NOD
+      only (already captured).  Document 15 (ADM, received 2026-07-16) is
+      Revised Addendum 2 to the 2023 Subsequent MND (stream restoration),
+      confirmed by fetching the 4.3 MB PDF.  No document entry corresponds
+      to the permit instrument.
+    status: not_found_nod_only
+
+  - id: dfa-portal-fresh-2026-08-22
+    source: State Water Board Division of Financial Assistance – AppSTAT portal
+    url: https://public.waterboards.ca.gov/dfaAppSTAT/
+    method: project_portal_and_document_directory_search
+    result: >-
+      Portal serves active applications under review only; executed-agreement
+      projects (including CA2300584) are excluded from display.  DFA project
+      document directory at /docs/dwsrf_projects/ returns a generic library
+      search page, not project-specific file listings.
+    status: not_found_portal_design_limitation
+
+  - id: musd-board-archive-fresh-2026-08-22
+    source: Mendocino Unified School District board meeting archive
+    method: internet_archive_cdx_and_direct_site_probe
+    result: >-
+      MUSD website (mendocinousd.org) returns 199-byte responses on all
+      sub-page paths in this environment.  Internet Archive CDX for
+      mendocinousd.org from 2025-10-01 to 2026-02-01 returned 100 records,
+      all limited to the root homepage URL; no PDF documents or sub-pages
+      were archived in that window.  BoardDocs and Simbli redirects returned
+      403 or minimal HTML.  MUSD board records for Nov–Dec 2025 are not
+      retrievable in this session.
+    status: inaccessible_in_this_environment
+
+  - id: mccsd-board-late2025-fresh-2026-08-22
+    source: MCCSD board meetings November and December 2025
+    urls_checked:
+      - https://www.mccsd.com/2025-11-17-board-of-directors-meeting
+      - https://www.mccsd.com/2025-12-15-board-of-directors-meeting
+    method: packet_and_agenda_pdf_fetch_and_text_extraction
+    result: >-
+      November 17, 2025 packet (8d3a110b4, 704 KB, 10 pages) is a scanned
+      image PDF with no text layer.  December 15, 2025 agenda (e4ffe1f8c,
+      196 KB, 2 pages, text PDF) was fully extracted; it contains no MUSD
+      water project, DDW permit, CA2300584, or water supply item.
+      December full packet (45c83ae15, 1.77 MB, 24 pages) is a scanned PDF
+      with no text layer.  MCCSD is not the permit applicant; its board
+      records would not ordinarily carry the DDW permit.
+    status: no_permit_item_in_accessible_records
+
+  - id: ccc-appeal-documents-fresh-2026-08-22
+    source: California Coastal Commission documents server
+    method: staff_report_text_search_and_monthly_path_probe
+    result: >-
+      The existing combined Substantial Issue staff report (W12a-W12b-4-2025)
+      was searched for CA2300584, DDW, drinking water permit, and water supply
+      permit; it references DDW system requirements in narrative but cites no
+      permit number and includes no permit instrument.  All 12 months of 2025
+      and 2026 were probed for a separate A-1-MEN-25-0002 staff report at
+      documents.coastal.ca.gov/reports/{year}/{month}/A-1-MEN-25-0002.pdf;
+      none exists, confirming the de novo hearing has not been scheduled or
+      its report published.
+    status: not_found
+
+  - id: state-water-board-agendas-fresh-2026-08-22
+    source: State Water Resources Control Board agendas and meeting records
+    method: agenda_page_and_site_search
+    result: >-
+      Agendas index returned empty HTML.  Site search returned a legacy
+      Google CSE template page with no rendered results for CA2300584 permit.
+      DDW routine permit amendments are issued administratively by district
+      staff; they are not noticed as State Board agenda items.
+    status: not_found_administrative_permit_not_board_noticed
+
+  - id: internet-archive-comprehensive-fresh-2026-08-22
+    source: Internet Archive CDX API (Wayback Machine)
+    method: multiple_url_pattern_probes
+    queries:
+      - "url=waterboards.ca.gov/*2300584*&filter=statuscode:200&from=20200101"
+      - "url=*2300584*permit*&filter=statuscode:200&from=20200101"
+      - "url=*permit*2300584*&filter=statuscode:200&from=20200101"
+      - "url=*mendocino*school*permit*&filter=statuscode:200&from=20250101"
+      - "url=mendocinousd.org/*&filter=mimetype:application/pdf&from=20251001&to=20260201"
+    result: >-
+      All queries returned empty result sets or the waterboards.ca.gov root
+      homepage only (domain-wildcard matching artifact).  No archived URL
+      containing a CA2300584 permit document has ever been crawled.
+    status: not_found
+
+  - id: govaccess-hearing-docs-fresh-2026-08-22
+    source: Mendocino County GovAccess document library
+    method: direct_document_id_probes
+    document_ids_probed:
+      - 79018 through 79036 (August 2026 hearing neighborhood)
+      - 79272 (previously flagged 20-condition version)
+      - 79300 through 79600 (September 2026 hearing range)
+    result: >-
+      All document IDs in the probed ranges returned HTTP 403 in this
+      environment.  County GovAccess documents require an active session or
+      CORS-permitted origin; they are not accessible via direct curl fetch.
+      The county staff report for UM_2025-0004 (id 79030) is confirmed in
+      the manifest as identified_unretrieved.
+    status: inaccessible_in_this_environment
+
+  - id: etrakit-attachment-list-fresh-2026-08-22
+    source: Mendocino County eTRAKiT (Accela Citizen Access) – UM-2025-0004
+    url: >-
+      https://aca.accela.com/mendocino/Cap/CapHome.aspx?altId=UM-2025-0004&module=Planning&TabName=Attachment
+    method: html_content_and_embedded_data_search
+    result: >-
+      eTRAKiT attachment list page loaded (63.7 KB) but attachment data is
+      loaded via JavaScript AJAX calls not present in the initial HTML
+      response.  No permit-related filename or CA2300584 reference was found
+      in the static HTML layer.  Attachment file names are not discoverable
+      without executing JavaScript.
+    status: not_accessible_without_javascript_execution
+
+  - id: nextrequest-search-fresh-2026-08-22
+    source: Mendocino County NextRequest public records portal
+    url: https://mendocino.nextrequest.com/requests
+    method: keyword_search_for_ddw_permit_requests
+    result: >-
+      Search for CA2300584, DDW, and water supply permit returned no
+      matching public request records in the closed-request archive.
+    status: not_found
+
+  - id: open-data-portals-fresh-2026-08-22
+    source: California open data portals (data.ca.gov, data.cnra.ca.gov)
+    method: datastore_api_search
+    result: >-
+      Searches of data.ca.gov and data.cnra.ca.gov datastores for CA2300584
+      returned empty record sets.  SWRCB SDWIS public data does not include
+      permit instrument files.
+    status: not_found
+
+confirmed_existing_captures:
+  - id: ceqanet_water_supply_amendment
+    capture_path: captures/cases/UM_2025-0004/water-law/2025-ddw-permit-amendment-nod.pdf
+    url: https://ceqanet.lci.ca.gov/2020080439/12/Attachment/aSsaxb
+    bytes: 114080
+    sha256: 4cb6e921a5d23caa0e4c7ffa5921e9f99e9bd2265ef91e58ab403b341a8bc7d5
+    document_type: Notice of Determination (NOT the permit)
+    note: >-
+      This is the only public online document confirming that DDW issued the
+      amended permit on November 26, 2025.  The NOD text reads: "Records of
+      permit approval are available to the general public upon request at the
+      State Water Board, DDW office listed above."
+
+new_captures: []
+
+negative_findings:
+  - >-
+    The Mendocino DDW district directory (62.8 KB, full listing) contains
+    files for CA2300541, CA2300590, and CA2300730 but zero files for CA2300584.
+  - The DDW permits directory contains only blank application forms.
+  - The EDT library contains only water-quality monitoring data, not permits.
+  - No archived URL containing a CA2300584 permit has ever been crawled by
+    the Internet Archive.
+  - The MCCSD December 15, 2025 board agenda (fully extracted) contains no
+    MUSD water permit item; MCCSD is not the permit applicant.
+  - The CCC de novo hearing for A-1-MEN-25-0002 has not been scheduled;
+    no staff report that might attach the permit has been published.
+  - DDW routine permit amendments are administrative, not State Board-noticed.
+
+remaining_action:
+  type: public_records_request
+  custodian: State Water Resources Control Board, Division of Drinking Water
+  email: DDW-PRARequest@waterboards.ca.gov
+  draft_location: cases/UM_2025-0004/records-requests.yaml
+  draft_id: ddw-ca2300584-permit-file
+  status: not_yet_sent
+  note: >-
+    This is the only remaining avenue for the operative permit and prior
+    permit chain.  The draft request is complete and specific; it covers the
+    November 26, 2025 amendment, the preceding permit, application, technical
+    reports, source approvals, and hauled-water plan.

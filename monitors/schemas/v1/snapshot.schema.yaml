@@ -1,0 +1,68 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/jmacd/mendo-codebook/monitors/schemas/v1/snapshot.schema.yaml
+title: Normalized publication monitor snapshot
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - fixture
+  - monitor_id
+  - observed_at
+  - snapshot
+  - records
+properties:
+  schema_version:
+    const: 1
+  fixture:
+    type: boolean
+  monitor_id:
+    type: string
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+  observed_at:
+    type: string
+    format: date-time
+  snapshot:
+    type: object
+    additionalProperties: false
+    required: [scope, complete, cursor]
+    properties:
+      scope:
+        type: string
+      complete:
+        type: boolean
+      cursor:
+        type: object
+      limitation:
+        type: string
+  records:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [repository_id, canonical_url, identifiers, fingerprints, state]
+      properties:
+        repository_id:
+          type: string
+        canonical_url:
+          type: string
+          format: uri
+        title:
+          type: string
+        identifiers:
+          type: object
+          additionalProperties:
+            type: string
+        fingerprints:
+          type: object
+          additionalProperties:
+            type: string
+        state:
+          enum: [indexed, downloadable, identified_unretrieved, removed]
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        notes:
+          type: string

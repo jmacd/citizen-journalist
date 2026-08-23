@@ -1,0 +1,104 @@
+schema_version: 1
+id: division-drinking-water
+name: Division of Drinking Water public system records
+agency_owner:
+  name: California State Water Resources Control Board
+  jurisdiction: State of California
+  unit: Division of Drinking Water
+official_repository:
+  name: California Drinking Water Watch and DDW public datasets
+  kind: regulatory_database
+  base_url: https://sdwis.waterboards.ca.gov/PDWW/
+  publisher_is_authority: true
+  notes: Public system identity, monitoring, water-quality, violation, inspection, site-visit, and mapped service-area records.
+discovery:
+  method: record_and_dataset_inventory
+  seeds:
+    - purpose: water_system_detail
+      url: https://sdwis.waterboards.ca.gov/PDWW/JSP/WaterSystemDetail.jsp?tinwsys_is_number={internal_system_id}&tinwsys_st_code=CA
+      template_variables: [internal_system_id]
+    - purpose: service_area_dataset
+      url: https://gispublic.waterboards.ca.gov/portalserver/rest/services/Drinking_Water/California_Drinking_Water_System_Area_Boundaries/FeatureServer/0/query?where=WATER_SYSTEM_NUMBER%3D%27{water_system_number}%27&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson
+      template_variables: [water_system_number]
+    - purpose: electronic_document_library
+      url: https://www.waterboards.ca.gov/drinking_water/certlic/drinkingwater/documents/edtlibrary/
+    - purpose: mendocino_district_documents
+      url: https://www.waterboards.ca.gov/drinking_water/programs/districts/docs/mendocino/
+  enumeration_unit: water_system
+  query_terms: [water system number, system name, funding agreement, permit amendment]
+  notes: Monitor public regulatory metadata and datasets; individual permit instruments may require a records request.
+cursor:
+  mode: per_target_full_snapshot
+  checkpoint_fields: [water_system_number, internal_system_id, dataset_edit_date, observed_at]
+  ordering: Per-system records grouped by official water system number; preserve source-specific dates.
+  overlap: Re-read tracked system detail and exact GIS feature; periodically inventory relevant official document directories.
+  snapshot_scope: Public pages and datasets for explicitly tracked water systems.
+  absence_semantics: The public interface not posting a permit does not establish that no operative permit exists.
+fingerprints:
+  - name: system_identity
+    scope: identity
+    algorithm: tuple
+    fields: [water_system_number]
+  - name: system_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [system_name, status, classification, contacts, facilities, source_dates]
+  - name: service_area_feature
+    scope: content
+    algorithm: sha256_bytes
+    fields: [canonical_geojson_bytes]
+    notes: Geometry is a general representation and not a binding service-area instrument.
+  - name: published_document
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P30D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Weekly for a system with a known pending or newly approved permit action.
+  jitter: P1D
+  rationale: Regulatory datasets change more slowly, while known permit actions justify temporary closer review.
+expected_identifiers:
+  - name: water_system_number
+    pattern: "^CA\\d{7}$"
+    examples: [CA2300584]
+    required: true
+  - name: internal_system_id
+    pattern: "^\\d+$"
+    examples: ["2882"]
+    required: false
+  - name: funding_agreement
+    pattern: "^[A-Z]-\\d{2}-\\d{7}-\\d{3}[A-Z]$"
+    examples: [C-06-2300584-001C]
+    required: false
+status:
+  state: active_with_constraints
+  verified_at: "2026-08-21"
+  notes: System records are public, but the operative CA2300584 permit and amendment are not posted in the reviewed interfaces.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Do not infer permit terms from system summaries, CEQA notices, or GIS boundaries.
+    - Treat GIS service areas as potentially outdated general representations.
+    - Do not probe non-public permit systems or bypass access controls.
+  failure_policy: Route an identified but unposted permit as identified_unretrieved and record exhausted official repositories before requesting it.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: review_metadata
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+    - request-missing-record
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/water-law/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Permit discovery and public system monitoring remain distinct evidence tasks.

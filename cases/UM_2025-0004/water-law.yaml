@@ -1,0 +1,374 @@
+schema_version: 1
+system:
+  id: CA2300584
+  name: Mendocino School District - Mendocino
+  operator: Mendocino Unified School District
+  regulator: State Water Resources Control Board, Division of Drinking Water
+  classification: nontransient_noncommunity
+  status: active
+  source_type: groundwater
+  population_nontransient: 579
+  connections: 15
+  registry_url: https://sdwis.waterboards.ca.gov/PDWW/JSP/WaterSystemDetail.jsp?tinwsys_is_number=2882&tinwsys_st_code=CA
+  caveat: >-
+    The public registry describes a school system but does not establish a
+    parcel-level service territory or the terms of its November 2025 permit
+    amendment.
+
+lcp_findings:
+  - id: mccsd_extraction_rules_not_incorporated
+    finding: >-
+      The County never applied for an LCP amendment incorporating MCCSD
+      groundwater-management extraction-permit provisions into the certified
+      Mendocino Town LCP.
+    source_id: ccc_2017_town_lcp_report
+    locator: PDF page 82
+    qualification: >-
+      The certified LCP still contains its own groundwater rules and uses some
+      MCCSD determinations and demand standards. Operational reliance on an
+      MCCSD permit does not incorporate the entire District ordinance.
+    practice_source_ids:
+      - nextrequest_22_583_mccsd_2018_letter
+      - nextrequest_22_583_mccsd_2019_comment
+      - nextrequest_22_583_mccsd_drought_email
+      - nextrequest_22_583_mccsd_2022_letter
+
+boundaries:
+  - id: musd_ddw_service_description
+    name: MUSD permitted public-water-system service
+    kind: ddw_service_description
+    status: verified_2021_geometry_exact_legal_scope_unknown
+    authority: State Water Resources Control Board, Division of Drinking Water
+    description: >-
+      Existing institutional users and any emergency dispensing authorized by
+      the domestic water supply permit. The operative permit is not yet in the
+      corpus.
+    source_ids: [ddw_2021_service_area, ceqanet_water_supply_amendment]
+  - id: mccsd_boundary
+    name: MCCSD jurisdictional boundary
+    kind: district_boundary
+    status: verified_general_description
+    authority: Mendocino LAFCo
+    description: >-
+      Approximately one square mile between Slaughterhouse Gulch and Big River.
+      This is the territory in which MCCSD exercises its activated powers.
+    source_ids:
+      - mccsd_2020_msr_soi
+      - lafco_2020_resolution_2020_21_01
+      - county_2026_mccsd_boundary
+  - id: mccsd_soi
+    name: MCCSD sphere of influence
+    kind: lafco_sphere
+    status: coterminous_with_district
+    authority: Mendocino LAFCo
+    source_ids: [mccsd_2020_msr_soi, lafco_2020_resolution_2020_21_01]
+  - id: county_emergency_drought_area
+    name: County emergency drought water service area
+    kind: county_permit_eligibility_area
+    status: published_map_verified_native_gis_and_parcel_intersections_needed
+    authority: Mendocino County Planning Commission permit condition
+    description: >-
+      MCCSD territory plus an extension to the Slaughterhouse Gulch watershed
+      boundary, selected during December 2024 permit deliberations. This has
+      not been shown to be a DDW service territory, district annexation, sphere
+      amendment, or LAFCo-approved out-of-area service area.
+    source_ids: [ccc_appeal_report, county_exhibit_i]
+  - id: grant_beneficiary_area
+    name: State grant beneficiary area
+    kind: funding_scope
+    status: 2023_agreements_verified_later_amendments_needed
+    authority: Department of Water Resources / State Water Resources Control Board
+    description: >-
+      DWR Amendment 1 funds emergency storage for eligible customers and uses
+      community-wide design assumptions, but does not supply a parcel-level
+      beneficiary polygon. The County's later Slaughterhouse Gulch eligibility
+      area has not been tied to a DWR or DFA amendment.
+    source_ids:
+      - musd_2023_final_subsequent_mnd
+      - musd_2023_response_and_funding_agreements
+  - id: practical_delivery_area
+    name: Practical tanker delivery area
+    kind: operational_area
+    status: operating_plan_needed
+    authority: MUSD / MCCSD / licensed water hauler
+    description: >-
+      Locations to which water could actually be hauled and discharged. It may
+      differ from every legal or funding boundary above.
+    source_ids: [nextrequest_2021_hauled_water]
+
+authorities:
+  - id: wat_13198
+    citation: California Water Code § 13198
+    title: Drought-scenario and interim-relief definitions
+    topic: drought_trigger
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=13198.&lawCode=WAT
+    effect: >-
+      Defines a drought scenario and lists forms of interim relief, including
+      hauled water, community tanks, emergency interties, wells, and permanent
+      connections.
+    does_not_establish: >-
+      It does not enlarge MUSD's drinking-water permit or MCCSD's boundary and
+      does not independently authorize retail service.
+  - id: wat_13194
+    citation: California Water Code § 13194
+    title: Funding for immediate drinking-water relief
+    topic: emergency_funding
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=13194.&lawCode=WAT
+    effect: >-
+      Allows State Board funding for tanks, hauled water, or bottled water for
+      households whose wells fail through drought, wildfire, or disaster.
+    does_not_establish: Territorial operating authority.
+  - id: wat_10700_10717
+    citation: California Water Code §§ 10700–10717
+    title: Mendocino-specific groundwater management authority
+    topic: groundwater_management
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?division=6.&chapter=&part=2.7.&lawCode=WAT
+    effect: >-
+      Applies only within MCCSD's existing boundaries; authorizes eligible
+      local agencies to establish groundwater programs, enter joint-powers
+      agreements for that purpose, regulate extraction, and exercise specified
+      replenishment-district powers.
+    does_not_establish: >-
+      It does not itself create a municipal central water system. Section 10717
+      ends these special powers when such a system is completed and implemented
+      to supply inhabitants within the local agency.
+  - id: gomes_v_mccsd_2019
+    citation: Gomes v. Mendocino City Community Services District (2019) 35 Cal.App.5th 249
+    title: Judicial interpretation of MCCSD groundwater-program procedures
+    topic: groundwater_management
+    url: https://www.courts.ca.gov/opinions/archive/A153078.PDF
+    effect: >-
+      Quotes the AB 786 author's signing letter, describes Ordinance 90-1, and
+      holds that Ordinance 07-1, Resolution 200, and Ordinance 07-4 were void
+      because MCCSD did not follow Water Code sections 10703-10706 when adopting
+      and implementing the groundwater management program.
+    does_not_establish: >-
+      The opinion does not reproduce the complete signed Ordinance 90-1 or its
+      amendments and does not adjudicate MUSD's current drinking-water authority.
+  - id: hsc_116525
+    citation: California Health and Safety Code § 116525
+    title: Public water system operating permit
+    topic: drinking_water_permit
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=116525.&lawCode=HSC
+    effect: Requires a permit to operate a public water system and permits the State Board to revise it.
+  - id: hsc_116550
+    citation: California Health and Safety Code § 116550
+    title: Changes requiring an amended permit
+    topic: drinking_water_permit
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=116550.&lawCode=HSC
+    effect: >-
+      Restricts changes to source, treatment, or the permitted distribution
+      system without an amended permit, subject to the statutory exceptions.
+  - id: hsc_116555
+    citation: California Health and Safety Code § 116555
+    title: Public water system duties
+    topic: drinking_water_operations
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=116555.&lawCode=HSC
+    effect: >-
+      Requires reliable, adequate, potable supply, compliance with standards,
+      backflow protection, and appropriately certified operators.
+  - id: hsc_116682
+    citation: California Health and Safety Code § 116682
+    title: Consolidation and extension of service
+    topic: consolidation
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?division=104.&chapter=4.&part=12.&lawCode=HSC
+    effect: >-
+      Authorizes State Board consolidation or service-extension orders after a
+      defined process for specified failing or at-risk systems and domestic wells.
+    does_not_establish: No located record shows that the State Board invoked this authority here.
+  - id: gov_56133
+    citation: California Government Code § 56133
+    title: Service outside a city or district boundary
+    topic: lafco_out_of_area_service
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=56133.&lawCode=GOV
+    effect: >-
+      Requires a city or LAFCo-defined district to obtain prior written LAFCo
+      approval before providing new or extended service outside its boundary.
+      Outside its sphere, LAFCo may approve service responding to a documented
+      existing or impending public-health or safety threat after notice to
+      alternate providers. Listed exceptions include qualifying substitute
+      public-agency service, transfers of nonpotable or untreated water,
+      specified surplus agricultural water, service existing by January 1,
+      2001, and fire-protection contracts.
+    does_not_establish: >-
+      The Cortese-Knox-Hertzberg definition of district excludes school
+      districts, so this section governs an MCCSD extension but does not answer
+      MUSD's authority. The exclusion is not an affirmative grant allowing MUSD
+      to furnish water to unrelated non-school users. No current source
+      establishes that potable emergency water here falls within a listed
+      exception.
+  - id: gov_61100_a
+    citation: California Government Code § 61100(a)
+    title: Community services district water power
+    topic: district_power
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=61100.&lawCode=GOV
+    effect: Allows a community services district to supply water within its boundaries.
+    does_not_establish: >-
+      It does not itself authorize MCCSD to furnish potable water outside its
+      boundary or make the County Emergency Water Service Area part of MCCSD.
+  - id: gov_6500
+    citation: California Government Code §§ 6500–6509.7
+    title: Joint Exercise of Powers Act
+    topic: joint_powers
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?division=7.&chapter=5.&part=&lawCode=GOV&title=1.
+    effect: >-
+      Allows public agencies, with governing-body authorization, to jointly
+      exercise powers common to the contracting parties and optionally create a
+      separate administering entity.
+    does_not_establish: >-
+      It does not manufacture a power that is not common to the parties or
+      replace independent DDW, LAFCo, land-use, or funding approvals.
+  - id: hsc_116275
+    citation: California Health and Safety Code § 116275
+    title: Public water system definitions
+    topic: drinking_water_classification
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=HSC&sectionNum=116275
+    effect: >-
+      Defines public water systems and community and noncommunity
+      classifications based on water provision, connections, population, and
+      patterns of use.
+    does_not_establish: >-
+      Public-water-system status is not necessarily public ownership and does
+      not itself grant a local government general water-service powers.
+  - id: gov_56824
+    citation: California Government Code §§ 56824.10-56824.14
+    title: Activation of latent district powers
+    topic: lafco_activation
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=56824.10&lawCode=GOV
+    effect: >-
+      Requires district and LAFCo hearings, a service plan, financing
+      information, and LAFCo approval to activate a latent or new class of service.
+  - id: edc_35160
+    citation: California Education Code §§ 35160-35160.1
+    title: School district general powers
+    topic: school_district_power
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=35160.&lawCode=EDC
+    effect: >-
+      Gives school districts broad authority for activities consistent with law
+      and school-district purposes.
+    does_not_establish: >-
+      It does not expressly answer whether MUSD may act as a continuing
+      area-wide retail water supplier.
+  - id: prc_30600
+    citation: California Public Resources Code § 30600(a)
+    title: Coastal permit is additional to other permits
+    topic: coastal_permit_scope
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=30600.&lawCode=PRC
+    effect: >-
+      Makes the coastal development permit an additional approval rather than
+      a substitute for drinking-water, district, or other legal authority.
+
+institutional_roles:
+  - actor: Mendocino County Planning Commission
+    can_authorize: Coastal development permit, physical development, and LCP-related conditions.
+    cannot_establish_alone: DDW operating authority, school-district powers, or an MCCSD boundary.
+  - actor: MUSD
+    can_authorize: Project implementation within its lawful powers and DDW permit.
+    cannot_establish_alone: An expanded statutory or DDW service territory.
+  - actor: State Water Resources Control Board, Division of Drinking Water
+    can_authorize: Sources, treatment, storage, distribution, operators, and public-water-system permit conditions.
+    cannot_establish_alone: County zoning or an MCCSD annexation.
+  - actor: MCCSD
+    can_authorize: Activated district services within its boundary and drought-stage declarations.
+    cannot_establish_alone: A latent central-water service or out-of-boundary service.
+  - actor: Mendocino LAFCo
+    can_authorize: MCCSD sphere changes, annexation, latent powers, and applicable out-of-area service.
+    cannot_establish_alone: MUSD's DDW permit or County coastal approval.
+  - actor: California Coastal Commission
+    can_authorize: Appeal decisions under the certified LCP and Coastal Act.
+    cannot_establish_alone: Drinking-water operating authority or groundwater rights.
+
+current_authority_gap:
+  action: Supply potable emergency water to users outside MCCSD's boundary.
+  status: unresolved
+  supported_interpretation: >-
+    The present documents identify MUSD, not MCCSD, as owner and operator of
+    the water-system assets. Condition 18 says stored water can be supplied by
+    MUSD. The MOU says MUSD will make excess water available and that MUSD and
+    MCCSD will jointly determine an application process. These records do not
+    establish that MCCSD takes title to, hauls, sells, or legally supplies the
+    water outside its boundary.
+  mccsd_rule: >-
+    Government Code section 61100(a) states MCCSD's water-supply power within
+    its boundaries. If MCCSD itself provides new or extended potable service
+    outside that boundary, section 56133 generally requires prior written LAFCo
+    approval unless a documented exception applies.
+  musd_rule: >-
+    Government Code section 56036 excludes school districts from the LAFCo
+    definition of district, so section 56133 does not directly decide MUSD's
+    conduct. That exclusion does not establish MUSD's underlying school-district
+    authority to serve non-MUSD users.
+  does_not_establish: >-
+    The County Emergency Water Service Area is a permit eligibility map. It is
+    not itself an MCCSD annexation, LAFCo outside-agency-service approval, DDW
+    service authorization, school-district power, or proof that delivery occurs
+    at an out-of-boundary service connection rather than at an authorized MUSD
+    filling point.
+  deciding_records:
+    - Operative November 26, 2025 DDW permit and incorporated emergency-delivery plan.
+    - Any LAFCo section 56133 request, written approval, exemption analysis, or no-jurisdiction determination.
+    - MUSD board resolution, counsel opinion, or specific statutory analysis authorizing supply to non-MUSD users.
+    - Final application, eligibility, allocation, pickup, hauling, billing, and chain-of-custody procedure.
+    - Records identifying whether MUSD, MCCSD, a hauler, or the recipient takes possession and where title and physical custody transfer.
+
+priority_missing_records:
+  - id: ddw_2025_amended_permit
+    title: CA2300584 amended domestic water supply permit issued November 26, 2025
+    why: >-
+      Determines whether DDW reviewed and authorized emergency dispensing,
+      customers, tanker filling, service scope, sources, storage, and operating conditions.
+  - id: ddw_preproject_permit
+    title: Immediately preceding CA2300584 permit and amendments
+    why: Establishes the baseline system, customers, facilities, and service description.
+  - id: county_exhibit_i
+    title: Native Exhibit I GIS package and parcel-intersection list
+    why: >-
+      The published PDF is captured, but it lacks parcel boundaries. Native GIS
+      is needed to reproduce the polygon and identify wholly or partly
+      intersected parcels.
+  - id: dwr_4600014624
+    title: DWR Agreement 4600014624 amendments after Amendment 1
+    why: >-
+      The March 2026 DWR letter proves a later amendment exists. It may revise
+      scope, deadlines, ownership, operating duties, or beneficiary provisions.
+  - id: state_revolving_fund_agreement
+    title: D2202005 amendments and MUSD funding-project update
+    why: >-
+      The original agreement is captured, but the State Board said its scope
+      did not match the expanded project. A 2026 status report also gives a
+      completion date different from the executed original.
+  - id: lafco_project_correspondence
+    title: Any LAFCo determination or correspondence concerning the MUSD/MCCSD project
+    why: >-
+      Shows whether district powers, annexation, or out-of-area service were
+      considered, including any section 56133 approval, exception analysis, or
+      determination that MUSD's school-district status places the activity
+      outside LAFCo jurisdiction.
+  - id: emergency_delivery_operating_plan
+    title: Final emergency-water application, pickup, hauling, billing, and delivery procedure
+    why: >-
+      Identifies the legal supplier, eligible recipient, pickup point, hauler,
+      transfer of possession, destination, price or fee, and agency responsible
+      for approving each delivery.
+  - id: musd_non_school_water_authority
+    title: MUSD governing-board and legal authority for supplying potable water to non-MUSD users
+    why: >-
+      A DDW permit regulates safe operation but does not itself establish the
+      school district's underlying corporate authority to furnish water to
+      unrelated users.
+  - id: measure_a_canvass
+    title: Certified November 5, 1985 Measure A ballot and canvass
+    why: >-
+      Later official records report a 141-76 vote, but the contemporaneous
+      certified election record is not publicly available in the repositories searched.
+  - id: early_mccsd_groundwater_ordinances
+    title: Signed Ordinance 90-1 and amendments 91-3, 92-2, 00-1, 01-1, and 04-1
+    why: >-
+      Later ordinances and Gomes describe this legislative lineage, but they do
+      not substitute for the original enacted texts and amendment history.
+  - id: ab786_bill_file
+    title: Complete 1987 AB 786 bill and chaptering file
+    why: >-
+      The Assembly Final History proves procedural dates and votes. Bill
+      versions, committee analyses, author correspondence, and the Governor's
+      chaptering file remain necessary to reconstruct legislative intent.

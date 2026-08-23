@@ -1,0 +1,132 @@
+schema_version: 1
+model_id: mendo_cross_case_government
+description: >-
+  Normalized, evidence-backed records for institutions, authority, boundaries,
+  procedures, relationships, and proposals across planning cases.
+
+source_reference:
+  required_fields: [case_id, source_ids]
+  resolution: >-
+    Every source ID must exist in cases/<case_id>/manifest.yaml. Source IDs are
+    scoped to a case and are not globally unique.
+
+common_record:
+  required_fields: [id, name, assertions]
+  id_pattern: "^[a-z0-9][a-z0-9._-]*$"
+  assertions:
+    required_fields:
+      - id
+      - statement
+      - evidence_status
+      - acceptance_status
+      - case_id
+      - source_ids
+      - limits
+    rules:
+      - source_ids must contain at least one existing manifest source ID.
+      - limits must state the inference boundary or use "none_identified".
+      - accepted does not imply legally sufficient.
+      - unresolved assertions must include a nonempty missing_record or open_question field.
+
+evidence_status:
+  - verified_fact
+  - supported_interpretation
+  - proposal
+  - unresolved
+  - disputed
+
+acceptance_status:
+  - not_applicable
+  - proposed
+  - accepted
+  - rejected
+  - superseded
+  - unknown
+
+instrument_status:
+  - operative
+  - adopted
+  - superseded
+  - voided
+  - missing
+  - status_unknown
+
+boundary_kind:
+  - jurisdictional_boundary
+  - sphere_of_influence
+  - regulatory_system_map
+  - permit_eligibility_area
+  - funding_scope
+  - operational_area
+
+relationship_kind:
+  - organizational_component
+  - regulates
+  - owns_operates
+  - boundary_service_oversight
+  - land_use_permitting
+  - financing
+  - grant_administration
+  - delegated_or_transferred_function
+  - cooperative_implementation
+
+entity_shapes:
+  agency:
+    required_fields: [id, name, kind, level, assertions]
+  office:
+    required_fields: [id, name, kind, parent_agency_id, assertions]
+  jurisdiction:
+    required_fields:
+      - id
+      - name
+      - holder_ids
+      - action
+      - subject_scope
+      - geographic_scope
+      - assertions
+  legal_instrument:
+    required_fields:
+      - id
+      - name
+      - kind
+      - issuing_actor_ids
+      - instrument_status
+      - assertions
+  boundary:
+    required_fields:
+      - id
+      - name
+      - kind
+      - authority_actor_ids
+      - assertions
+  procedure:
+    required_fields:
+      - id
+      - name
+      - action
+      - actor_ids
+      - steps
+      - assertions
+  relationship:
+    required_fields:
+      - id
+      - name
+      - kind
+      - from_id
+      - to_id
+      - assertions
+  proposal:
+    required_fields:
+      - id
+      - name
+      - proponent_ids
+      - acceptance_status
+      - assertions
+
+cross_reference_rules:
+  - All actor, boundary, instrument, procedure, and relationship targets must exist.
+  - Every assertion ID must be unique within its file.
+  - An office parent must be an agency.
+  - A relationship is directional; inverse meaning must not be assumed.
+  - A boundary record describes one boundary concept only.
+  - A proposal may be accepted while implementation authority remains unresolved.

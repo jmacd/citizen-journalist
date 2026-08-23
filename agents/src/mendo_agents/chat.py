@@ -1,0 +1,414 @@
+"""Read-only public chat service over the canonical case corpus."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import mimetypes
+from dataclasses import asdict
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from time import perf_counter
+from typing import TypedDict
+from urllib.parse import urlsplit
+
+from agent_framework import FileCheckpointStorage
+
+from .config import Settings
+from .models import CaseQuestion, DispositionKind, RunDisposition
+from .policy import load_society_policy
+from .providers import create_reasoner, provider_identity
+from .repository import CorpusRepository
+from .research_queue import ResearchQueue
+from .skills import load_skills
+from .telemetry import configure_telemetry
+from .workflow import build_evidence_workflow
+
+MAX_REQUEST_BYTES = 16_384
+MAX_QUESTION_CHARACTERS = 2_000
+MAX_HISTORY_MESSAGES = 12
+MAX_HISTORY_CHARACTERS = 8_000
+
+
+class ChatHistoryMessage(TypedDict):
+    role: str
+    content: str
+
+
+class PublicChatError(RuntimeError):
+    """A safe error that may be returned to a public client."""
+
+
+class PublicChatService:
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        policy_path: Path | None = None,
+    ) -> None:
+        self.settings = settings
+        self.corpus = CorpusRepository(settings.repo_root, settings.case_id)
+        self.policy = load_society_policy(
+            policy_path
+            or settings.repo_root / "agents" / "organization" / "society.yaml"
+        )
+        self.skills = load_skills(settings.repo_root)
+        self.research_queue = ResearchQueue(settings.research_queue_path)
+        self.telemetry = configure_telemetry(False)
+
+    async def ask(
+        self,
+        question: str,
+        history: tuple[ChatHistoryMessage, ...] = (),
+    ) -> dict[str, object]:
+        started_at = perf_counter()
+        normalized = " ".join(question.split())
+        if not normalized:
+            raise PublicChatError("Enter a question about this case.")
+        if len(normalized) > MAX_QUESTION_CHARACTERS:
+            raise PublicChatError(
+                f"Question exceeds {MAX_QUESTION_CHARACTERS} characters."
+            )
+        normalized_history = self._normalize_history(history)
+        contextual_question = self._contextual_question(
+            normalized,
+            normalized_history,
+        )
+        self.telemetry.run_started(self.settings.case_id, "PublicCaseQuestion")
+
+        checkpoint_path = (
+            self.settings.checkpoint_root / "public-chat" / self.settings.case_id
+        )
+        checkpoint_path.mkdir(parents=True, exist_ok=True)
+        workflow = build_evidence_workflow(
+            self.corpus,
+            self.policy,
+            self.skills,
+            create_reasoner(self.settings.model_provider),
+            FileCheckpointStorage(storage_path=checkpoint_path),
+            max_iterations=self.settings.max_iterations,
+            max_research_rounds=0,
+            auto_publish_read_only=True,
+        )
+        output: RunDisposition | None = None
+        async for event in workflow.run(
+            CaseQuestion(
+                case_id=self.settings.case_id,
+                question=contextual_question,
+                asked_by="public",
+            ),
+            stream=True,
+        ):
+            if event.type == "request_info":
+                raise RuntimeError(
+                    "Public read-only workflow unexpectedly requested approval"
+                )
+            if event.type == "output":
+                output = event.data
+        if output is None:
+            raise RuntimeError("Public workflow ended without a disposition")
+        queued = ()
+        if (
+            output.kind == DispositionKind.ANSWER_READY
+            and output.analysis is not None
+            and output.review is not None
+            and output.review.accepted
+        ):
+            queued = self.research_queue.enqueue(
+                self.settings.case_id,
+                normalized,
+                output.analysis.gaps,
+            )
+        result = self._serialize(output)
+        result["queued_research"] = [asdict(item) for item in queued]
+        runtime = provider_identity(self.settings.model_provider)
+        result["runtime"] = runtime
+        self.telemetry.run_completed(output.kind.value)
+        print(
+            json.dumps(
+                {
+                    "case_id": self.settings.case_id,
+                    "claim_count": len(output.analysis.claims)
+                    if output.analysis is not None
+                    else 0,
+                    "disposition": output.kind.value,
+                    "duration_ms": round((perf_counter() - started_at) * 1000),
+                    "event": "public_chat_completed",
+                    "provider": runtime["provider"],
+                    "queued_research_count": len(queued),
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+        return result
+
+    @staticmethod
+    def _normalize_history(
+        history: tuple[ChatHistoryMessage, ...],
+    ) -> tuple[ChatHistoryMessage, ...]:
+        if len(history) > MAX_HISTORY_MESSAGES:
+            raise PublicChatError(
+                f"Conversation history exceeds {MAX_HISTORY_MESSAGES} messages."
+            )
+        normalized: list[ChatHistoryMessage] = []
+        total_characters = 0
+        for message in history:
+            role = message.get("role")
+            content = message.get("content")
+            if role not in {"user", "assistant"} or not isinstance(content, str):
+                raise PublicChatError(
+                    "Conversation history must contain user or assistant messages."
+                )
+            text = " ".join(content.split())
+            if not text:
+                raise PublicChatError(
+                    "Conversation history cannot contain empty messages."
+                )
+            total_characters += len(text)
+            if total_characters > MAX_HISTORY_CHARACTERS:
+                raise PublicChatError(
+                    "Conversation history is too long; start a new conversation."
+                )
+            normalized.append({"role": role, "content": text})
+        return tuple(normalized)
+
+    @staticmethod
+    def _contextual_question(
+        question: str,
+        history: tuple[ChatHistoryMessage, ...],
+    ) -> str:
+        if not history:
+            return question
+        transcript = "\n".join(
+            f"{message['role'].title()}: {message['content']}"
+            for message in history
+        )
+        return f"Conversation context:\n{transcript}\nCurrent question: {question}"
+
+    def _serialize(self, output: RunDisposition) -> dict[str, object]:
+        if output.kind != DispositionKind.ANSWER_READY or output.analysis is None:
+            return {
+                "status": output.kind.value,
+                "summary": output.summary,
+                "answer": None,
+                "claims": [],
+                "gaps": [asdict(gap) for gap in output.gaps],
+                "review_findings": (
+                    [asdict(finding) for finding in output.review.findings]
+                    if output.review is not None
+                    else []
+                ),
+            }
+
+        claims = []
+        for claim in output.analysis.claims:
+            citations = []
+            for locator in claim.locators:
+                source = self.corpus.document_metadata(locator.document_id)
+                citations.append(
+                    {
+                        "document_id": locator.document_id,
+                        "title": source["title"],
+                        "publisher": source["publisher"],
+                        "document_date": source["document_date"],
+                        "url": source["url"] or source["attachment_url"],
+                        "page": locator.page,
+                        "section": locator.section,
+                        "timestamp": locator.timestamp,
+                        "field": locator.field,
+                    }
+                )
+            claims.append(
+                {
+                    "text": claim.text,
+                    "confidence": claim.confidence.value,
+                    "does_not_establish": claim.does_not_establish,
+                    "citations": citations,
+                }
+            )
+        gaps = output.analysis.gaps or output.gaps
+        return {
+            "status": output.kind.value,
+            "summary": output.summary,
+            "answer": output.analysis.short_answer,
+            "claims": claims,
+            "gaps": [asdict(gap) for gap in gaps],
+        }
+
+
+class ChatRequestHandler(BaseHTTPRequestHandler):
+    server_version = "MendoCaseChat/0.1"
+
+    @property
+    def chat_server(self) -> "ChatHTTPServer":
+        return self.server  # type: ignore[return-value]
+
+    def _headers(self, status: HTTPStatus, content_type: str) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; style-src 'self'; script-src 'self'; "
+            "connect-src 'self'; img-src 'self' data:; "
+            "frame-ancestors 'none'; base-uri 'none'",
+        )
+        self.end_headers()
+
+    def _json(self, status: HTTPStatus, value: object) -> None:
+        self._headers(status, "application/json; charset=utf-8")
+        self.wfile.write(json.dumps(value, sort_keys=True).encode("utf-8"))
+
+    def do_GET(self) -> None:  # noqa: N802
+        path = urlsplit(self.path).path
+        if path == "/api/health":
+            self._json(
+                HTTPStatus.OK,
+                {
+                    "status": "ok",
+                    "case_id": self.chat_server.service.settings.case_id,
+                    "runtime": provider_identity(
+                        self.chat_server.service.settings.model_provider
+                    ),
+                },
+            )
+            return
+        self._serve_static(path)
+
+    def do_POST(self) -> None:  # noqa: N802
+        if urlsplit(self.path).path != "/api/chat":
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+            return
+        content_type = self.headers.get_content_type()
+        if content_type != "application/json":
+            self._json(
+                HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                {"error": "Content-Type must be application/json."},
+            )
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Invalid request length."})
+            return
+        if length <= 0 or length > MAX_REQUEST_BYTES:
+            self._json(
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                {"error": "Request body is empty or too large."},
+            )
+            return
+        try:
+            payload = json.loads(self.rfile.read(length))
+            if not isinstance(payload, dict) or not isinstance(
+                payload.get("question"), str
+            ):
+                raise PublicChatError("The request must contain a question string.")
+            raw_history = payload.get("history", [])
+            if not isinstance(raw_history, list) or not all(
+                isinstance(message, dict) for message in raw_history
+            ):
+                raise PublicChatError(
+                    "Conversation history must be an array of messages."
+                )
+            result = asyncio.run(
+                self.chat_server.service.ask(
+                    payload["question"],
+                    tuple(raw_history),
+                )
+            )
+            self._json(HTTPStatus.OK, result)
+        except (json.JSONDecodeError, PublicChatError) as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+        except Exception as error:
+            self.log_error("Chat request failed: %s", type(error).__name__)
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": "The evidence workflow failed. No answer was published."},
+            )
+
+    def _serve_static(self, request_path: str) -> None:
+        relative = request_path.lstrip("/") or "casebook.html"
+        candidate = (self.chat_server.web_root / relative).resolve()
+        try:
+            candidate.relative_to(self.chat_server.web_root)
+        except ValueError:
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Forbidden."})
+            return
+        if not candidate.is_file():
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+            return
+        content_type = mimetypes.guess_type(candidate.name)[0]
+        self._headers(
+            HTTPStatus.OK,
+            f"{content_type or 'application/octet-stream'}"
+            + ("; charset=utf-8" if content_type and content_type.startswith("text/") else ""),
+        )
+        self.wfile.write(candidate.read_bytes())
+
+
+class ChatHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def __init__(
+        self,
+        address: tuple[str, int],
+        service: PublicChatService,
+        web_root: Path,
+    ) -> None:
+        self.service = service
+        self.web_root = web_root.resolve()
+        super().__init__(address, ChatRequestHandler)
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="mendo-chat")
+    parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--case-id")
+    parser.add_argument("--provider", choices=("scripted", "ollama", "foundry"))
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=4173)
+    return parser
+
+
+def _settings_from_args(args: argparse.Namespace) -> Settings:
+    loaded = Settings.from_env(args.repo_root)
+    return Settings(
+        repo_root=loaded.repo_root,
+        case_id=args.case_id or loaded.case_id,
+        model_provider=args.provider or loaded.model_provider,
+        checkpoint_root=loaded.checkpoint_root,
+        run_root=loaded.run_root,
+        research_queue_path=loaded.research_queue_path,
+        max_iterations=loaded.max_iterations,
+        max_research_rounds=0,
+        enable_sensitive_telemetry=False,
+    )
+
+
+def main() -> None:
+    args = _parser().parse_args()
+    settings = _settings_from_args(args)
+    server = ChatHTTPServer(
+        (args.host, args.port),
+        PublicChatService(settings),
+        settings.repo_root / "web",
+    )
+    print(
+        f"Mendocino case chat: http://{args.host}:{args.port}/casebook.html "
+        f"({settings.model_provider})"
+    )
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+
+if __name__ == "__main__":
+    main()

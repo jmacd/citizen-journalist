@@ -1,0 +1,364 @@
+schema_version: 1
+question: >-
+  How do the State Water Board, MUSD, MCCSD, LAFCo, County, and their agreements
+  combine—and not combine—to authorize groundwater management, a public water
+  system, and emergency community water delivery?
+preliminary_conclusion: >-
+  The project is presently a layered cooperation model, not a demonstrated
+  transfer or merger of powers. MCCSD regulates groundwater and holds active
+  CSD water powers; MUSD owns and operates CA2300584; DDW regulates that public
+  water system; LAFCo controls applicable MCCSD boundary and service-class
+  questions; and the County controls land-use and coastal permits. The 2024
+  MOU allocates project, asset, grant, and operating responsibilities but does
+  not on its face create a separate joint-powers entity or supply missing
+  statutory authority.
+
+actors:
+  - id: swrcb_ddw
+    name: State Water Resources Control Board — Division of Drinking Water
+    role: public_water_system_regulator
+    powers:
+      - Issue and amend the domestic water supply permit for CA2300584.
+      - Regulate source, treatment, storage, distribution, water quality, operators, and reliability.
+      - Review technical, managerial, and financial capacity.
+    limits:
+      - Does not activate MCCSD services or alter MCCSD boundaries.
+      - A DDW permit regulates operation; it does not itself create MUSD's underlying local-government power.
+    source_ids:
+      - ca_drinking_water_lawbook_2026
+      - ddw_public_water_system_guide
+      - ddw_permit_application
+      - ddw_amended_permit_application
+  - id: swrcb_dfa
+    name: State Water Resources Control Board — Division of Financial Assistance
+    role: financing_agency
+    powers:
+      - Administer DWSRF agreement D2202005 and approve material funded-project changes.
+    limits:
+      - Financing approval is not a drinking-water operating permit or LAFCo service authorization.
+    source_ids: [musd_2023_response_and_funding_agreements, ddw_dfa_2023_comment_letter]
+  - id: dwr
+    name: California Department of Water Resources
+    role: grant_agency
+    powers:
+      - Administer Agreement 4600014624 and approve material UMBDR project changes.
+    limits:
+      - Grant eligibility and scope do not establish public-water-system or district authority.
+    source_ids: [musd_2023_response_and_funding_agreements, musd_2026_project_status]
+  - id: rwqcb
+    name: North Coast Regional Water Quality Control Board
+    role: recycled_water_and_discharge_regulator
+    powers:
+      - Regulate wastewater discharge and recycled-water production and use.
+    limits:
+      - Does not issue the domestic water supply permit for CA2300584.
+    source_ids: [mccsd_2020_msr_soi]
+  - id: musd
+    name: Mendocino Unified School District
+    role: public_water_system_owner_operator
+    powers:
+      - Own and operate CA2300584 subject to its DDW permit.
+      - Exercise school-district powers consistent with law and school purposes.
+      - Own the combined project's water-system assets under the 2024 MOU.
+    limits:
+      - Public-water-system status is a regulatory classification, not proof of general area-wide retail-water power.
+      - The operative DDW permit is needed to establish authorized emergency dispensing and customers.
+    source_ids: [mccsd_musd_2024_mou, ca_drinking_water_lawbook_2026]
+  - id: mccsd
+    name: Mendocino City Community Services District
+    role: groundwater_manager_and_csd_with_water_powers
+    powers:
+      - Supply water for beneficial uses within its boundary under Government Code §61100(a).
+      - Administer the special Water Code §§10700–10717 groundwater program.
+      - Require extraction permits, studies, meters, allotments, and drought reductions.
+      - Continue and expand pre-2006 classes of active water service identified by LAFCo.
+    limits:
+      - A municipal central water system and certain replenishment activities were identified by LAFCo as new or different service classes requiring activation.
+      - Water Code §10717 terminates the special Part 2.7 powers when a municipal central system is completed and implemented for inhabitants within MCCSD.
+      - Its ordinances were not incorporated wholesale into the certified Town LCP.
+    source_ids:
+      - mccsd_water_code_10700_10717
+      - mccsd_ordinance_2020_01
+      - lafco_2005_csd_powers
+      - lafco_2022_groundwater_authority
+      - mccsd_2020_msr_soi
+      - ccc_2017_town_lcp_report
+  - id: lafco
+    name: Mendocino Local Agency Formation Commission
+    role: district_boundary_and_service_class_regulator
+    powers:
+      - Determine MCCSD active and latent classes of service.
+      - Approve applicable service activation, sphere changes, annexation, and out-of-area district service.
+    limits:
+      - Does not issue a DDW operating permit or confer school-district powers.
+    source_ids:
+      - lafco_2005_csd_powers
+      - lafco_2022_groundwater_authority
+      - mccsd_2020_msr_soi
+      - lafco_2020_resolution_2020_21_01
+      - lafco_2025_07_07_packet
+      - lafco_2025_09_08_packet
+      - lafco_2025_12_01_packet
+  - id: county
+    name: Mendocino County
+    role: land_use_coastal_and_well_permitting
+    powers:
+      - Issue County permits and impose legally supportable project conditions.
+      - Apply the certified LCP's groundwater and proof-of-water provisions.
+    limits:
+      - Cannot substitute a County permit for DDW, LAFCo, or independent agency authority.
+      - Operational reliance on an MCCSD permit does not incorporate the entire MCCSD ordinance into the LCP.
+    source_ids:
+      - ccc_2017_town_lcp_report
+      - nextrequest_22_583_mccsd_drought_email
+
+instruments:
+  - id: water_code_part_2_7
+    title: Water Code §§10700–10717
+    kind: special_groundwater_statute
+    effect: >-
+      Applies only within MCCSD's existing boundaries; authorizes an eligible
+      local agency to adopt a groundwater program, enter a JPA for that
+      purpose, regulate extraction, and exercise replenishment-district powers.
+    limits: >-
+      Requires specified adoption procedures and agreements before acting
+      within another water agency's boundaries. Section 10717 contains a
+      central-system termination trigger.
+    source_ids:
+      - mccsd_water_code_10700_10717
+      - mccsd_2012_groundwater_management_plan
+      - ca_assembly_final_history_1987_88
+      - gomes_v_mccsd_2019
+  - id: county_mccsd_1990_transfer
+    title: County-MCCSD Agreement 90-113
+    kind: interagency_groundwater_agreement
+    effect: >-
+      Transfers County groundwater-extraction regulation within MCCSD to the
+      District to the extent authorized by law, while retaining County well
+      construction standards and specified permit enforcement.
+    limits: >-
+      It is not a transfer of all County land-use authority, a drinking-water
+      operating permit, or authority outside MCCSD's boundary.
+    source_ids: [mccsd_2012_groundwater_management_plan]
+  - id: csd_water_power
+    title: Government Code §61100(a) and Measure A
+    kind: underlying_district_power
+    effect: >-
+      Authorizes MCCSD to supply water for beneficial uses within its boundary
+      in the same manner as a municipal water district.
+    limits: >-
+      Particular new or different classes of service may still require LAFCo
+      activation; boundaries and other regulatory permits remain controlling.
+    source_ids: [lafco_2005_csd_powers, lafco_2022_groundwater_authority, mccsd_2020_msr_soi]
+  - id: joint_exercise_of_powers_act
+    title: Government Code §§6500 et seq.
+    kind: cooperation_authority
+    effect: >-
+      Permits public agencies, with governing-body authorization, to jointly
+      exercise a power common to the contracting parties. An agreement must
+      identify the purpose or power and the method of exercise.
+    limits: >-
+      A JPA cannot manufacture a power that is not common to the parties.
+      Additional filing, treasury, accountability, and audit rules apply,
+      especially when a separate entity is created.
+    source_ids: [state_controller_jpa_guide, mccsd_water_code_10700_10717]
+  - id: mou_2024
+    title: 2024 MUSD–MCCSD Memorandum of Understanding
+    kind: cooperative_project_agreement
+    effect: >-
+      Combines funded construction into one project; assigns MUSD ownership,
+      operation, CEQA, and school-system responsibilities; preserves MCCSD and
+      MUSD control over their respective grant-funded changes; and limits
+      non-MUSD/non-fire access to declared drought emergencies when neighboring
+      districts cannot provide hauled water, through a future application process.
+    limits: >-
+      It creates no separate entity, identifies no JPA governance or common
+      power, and does not amend the DDW permit or LAFCo approvals. Its legal
+      status as a non-entity joint-powers agreement is not established by the
+      current record; substance and governing-body authorization, not the
+      document's title, would control.
+    source_ids:
+      - mccsd_musd_2024_mou
+      - mccsd_2024_11_25_board_minutes
+      - mccsd_2024_11_25_board_packet
+      - musd_2024_11_21_board_minutes
+      - musd_2024_11_21_board_packet
+  - id: mou_2022
+    title: 2022 MUSD-MCCSD Water Supply and Storage Project MOU
+    kind: superseded_cooperative_project_agreement
+    effect: >-
+      Proposed MCCSD ownership and operation of a new 500,000-gallon tank and
+      new wells, with MCCSD providing emergency water to eligible residential
+      and commercial customers.
+    limits: >-
+      The recovered instrument is an unsigned packet copy. Both boards approved
+      the agreement, but the signed original remains missing, and the agreement
+      was replaced in April 2023.
+    source_ids:
+      - mccsd_2022_08_29_board_minutes
+      - musd_2022_09_08_board_minutes
+      - musd_2022_09_08_board_packet
+      - mccsd_2022_10_03_board_minutes
+  - id: mou_2023
+    title: April 20, 2023 MUSD-MCCSD Memorandum of Understanding
+    kind: superseded_cooperative_project_agreement
+    effect: >-
+      Combined the agencies' potable well and storage projects and divided
+      access, operating, maintenance, grant, and asset responsibilities.
+    limits: >-
+      MCCSD rescinded this agreement November 25, 2024. It must not be treated
+      as the current agreement or confused with the separate 1997 recycled-water MOU.
+    source_ids:
+      - mccsd_musd_2023_mou
+      - mccsd_2023_04_19_board_minutes
+      - mccsd_2023_04_19_board_packet
+      - musd_2023_04_20_board_minutes
+      - musd_2023_04_20_board_packet
+      - mccsd_2024_11_25_board_minutes
+  - id: gomes_2019
+    title: Gomes v. Mendocino City Community Services District (2019) 35 Cal.App.5th 249
+    kind: published_judicial_interpretation
+    effect: >-
+      Holds that the special Water Code provisions authorize groundwater
+      extraction limits but require the statutory adoption process for new or
+      materially expanded groundwater-management programs.
+    limits: >-
+      The decision invalidated Ordinance 07-1, Resolution 200, and Ordinance
+      07-4 without prejudice to lawful readoption; it does not invalidate
+      Ordinance 90-1 or determine potable-project service authority.
+    source_ids: [gomes_v_mccsd_2019]
+  - id: lafco_policy_12_2_5
+    title: Mendocino LAFCo Policy 12.2.5
+    kind: emergency_outside_agency_service_procedure
+    effect: >-
+      Implements Government Code section 56133(d) by allowing the Executive
+      Officer to administratively approve urgent public-health or safety
+      outside-agency service, followed by Commission ratification.
+    limits: >-
+      It applies to a city or LAFCo-defined district requesting outside service.
+      Government Code section 56036 excludes school districts, so the policy
+      does not by itself govern MUSD acting in its own capacity.
+    source_ids:
+      - lafco_2025_07_07_packet
+      - lafco_2025_11_03_packet
+      - lafco_2025_12_01_packet
+  - id: recycled_water_mou_1997
+    title: 1997 MUSD-MCCSD Recycled-Water MOU and Joint Resolution 97-1
+    kind: recycled_water_cooperation_agreement
+    effect: >-
+      Commits both districts to the capital and operating arrangements for
+      tertiary recycled water used to irrigate MUSD athletic fields.
+    limits: >-
+      It concerns recycled irrigation water under separate water-quality
+      regulation, not the present potable emergency-water project.
+    source_ids: [mccsd_2012_groundwater_management_plan]
+  - id: ddw_permit
+    title: CA2300584 domestic water supply permit
+    kind: regulatory_operating_instrument
+    effect: Regulates MUSD's operation of the public water system.
+    limits: >-
+      The November 26, 2025 amended permit is missing, so its treatment of
+      community emergency distribution, tanker filling, and service scope
+      remains unknown.
+    source_ids: [ceqanet_water_supply_amendment]
+
+relationships:
+  - id: mccsd_to_musd_groundwater
+    from_actor: mccsd
+    to_actor: musd
+    relationship: groundwater_regulation_of_project_wells
+    analysis: >-
+      The MOU subjects project test wells to Ordinance 2020-01. That is MCCSD
+      exercising its groundwater program, not operating MUSD's public water system.
+    source_ids: [mccsd_musd_2024_mou, mccsd_ordinance_2020_01]
+  - id: ddw_to_musd
+    from_actor: swrcb_ddw
+    to_actor: musd
+    relationship: permit_and_public_health_regulation
+    analysis: >-
+      DDW controls whether and how CA2300584 may use new sources, treatment,
+      storage, distribution, and emergency dispensing.
+    source_ids: [ca_drinking_water_lawbook_2026, ceqanet_water_supply_amendment]
+  - id: mccsd_musd_mou
+    from_actor: mccsd
+    to_actor: musd
+    relationship: cooperative_implementation
+    analysis: >-
+      The agencies pool project execution and funding but retain separate legal
+      identities, approvals, grant control, and regulatory responsibilities.
+    source_ids:
+      - mccsd_musd_2024_mou
+      - mccsd_2024_11_25_board_minutes
+      - musd_2024_11_21_board_minutes
+  - id: county_to_mccsd_groundwater
+    from_actor: county
+    to_actor: mccsd
+    relationship: agreed_transition_of_groundwater_extraction_regulation
+    analysis: >-
+      Agreement 90-113 transferred groundwater-extraction regulation within
+      MCCSD to the District to the extent authorized by law, while the County
+      retained well-construction standards and specified permit enforcement.
+    source_ids: [mccsd_2012_groundwater_management_plan]
+  - id: musd_mccsd_recycled_water_1997
+    from_actor: mccsd
+    to_actor: musd
+    relationship: recycled_water_project_cooperation
+    analysis: >-
+      The 1997 MOU and Joint Resolution 97-1 are a prior model of cooperation,
+      but their subject is tertiary recycled water for athletic-field irrigation,
+      not potable emergency supply.
+    source_ids: [mccsd_2012_groundwater_management_plan]
+  - id: lafco_to_mccsd
+    from_actor: lafco
+    to_actor: mccsd
+    relationship: service_class_and_boundary_oversight
+    analysis: >-
+      LAFCo confirmed active groundwater and limited water powers but found a
+      municipal central system to be a new or different class requiring activation.
+    source_ids: [mccsd_2020_msr_soi, lafco_2022_groundwater_authority]
+  - id: county_to_project
+    from_actor: county
+    to_actor: musd
+    relationship: coastal_and_land_use_permitting
+    analysis: >-
+      County approval authorizes development under land-use law; it does not
+      itself authorize MUSD's water-system operation or MCCSD service expansion.
+    source_ids: [county_pc_2024_0019]
+
+decision_chain:
+  - step: 1
+    question: What physical or governmental act is proposed?
+    why: >-
+      Aquifer regulation, well construction, public-system operation, emergency
+      dispensing, hauled-water eligibility, and central retail service are different acts.
+  - step: 2
+    question: Which agency possesses that power independently?
+    why: >-
+      A contract or JPA coordinates existing powers; it does not substitute for
+      the underlying enabling statute.
+  - step: 3
+    question: Where and for whom will the power be exercised?
+    why: >-
+      MCCSD boundary, MUSD's permitted operation, the County EWSA, grant scope,
+      and practical hauling area are not interchangeable.
+  - step: 4
+    question: Is the agreement a service contract, cooperative MOU, non-entity JPA, or separate-entity JPA?
+    why: >-
+      The classification determines common-power, authorization, filing,
+      governance, treasury, audit, liability, and records requirements.
+  - step: 5
+    question: Which independent approvals remain necessary?
+    why: DDW, LAFCo, County/Coastal, grantor, and water-quality approvals do different work.
+  - step: 6
+    question: Does Water Code §10717's municipal-central-system trigger apply?
+    why: >-
+      If triggered, the special groundwater powers in Part 2.7 end, although
+      MCCSD's other statutory water powers do not necessarily disappear.
+
+unresolved:
+  - The operative November 26, 2025 DDW permit and its authorized service description.
+  - Whether either agency treated the approved 2024 MOU as a Government Code §6500 agreement.
+  - The asserted power common to MUSD and MCCSD if the MOU is claimed to be a JPA.
+  - Whether emergency hauled supply can become a municipal central system for §10717 purposes.
+  - Any nonpublic LAFCo advice or pre-application consultation specific to the MUSD/MCCSD potable-water project after 2022; none appears in the public docket searched through July 2026.
+  - The certified 1985 Measure A election record, complete AB 786 legislative history, and original Ordinance 90-1.

@@ -1,0 +1,27 @@
+schema_version: 1
+fixture: true
+monitor_id: county-etrakit
+observed_at: "2026-08-21T12:00:00Z"
+snapshot:
+  scope: Current public attachments for PC_2024-0019
+  complete: true
+  cursor:
+    record_number: PC_2024-0019
+    attachment_count: 1
+  limitation: Complete means complete for showCurrent=true, not for the administrative file or version history.
+records:
+  - repository_id: "PC_2024-0019:JFE:2501030815526995"
+    canonical_url: https://etrakit.mendocinocounty.org/eTRAKiT3/viewAttachment.aspx?Group=PROJECT&key=JFE%3A2501030815526995&ActivityNo=PC_2024-0019
+    title: Resolution PC 2024-0019 for UM_2024-0008
+    identifiers:
+      record_number: PC_2024-0019
+      related_case: UM_2024-0008
+      attachment_key: "JFE:2501030815526995"
+    fingerprints:
+      identity: "PC_2024-0019:JFE:2501030815526995"
+      metadata: fixture-not-a-computed-hash
+      content: ade3e62398cb3b40e2e5a1109759e8cc69eca31362ba8cc5da4248da12f54150
+    state: downloadable
+    first_seen_at: "2026-08-21T12:00:00Z"
+    last_seen_at: "2026-08-21T12:00:00Z"
+    notes: Fixture represents a signed adopted resolution already registered in the case manifest.

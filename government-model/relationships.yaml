@@ -1,0 +1,144 @@
+schema_version: 1
+entity_type: relationship
+records:
+  - id: relationship.swrcb-ddw
+    name: DDW is a State Water Board division
+    kind: organizational_component
+    from_id: office.ca.swrcb.ddw
+    to_id: agency.ca.swrcb
+    assertions:
+      - id: relationship-swrcb-ddw.component
+        statement: DDW performs the State Water Board's public-water-system regulatory function.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [ca_drinking_water_lawbook_2026, ddw_public_water_system_guide]
+        limits: none_identified
+  - id: relationship.ddw-musd
+    name: DDW regulates MUSD public water system operation
+    kind: regulates
+    from_id: office.ca.swrcb.ddw
+    to_id: agency.musd
+    assertions:
+      - id: relationship-ddw-musd.permit
+        statement: DDW regulates CA2300584 through the domestic water supply permit.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [ca_drinking_water_lawbook_2026, ceqanet_water_supply_amendment]
+        limits: DDW regulation does not create general school-district water-service power.
+  - id: relationship.musd-ca2300584
+    name: MUSD owns and operates CA2300584
+    kind: owns_operates
+    from_id: agency.musd
+    to_id: instrument.musd.ca2300584-ddw-permit
+    assertions:
+      - id: relationship-musd-system.operation
+        statement: MUSD is the owner and operator of the regulated public water system.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_musd_2024_mou, ca_drinking_water_lawbook_2026]
+        limits: The operative permit scope remains unresolved because the permit is missing.
+  - id: relationship.mccsd-musd-groundwater
+    name: MCCSD regulates project-well groundwater extraction
+    kind: regulates
+    from_id: agency.mccsd
+    to_id: agency.musd
+    assertions:
+      - id: relationship-mccsd-musd.groundwater
+        statement: The 2024 MOU subjects project test wells to MCCSD Ordinance 2020-01.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [mccsd_musd_2024_mou, mccsd_ordinance_2020_01]
+        limits: Groundwater extraction regulation is not operation of MUSD's public water system.
+  - id: relationship.lafco-mccsd
+    name: LAFCo oversees MCCSD boundary and service-class changes
+    kind: boundary_service_oversight
+    from_id: agency.mendocino-lafco
+    to_id: agency.mccsd
+    assertions:
+      - id: relationship-lafco-mccsd.oversight
+        statement: >-
+          LAFCo confirmed active groundwater and limited water-service classes
+          while identifying a municipal central system as requiring activation.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [lafco_2005_csd_powers, lafco_2022_groundwater_authority, mccsd_2020_msr_soi]
+        limits: LAFCo oversight does not issue the DDW permit.
+  - id: relationship.county-mccsd-groundwater
+    name: County transferred a groundwater-regulation function to MCCSD
+    kind: delegated_or_transferred_function
+    from_id: agency.mendocino-county
+    to_id: agency.mccsd
+    assertions:
+      - id: relationship-county-mccsd.transfer
+        statement: >-
+          Agreement 90-113 transferred extraction regulation within MCCSD to
+          the extent authorized while retaining County functions.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [mccsd_2012_groundwater_management_plan]
+        limits: It was not a wholesale transfer of land-use or well-construction authority.
+  - id: relationship.county-musd-project
+    name: County permits project development
+    kind: land_use_permitting
+    from_id: agency.mendocino-county
+    to_id: agency.musd
+    assertions:
+      - id: relationship-county-musd.permit
+        statement: The County approved project development through Resolution PC 2024-0019.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019]
+        limits: The County action does not authorize public-water-system operation or district service.
+  - id: relationship.mccsd-musd-cooperation
+    name: MCCSD and MUSD cooperate on project implementation
+    kind: cooperative_implementation
+    from_id: agency.mccsd
+    to_id: agency.musd
+    assertions:
+      - id: relationship-mccsd-musd.cooperation
+        statement: >-
+          The agencies pool project execution and funding responsibilities
+          while retaining separate identities, grant controls, and approvals.
+        evidence_status: supported_interpretation
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2024_mou
+          - mccsd_2024_11_25_board_minutes
+          - musd_2024_11_21_board_minutes
+        limits: >-
+          The record does not establish a separate joint-powers entity, a
+          merger of powers, or satisfaction of missing independent approvals.
+  - id: relationship.dwr-project
+    name: DWR administers project grant funding
+    kind: grant_administration
+    from_id: agency.ca.dwr
+    to_id: agency.musd
+    assertions:
+      - id: relationship-dwr-musd.grant
+        statement: DWR Agreement 4600014624 funds part of the project.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [musd_2023_response_and_funding_agreements, musd_2026_project_status]
+        limits: Grant funding does not establish regulatory or territorial authority.
+  - id: relationship.dfa-project
+    name: DFA administers drinking-water project financing
+    kind: financing
+    from_id: office.ca.swrcb.dfa
+    to_id: agency.musd
+    assertions:
+      - id: relationship-dfa-musd.financing
+        statement: The cited State Water Board agreement finances part of the project.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [musd_2023_response_and_funding_agreements, ddw_dfa_2023_comment_letter]
+        limits: Financing is not a permit or LAFCo service authorization.

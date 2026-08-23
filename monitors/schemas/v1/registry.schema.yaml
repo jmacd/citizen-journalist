@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/jmacd/mendo-codebook/monitors/schemas/v1/registry.schema.yaml
+title: Publication monitor registry
+type: object
+additionalProperties: false
+required: [schema_version, monitors]
+properties:
+  schema_version:
+    const: 1
+  monitors:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, definition, enabled]
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        definition:
+          type: string
+          pattern: "^definitions/.+\\.yaml$"
+        enabled:
+          type: boolean

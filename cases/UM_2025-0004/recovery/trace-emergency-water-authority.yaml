@@ -1,0 +1,86 @@
+schema_version: 1
+case_id: UM_2025-0004
+created_at: 2026-08-22T15:45:36-07:00
+status: research_directive_active
+action: Supply potable emergency water to users outside MCCSD's boundary.
+cio_question: >-
+  MCCSD has water authority within its district, while the County Emergency
+  Water Service Area extends beyond that district toward Slaughterhouse Gulch.
+  Identify who would legally and physically supply hauled water outside the
+  boundary and every authority, approval, or exception required for that act.
+directive_text: >-
+  Research the authority to supply potable emergency water to users outside
+  MCCSD's boundary. Distinguish MUSD, MCCSD, the County, DDW, LAFCo, any hauler,
+  and the recipient. Retrieve primary statutes, permits, resolutions,
+  agreements, board authorizations, application procedures, and agency
+  determinations. Determine where possession transfers and whether service is
+  provided at an MUSD filling point or at an out-of-boundary location. Treat
+  the County Emergency Water Service Area only as a permit eligibility map
+  unless another source grants territorial or operating authority. Do not infer
+  MUSD authority from its DDW permit or from its exclusion from Government Code
+  section 56036. Record what every authority does not establish. Do not send a
+  public-record request without CIO approval.
+verified_primary_sources:
+  - citation: California Government Code section 61100(a)
+    official_url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=61100.&lawCode=GOV
+    retrieved_at: 2026-08-22T15:45:36-07:00
+    effect: A community services district may supply water within its boundaries.
+    limitation: Does not itself authorize MCCSD service outside its boundary.
+  - citation: California Government Code section 56133
+    official_url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=56133.&lawCode=GOV
+    retrieved_at: 2026-08-22T15:45:36-07:00
+    effect: >-
+      A city or LAFCo-defined district generally needs prior written LAFCo
+      approval for new or extended service outside its boundary.
+    limitation: Applicability depends on provider identity, service facts, and any exception.
+  - citation: California Government Code section 56036
+    official_url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=56036.&lawCode=GOV
+    retrieved_at: 2026-08-22T15:45:36-07:00
+    effect: Excludes school districts from the Cortese-Knox-Hertzberg definition of district.
+    limitation: The exclusion does not grant MUSD authority to supply non-school users.
+  - source_id: county_pc_2024_0019
+    locator: page 7
+    effect: Condition 18 says stored water can be supplied by MUSD.
+    limitation: A County coastal permit condition is not a DDW permit, LAFCo approval, or school-district powers determination.
+  - source_id: mccsd_musd_2024_mou
+    locator: pages 2-3
+    effect: >-
+      MUSD owns and operates the assets; excess water may be made available in
+      declared drought emergencies through an application process determined
+      by MUSD and MCCSD.
+    limitation: >-
+      The MOU does not identify the legal supplier, pickup point, hauler,
+      transfer of possession, or authority for delivery outside MCCSD.
+current_conclusion:
+  label: unresolved
+  text: >-
+    No located source establishes that MCCSD may supply potable water outside
+    its boundary to the Slaughterhouse Gulch extension. The documents may
+    instead contemplate MUSD making water available at its system while MCCSD
+    participates in drought declarations or application review. That
+    interpretation remains unverified until the operating procedure, DDW
+    permit, MUSD authority, and LAFCo records are obtained.
+acquisition_tasks:
+  - id: operative_ddw_permit_and_plan
+    custodian: State Water Resources Control Board, Division of Drinking Water
+    records:
+      - November 26, 2025 CA2300584 permit and incorporated documents.
+      - Approved emergency dispensing, tanker filling, customer eligibility, and service geography.
+  - id: lafco_project_determination
+    custodian: Mendocino LAFCo
+    records:
+      - Section 56133 request, approval, exemption, or no-jurisdiction determination.
+      - Project correspondence concerning MUSD, MCCSD, the Emergency Water Service Area, and Slaughterhouse Gulch.
+    existing_request_draft: lafco-musd-mccsd-project
+  - id: musd_corporate_authority
+    custodian: Mendocino Unified School District
+    records:
+      - Board resolutions and minutes authorizing emergency supply to non-MUSD users.
+      - Counsel opinions or statutory analyses supporting that authority.
+      - Final customer application, fees, pickup, hauling, and delivery procedures.
+  - id: county_delivery_administration
+    custodian: Mendocino County Planning and Building Services
+    records:
+      - Final implementation protocol for Condition 18.
+      - Records identifying the approving agency, supplier, pickup point, hauler, recipient, and delivery destination.
+next_disposition: search_public_sources_before_request

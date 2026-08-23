@@ -1,0 +1,154 @@
+schema_version: 1
+entity_type: agency
+records:
+  - id: agency.ca.coastal-commission
+    name: California Coastal Commission
+    kind: state_commission
+    level: state
+    assertions:
+      - id: coastal-commission.lcp-and-appeal-role
+        statement: >-
+          The Commission reviews and certifies Local Coastal Program amendments
+          and exercises Coastal Act appellate jurisdiction over qualifying
+          local coastal development permit decisions.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - ccc_2017_town_lcp_certification
+          - ccc_appeal_report
+        limits: >-
+          Coastal certification or appeal jurisdiction does not issue a
+          drinking-water permit, alter a district boundary, or create an
+          underlying local-agency service power.
+  - id: agency.ca.legislature
+    name: California Legislature
+    kind: state_legislature
+    level: state
+    assertions:
+      - id: legislature.enacts-state-statutes
+        statement: >-
+          The California Legislature enacts the state statutes represented in
+          this seed model.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_water_code_10700_10717, ca_assembly_final_history_1987_88]
+        limits: >-
+          Enactment of a general or special statute does not prove that a
+          particular local proposal has completed every required procedure.
+  - id: agency.ca.swrcb
+    name: California State Water Resources Control Board
+    kind: state_board
+    level: state
+    assertions:
+      - id: swrcb.drinking-water-and-finance
+        statement: >-
+          The State Water Board contains functions that regulate public water
+          systems and functions that administer drinking-water financing.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [ca_drinking_water_lawbook_2026, ddw_dfa_2023_comment_letter]
+        limits: >-
+          These functions do not activate district services, change local
+          boundaries, or supply County land-use approval.
+  - id: agency.ca.dwr
+    name: California Department of Water Resources
+    kind: state_department
+    level: state
+    assertions:
+      - id: dwr.grant-administrator
+        statement: >-
+          DWR administers Agreement 4600014624 for the project represented in
+          the cited funding records.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [musd_2023_response_and_funding_agreements, musd_2026_project_status]
+        limits: >-
+          Grant administration does not itself establish drinking-water
+          operating authority, district power, or a service territory.
+  - id: agency.ca.north-coast-rwqcb
+    name: North Coast Regional Water Quality Control Board
+    kind: regional_state_board
+    level: state_regional
+    assertions:
+      - id: rwqcb.water-quality-role
+        statement: >-
+          The Regional Board regulates wastewater discharge and recycled-water
+          production and use associated with MCCSD.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_2020_msr_soi]
+        limits: It does not issue the domestic water supply permit for CA2300584.
+  - id: agency.mendocino-county
+    name: County of Mendocino
+    kind: county
+    level: county
+    assertions:
+      - id: county.land-use-role
+        statement: >-
+          The County exercises land-use, coastal-development, and well-related
+          permitting functions relevant to the seeded case.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019, ccc_2017_town_lcp_report]
+        limits: >-
+          County approval does not substitute for DDW, LAFCo, or another
+          agency's independent authority.
+  - id: agency.mendocino-lafco
+    name: Mendocino Local Agency Formation Commission
+    kind: local_agency_formation_commission
+    level: county_regional
+    assertions:
+      - id: lafco.boundary-and-service-role
+        statement: >-
+          Mendocino LAFCo determines relevant MCCSD boundary, sphere, and
+          service-class questions.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - lafco_2005_csd_powers
+          - mccsd_2020_msr_soi
+          - lafco_2020_resolution_2020_21_01
+        limits: >-
+          LAFCo does not issue a public-water-system operating permit or confer
+          school-district powers.
+  - id: agency.mccsd
+    name: Mendocino City Community Services District
+    kind: community_services_district
+    level: special_district
+    assertions:
+      - id: mccsd.active-water-and-groundwater-powers
+        statement: >-
+          MCCSD has active water-service classes identified by LAFCo and
+          administers the Mendocino-specific groundwater program.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - lafco_2005_csd_powers
+          - lafco_2022_groundwater_authority
+          - mccsd_ordinance_2020_01
+        limits: >-
+          The cited records do not establish every possible water service as
+          active; a municipal central water system was identified as a new or
+          different service class.
+  - id: agency.musd
+    name: Mendocino Unified School District
+    kind: school_district
+    level: school_district
+    assertions:
+      - id: musd.public-water-system-operator
+        statement: MUSD owns and operates public water system CA2300584.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_musd_2024_mou, ca_drinking_water_lawbook_2026]
+        limits: >-
+          Public-water-system classification does not itself prove general
+          area-wide retail-water authority.

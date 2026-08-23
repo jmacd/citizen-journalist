@@ -148,3 +148,106 @@ def test_invalid_channel_creates_no_release(tmp_path: Path) -> None:
         ReleaseBuilder(archive_root).create(channel="../public")
 
     assert not (archive_root / "releases").exists()
+
+
+def test_reuses_channel_release_when_verified_content_is_unchanged(
+    tmp_path: Path,
+) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+    builder = ReleaseBuilder(archive_root)
+    first = builder.create(channel="staging")
+    channel_before = first.channel_path.read_bytes()
+
+    second = builder.create(channel="staging", reuse_unchanged=True)
+
+    assert second.reused is True
+    assert second.release.release_id == first.release.release_id
+    assert second.manifest_sha256 == first.manifest_sha256
+    assert second.channel_path.read_bytes() == channel_before
+    assert len(list((archive_root / "releases").iterdir())) == 1
+
+
+def test_first_reuse_enabled_run_creates_channel_release(tmp_path: Path) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+
+    result = ReleaseBuilder(archive_root).create(
+        channel="staging",
+        reuse_unchanged=True,
+    )
+
+    assert result.reused is False
+    assert result.channel_path is not None
+    assert result.channel_path.is_file()
+    assert len(list((archive_root / "releases").iterdir())) == 1
+
+
+def test_changed_content_creates_new_channel_release(tmp_path: Path) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+    builder = ReleaseBuilder(archive_root)
+    first = builder.create(channel="staging")
+    source = tmp_path / "second.pdf"
+    source.write_bytes(b"second record")
+    ArchiveStore(archive_root).ingest_file(
+        source,
+        record_id="record-2",
+        record_title="Record Two",
+        collections=["case-1"],
+    )
+
+    second = builder.create(channel="staging", reuse_unchanged=True)
+
+    assert second.reused is False
+    assert second.release.release_id != first.release.release_id
+    assert len(list((archive_root / "releases").iterdir())) == 2
+
+
+def test_reuse_unchanged_requires_channel(tmp_path: Path) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+
+    with pytest.raises(InvalidEventError, match="requires a channel"):
+        ReleaseBuilder(archive_root).create(reuse_unchanged=True)
+
+    assert not (archive_root / "releases").exists()
+
+
+def test_corrupt_existing_channel_is_not_silently_replaced(tmp_path: Path) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+    channel_path = archive_root / "channels" / "staging.json"
+    channel_path.parent.mkdir()
+    channel_path.write_text("not json", encoding="utf-8")
+
+    with pytest.raises(InvalidEventError, match="invalid release channel"):
+        ReleaseBuilder(archive_root).create(
+            channel="staging",
+            reuse_unchanged=True,
+        )
+
+    assert not (archive_root / "releases").exists()
+
+
+def test_corrupt_frozen_release_is_not_reused(tmp_path: Path) -> None:
+    archive_root = tmp_path / "archive"
+    seed_release_archive(archive_root)
+    first = ReleaseBuilder(archive_root).create(channel="staging")
+    frozen_catalog = (
+        archive_root
+        / "releases"
+        / first.release.release_id
+        / "catalog"
+        / "records.parquet"
+    )
+    frozen_catalog.chmod(0o640)
+    frozen_catalog.write_bytes(b"corrupt")
+
+    with pytest.raises(IntegrityError, match="existing release source"):
+        ReleaseBuilder(archive_root).create(
+            channel="staging",
+            reuse_unchanged=True,
+        )
+
+    assert len(list((archive_root / "releases").iterdir())) == 1

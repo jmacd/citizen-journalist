@@ -91,7 +91,8 @@ planning cases, legal repositories, agency archives, or meeting series.
 ```sh
 observatory/.venv/bin/mendo-release create \
   --root /home/shared/observatory/archive \
-  --channel private
+  --channel private \
+  --reuse-unchanged
 
 observatory/.venv/bin/mendo-release materialize \
   --root /home/shared/observatory/archive \
@@ -104,6 +105,10 @@ referenced object and file hash in an immutable manifest, then atomically
 updates the optional channel pointer. Materialization requires a new
 destination, verifies every source and copied file, and renames the completed
 temporary directory into place. A failure leaves no partial destination.
+With `--reuse-unchanged`, creation compares verified destination hashes and
+counts with the current channel manifest and returns that release instead of
+creating an identical one. The option requires a channel; malformed existing
+channel state is an error rather than a reason to overwrite it.
 
 ## Push to and materialize from MinIO
 

@@ -141,6 +141,9 @@ Copy the resulting `archive_id` into `MENDO_STAGING_ARCHIVE_ID` in
 `staging.env`. Both runners require the canonical staging path and this exact
 identity. A missing mount, substituted archive, or accidental preservation
 primary path fails the unit instead of being reported as a skipped success.
+The publication runner rebuilds and verifies the corpus on every invocation,
+but reuses the current staging release when its file hashes and counts are
+unchanged. It does not advance the channel or accumulate duplicate releases.
 
 Then run the loop manually:
 

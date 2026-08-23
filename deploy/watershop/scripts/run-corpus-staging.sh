@@ -62,7 +62,8 @@ podman run --rm \
   "${MENDO_IMAGE}" \
   mendo-release create \
     --root /archive \
-    --channel "${MENDO_RELEASE_CHANNEL}"
+    --channel "${MENDO_RELEASE_CHANNEL}" \
+    --reuse-unchanged
 
 podman run --rm \
   --name mendo-corpus-push-staging \

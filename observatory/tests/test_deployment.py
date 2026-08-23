@@ -46,6 +46,7 @@ def test_staging_configuration_requires_digest_and_isolated_prefix() -> None:
     assert 'if [[ "${MENDO_IMAGE}" != *@sha256:* ]]' in runner
     assert '!= "/home/shared/observatory/staging/archive"' in runner
     assert "MENDO_STAGING_ARCHIVE_ID" in runner
+    assert "--reuse-unchanged" in runner
     assert "--pull=always" not in runner
 
 

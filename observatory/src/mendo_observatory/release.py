@@ -40,6 +40,7 @@ class ReleaseResult:
     manifest_path: Path
     manifest_sha256: str
     channel_path: Path | None
+    reused: bool = False
 
 
 @dataclass(frozen=True)
@@ -68,11 +69,32 @@ class ReleaseBuilder:
         self.file_mode = file_mode
         self.corpus = CorpusBuilder(self.root)
 
-    def create(self, *, channel: str | None = None) -> ReleaseResult:
+    def create(
+        self,
+        *,
+        channel: str | None = None,
+        reuse_unchanged: bool = False,
+    ) -> ReleaseResult:
         if channel is not None:
             self._validate_channel(channel)
+        elif reuse_unchanged:
+            raise InvalidEventError(
+                "reuse_unchanged requires a channel to identify the prior release"
+            )
         identity = self.corpus.load_identity()
         build = self.corpus.build_catalogs()
+        if reuse_unchanged and channel is not None:
+            existing = self._reuse_if_unchanged(
+                channel=channel,
+                archive_id=identity.archive_id,
+                event_count=build.event_count,
+                record_count=build.record_count,
+                object_count=build.object_count,
+                entries=self._current_entries(build.catalog_paths),
+            )
+            if existing is not None:
+                return existing
+
         release_id = str(uuid.uuid4())
         releases_directory = self.root / "releases"
         ensure_directory(releases_directory)
@@ -141,6 +163,78 @@ class ReleaseBuilder:
             manifest_path=manifest_path,
             manifest_sha256=manifest_sha256,
             channel_path=channel_path,
+        )
+
+    def _current_entries(
+        self,
+        catalog_paths: dict[str, Path],
+    ) -> list[ReleaseEntry]:
+        entries = [self._entry(self.root / "archive.json", "archive.json")]
+        for name, catalog_path in sorted(catalog_paths.items()):
+            entries.append(self._entry(catalog_path, f"catalog/{name}.parquet"))
+
+        object_rows = pq.read_table(catalog_paths["objects"]).to_pylist()
+        for row in sorted(object_rows, key=lambda value: value["sha256"]):
+            source_path = self.root / row["archive_path"]
+            entry = self._entry(source_path, row["archive_path"])
+            if entry.sha256 != row["sha256"] or entry.bytes != row["bytes"]:
+                raise IntegrityError(
+                    f"object changed after catalog verification: {source_path}"
+                )
+            entries.append(entry)
+        return entries
+
+    def _reuse_if_unchanged(
+        self,
+        *,
+        channel: str,
+        archive_id: str,
+        event_count: int,
+        record_count: int,
+        object_count: int,
+        entries: list[ReleaseEntry],
+    ) -> ReleaseResult | None:
+        channel_path = self.root / "channels" / f"{channel}.json"
+        if not os.path.lexists(channel_path):
+            return None
+
+        release = self.load_release(channel=channel)
+        expected = [
+            (entry.destination_path, entry.sha256, entry.bytes)
+            for entry in sorted(entries, key=lambda value: value.destination_path)
+        ]
+        existing = [
+            (entry.destination_path, entry.sha256, entry.bytes)
+            for entry in sorted(
+                release.entries,
+                key=lambda value: value.destination_path,
+            )
+        ]
+        if (
+            release.archive_id != archive_id
+            or release.event_count != event_count
+            or release.record_count != record_count
+            or release.object_count != object_count
+            or existing != expected
+        ):
+            return None
+
+        for entry in release.entries:
+            source = self.root / entry.source_path
+            actual_sha256, actual_bytes = hash_file(source)
+            if actual_sha256 != entry.sha256 or actual_bytes != entry.bytes:
+                raise IntegrityError(
+                    f"existing release source failed verification: {source}"
+                )
+
+        manifest_path = self.root / "releases" / release.release_id / "manifest.json"
+        manifest_sha256, _ = hash_file(manifest_path)
+        return ReleaseResult(
+            release=release,
+            manifest_path=manifest_path,
+            manifest_sha256=manifest_sha256,
+            channel_path=channel_path,
+            reused=True,
         )
 
     def load_release(

@@ -2,16 +2,41 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 from mendo_observatory import release_cli
-from mendo_observatory.release import MaterializationResult
+from mendo_observatory.release import MaterializationResult, ReleaseResult
 from mendo_observatory.remote import PushResult
 
 
 class FakeBuilder:
     def __init__(self, root: Path) -> None:
         self.root = root
+        self.create_arguments: dict[str, object] | None = None
         self.materialize_arguments: dict[str, object] | None = None
+
+    def create(
+        self,
+        *,
+        channel: str | None,
+        reuse_unchanged: bool,
+    ) -> ReleaseResult:
+        self.create_arguments = {
+            "channel": channel,
+            "reuse_unchanged": reuse_unchanged,
+        }
+        return SimpleNamespace(
+            release=SimpleNamespace(
+                release_id="release",
+                event_count=1,
+                record_count=1,
+                object_count=1,
+            ),
+            manifest_path=Path("/release/manifest.json"),
+            manifest_sha256="a" * 64,
+            channel_path=Path("/channels/staging.json"),
+            reused=True,
+        )
 
     def materialize(
         self,
@@ -114,6 +139,40 @@ def test_push_s3_routes_verify_reused(monkeypatch, tmp_path: Path) -> None:
     assert FakeRemoteStore.instance is not None
     assert FakeRemoteStore.instance.push_arguments is not None
     assert FakeRemoteStore.instance.push_arguments["verify_reused"] is True
+
+
+def test_create_routes_reuse_unchanged(
+    monkeypatch, tmp_path: Path, capsys
+) -> None:
+    builders: list[FakeBuilder] = []
+
+    def make_builder(root: Path) -> FakeBuilder:
+        builder = FakeBuilder(root)
+        builders.append(builder)
+        return builder
+
+    monkeypatch.setattr(release_cli, "ReleaseBuilder", make_builder)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "mendo-release",
+            "create",
+            "--root",
+            str(tmp_path),
+            "--channel",
+            "staging",
+            "--reuse-unchanged",
+        ],
+    )
+
+    release_cli.main()
+
+    assert builders[0].create_arguments == {
+        "channel": "staging",
+        "reuse_unchanged": True,
+    }
+    assert '"reused": true' in capsys.readouterr().out
 
 
 def test_materialize_s3_routes_expected_manifest_hash(

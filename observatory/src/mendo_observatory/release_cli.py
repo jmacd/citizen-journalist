@@ -18,6 +18,11 @@ def build_parser() -> argparse.ArgumentParser:
     create = subparsers.add_parser("create")
     create.add_argument("--root", type=Path, required=True)
     create.add_argument("--channel")
+    create.add_argument(
+        "--reuse-unchanged",
+        action="store_true",
+        help="reuse the current channel release when verified corpus content is unchanged",
+    )
 
     materialize = subparsers.add_parser("materialize")
     materialize.add_argument("--root", type=Path, required=True)
@@ -63,7 +68,10 @@ def main() -> None:
     args = build_parser().parse_args()
     if args.command == "create":
         builder = ReleaseBuilder(args.root)
-        result = builder.create(channel=args.channel)
+        result = builder.create(
+            channel=args.channel,
+            reuse_unchanged=args.reuse_unchanged,
+        )
         payload = {
             "release_id": result.release.release_id,
             "manifest_path": str(result.manifest_path),
@@ -72,6 +80,7 @@ def main() -> None:
             "event_count": result.release.event_count,
             "record_count": result.release.record_count,
             "object_count": result.release.object_count,
+            "reused": result.reused,
         }
     elif args.command == "materialize":
         builder = ReleaseBuilder(args.root)

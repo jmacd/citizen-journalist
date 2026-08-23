@@ -1,0 +1,100 @@
+schema_version: 1
+entity_type: boundary
+records:
+  - id: boundary.mccsd.jurisdiction
+    name: MCCSD jurisdictional boundary
+    kind: jurisdictional_boundary
+    authority_actor_ids: [agency.mendocino-lafco, agency.mccsd]
+    assertions:
+      - id: mccsd-boundary.general-and-geometry
+        statement: >-
+          MCCSD covers approximately one square mile between Slaughterhouse
+          Gulch and Big River; a current County GIS representation is captured.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_2020_msr_soi
+          - lafco_2020_resolution_2020_21_01
+          - county_2026_mccsd_boundary
+        limits: >-
+          The County GIS layer is a representation and is not the source of the
+          County emergency eligibility polygon.
+  - id: boundary.mccsd.sphere
+    name: MCCSD sphere of influence
+    kind: sphere_of_influence
+    authority_actor_ids: [agency.mendocino-lafco]
+    assertions:
+      - id: mccsd-sphere.coterminous
+        statement: LAFCo made the MCCSD sphere coterminous with its jurisdictional boundary.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [lafco_2020_resolution_2020_21_01, mccsd_2020_msr_soi]
+        limits: The sphere action expressly granted no new service power or service area.
+  - id: boundary.musd.ca2300584-map
+    name: CA2300584 drinking water system area map
+    kind: regulatory_system_map
+    authority_actor_ids: [office.ca.swrcb.ddw]
+    assertions:
+      - id: ca2300584-map.geometry
+        statement: A two-part 2021 DDW system-area MultiPolygon is captured.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [ddw_2021_service_area]
+        limits: >-
+          The Water Board describes the layer as a general representation that
+          may be outdated and is not a binding legal document; it does not prove
+          the operative permit's customer or emergency-dispensing scope.
+  - id: boundary.county.emergency-water-eligibility
+    name: County emergency drought water eligibility area
+    kind: permit_eligibility_area
+    authority_actor_ids: [office.mendocino-county.planning-commission]
+    assertions:
+      - id: county-ewsa.adopted-map
+        statement: >-
+          The County permit uses an eligibility area comprising MCCSD territory
+          plus an extension toward the Slaughterhouse Gulch watershed boundary.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019, county_exhibit_i, ccc_appeal_report]
+        limits: >-
+          The published map lacks parcel boundaries and is not shown to be a
+          DDW territory, annexation, sphere change, or LAFCo-approved service area.
+  - id: boundary.project.grant-beneficiary-scope
+    name: Project grant beneficiary scope
+    kind: funding_scope
+    authority_actor_ids: [agency.ca.dwr, office.ca.swrcb.dfa]
+    assertions:
+      - id: grant-scope.no-parcel-polygon
+        statement: >-
+          The 2023 agreements fund emergency storage using community-oriented
+          assumptions but do not supply a parcel-level beneficiary polygon.
+        evidence_status: supported_interpretation
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - musd_2023_final_subsequent_mnd
+          - musd_2023_response_and_funding_agreements
+        limits: >-
+          The later County eligibility polygon has not been tied to an amendment
+          of the cited DWR or DFA agreements.
+  - id: boundary.project.practical-delivery
+    name: Practical tanker delivery area
+    kind: operational_area
+    authority_actor_ids: [agency.musd, agency.mccsd]
+    assertions:
+      - id: practical-delivery.unresolved
+        statement: >-
+          An operating plan is needed to identify locations a licensed hauler
+          could actually serve from the project.
+        evidence_status: unresolved
+        acceptance_status: unknown
+        missing_record: Final emergency hauled-water operating and delivery plan
+        case_id: UM_2025-0004
+        source_ids: [nextrequest_2021_hauled_water, ddw_dfa_2023_comment_letter]
+        limits: >-
+          Practical delivery reach must not be treated as a legal boundary,
+          permit scope, or funding boundary.

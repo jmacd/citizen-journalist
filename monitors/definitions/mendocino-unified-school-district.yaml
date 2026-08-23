@@ -1,0 +1,108 @@
+schema_version: 1
+id: mendocino-unified-school-district
+name: Mendocino Unified School District publications
+agency_owner:
+  name: Mendocino Unified School District
+  jurisdiction: Mendocino County, California
+  unit: Board of Trustees and district administration
+official_repository:
+  name: MUSD board and project publications
+  kind: agency_website
+  base_url: https://www.mendocinousd.org/
+  publisher_is_authority: true
+  notes: Official board packets, minutes, project updates, environmental records, and hosted files.
+discovery:
+  method: meeting_and_project_archive_inventory
+  seeds:
+    - purpose: district_home
+      url: https://www.mendocinousd.org/
+    - purpose: board_record
+      url: https://www.mendocinousd.org/files/page/{page_id}/{filename}
+      template_variables: [page_id, filename]
+    - purpose: hosted_project_file
+      url: https://www.mendocinousd.org/files/user/{user_id}/file/{filename}
+      template_variables: [user_id, filename]
+  enumeration_unit: agenda_packet
+  query_terms:
+    - MUSD Water Supply and Storage Project
+    - MCCSD and memorandum of understanding
+    - CA2300584 and 2300584-001C
+    - tracked County permit IDs and SCH numbers
+  notes: Inventory board agendas, packets, action minutes, and project-specific publication pages.
+cursor:
+  mode: full_snapshot
+  checkpoint_fields: [meeting_date, page_id, canonical_url, observed_at]
+  ordering: Board meeting date and agenda order; hosted path IDs do not establish document chronology.
+  overlap: Revisit recent board records and tracked project pages; retain known legacy paths.
+  snapshot_scope: Public board meeting records and district-hosted files matching tracked projects and identifiers.
+  absence_semantics: A missing board attachment may be a site migration or removal; preserve the prior URL and route investigation.
+fingerprints:
+  - name: hosted_file_identity
+    scope: identity
+    algorithm: tuple
+    fields: [canonical_url]
+  - name: board_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, agenda_item, link_label, canonical_url]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+  - name: meeting_attachment_set
+    scope: collection
+    algorithm: sha256_canonical_yaml
+    fields: [meeting_date, sorted_attachment_urls]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily before and after board meetings with a tracked project item.
+  jitter: PT6H
+  rationale: Packets establish proposed text while later minutes establish board action.
+expected_identifiers:
+  - name: water_system_number
+    pattern: "^CA\\d{7}$"
+    examples: [CA2300584]
+    required: false
+  - name: sch_number
+    pattern: "^\\d{10}$"
+    examples: ["2020080439"]
+    required: false
+  - name: county_case
+    pattern: "^(?:U|UM|PC)_\\d{4}-\\d{4}$"
+    examples: [UM_2025-0004]
+    required: false
+  - name: funding_project
+    pattern: "^\\d{7}-\\d{3}[A-Z]$"
+    examples: [2300584-001C]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Public board and hosted project files are anonymously readable, with legacy paths still in use.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Do not infer approval from a packet; use action minutes or an executed instrument.
+    - Retain packet, minutes, and agreement as separate records.
+    - Avoid crawling unrelated student, personnel, or restricted content.
+  failure_policy: Record missing legacy URLs without path guessing beyond links exposed by official public pages or prior official citations.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/water-law/musd-recovery/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Route proposed, approved, signed, amended, and superseded agreements as distinct versions.

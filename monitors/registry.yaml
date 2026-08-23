@@ -1,0 +1,29 @@
+schema_version: 1
+monitors:
+  - id: planning-commission-govaccess
+    definition: definitions/planning-commission-govaccess.yaml
+    enabled: true
+  - id: county-etrakit
+    definition: definitions/county-etrakit.yaml
+    enabled: true
+  - id: county-nextrequest
+    definition: definitions/county-nextrequest.yaml
+    enabled: true
+  - id: coastal-commission
+    definition: definitions/coastal-commission.yaml
+    enabled: true
+  - id: ceqanet
+    definition: definitions/ceqanet.yaml
+    enabled: true
+  - id: division-drinking-water
+    definition: definitions/division-drinking-water.yaml
+    enabled: true
+  - id: mendocino-lafco
+    definition: definitions/mendocino-lafco.yaml
+    enabled: true
+  - id: mendocino-unified-school-district
+    definition: definitions/mendocino-unified-school-district.yaml
+    enabled: true
+  - id: mendocino-city-community-services-district
+    definition: definitions/mendocino-city-community-services-district.yaml
+    enabled: true

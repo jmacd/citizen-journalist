@@ -1,0 +1,101 @@
+schema_version: 1
+id: ceqanet
+name: California State Clearinghouse CEQAnet project history
+agency_owner:
+  name: California Governor's Office of Land Use and Climate Innovation
+  jurisdiction: State of California
+  unit: State Clearinghouse
+official_repository:
+  name: CEQAnet
+  kind: environmental_register
+  base_url: https://ceqanet.lci.ca.gov/
+  publisher_is_authority: true
+  notes: Project-centered CEQA publication history; attachments may be notices rather than underlying approvals.
+discovery:
+  method: project_history_inventory
+  seeds:
+    - purpose: project_history
+      url: https://ceqanet.lci.ca.gov/Project/{sch_number}
+      template_variables: [sch_number]
+    - purpose: project_entry
+      url: https://ceqanet.lci.ca.gov/{sch_number}/{entry_id}
+      template_variables: [sch_number, entry_id]
+    - purpose: attachment
+      url: https://ceqanet.lci.ca.gov/{sch_number}/{entry_id}/Attachment/{attachment_id}
+      template_variables: [sch_number, entry_id, attachment_id]
+  enumeration_unit: project_entry
+  query_terms: [SCH number, lead agency, project title, local case IDs]
+  notes: Enumerate the complete project history and every attachment for each tracked SCH number.
+cursor:
+  mode: per_target_full_snapshot
+  checkpoint_fields: [sch_number, entry_id, attachment_id, observed_at]
+  ordering: Numeric project entry ID; entry order is publication history, not necessarily document execution order.
+  overlap: Re-enumerate all entries and attachments for each tracked SCH project.
+  snapshot_scope: One complete public CEQAnet project history and its visible attachments.
+  absence_semantics: A missing attachment is a removal candidate; an entry without the operative instrument is only an indexed/cited record.
+fingerprints:
+  - name: entry_identity
+    scope: identity
+    algorithm: tuple
+    fields: [sch_number, entry_id]
+  - name: entry_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [document_type, title, agencies, dates, attachment_ids]
+  - name: attachment_identity
+    scope: identity
+    algorithm: tuple
+    fields: [sch_number, entry_id, attachment_id]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily while a tracked project has an open review period or recent agency action.
+  jitter: PT4H
+  rationale: Notices, revised environmental documents, and agency determinations accumulate under one SCH number.
+expected_identifiers:
+  - name: sch_number
+    pattern: "^\\d{10}$"
+    examples: ["2020080439"]
+    required: true
+  - name: entry_id
+    pattern: "^\\d+$"
+    examples: ["12"]
+    required: false
+  - name: attachment_id
+    pattern: "^[A-Za-z0-9_-]+$"
+    examples: [aSsaxb]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Public project pages and attachment links are anonymously readable.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Inspect visible content and MIME type; attachment metadata can contain template anomalies.
+    - Do not treat a Notice of Determination as the permit or approval instrument it references.
+    - Use measured request rates and complete one project inventory at a time.
+  failure_policy: Retain the entry as indexed or cited_record_only when an attachment is absent or does not contain the operative instrument.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: acquire
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Preserve SCH project identity, entry identity, attachment identity, and issuing agency separately.

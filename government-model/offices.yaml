@@ -1,0 +1,108 @@
+schema_version: 1
+entity_type: office
+records:
+  - id: office.mendocino-county.board-of-supervisors
+    name: Mendocino County Board of Supervisors
+    kind: elected_governing_body
+    parent_agency_id: agency.mendocino-county
+    assertions:
+      - id: board-of-supervisors.ordinance-4395
+        statement: >-
+          The Board adopted Ordinance 4395 as part of the Mendocino Town zoning
+          code amendment and Coastal Commission certification sequence.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids:
+          - county_ordinance_4395
+          - ccc_2017_town_lcp_certification
+        limits: >-
+          Adoption of a County zoning ordinance does not establish drinking-water
+          operating authority or alter a special district boundary.
+  - id: office.mendocino-county.planning-building-services
+    name: Mendocino County Planning and Building Services
+    kind: administrative_department
+    parent_agency_id: agency.mendocino-county
+    assertions:
+      - id: planning-building-services.case-record-role
+        statement: >-
+          The County planning record contains staff materials, permit
+          resolutions, conditions, and hearing records used to administer and
+          present the UM_2025-0004 lineage.
+        evidence_status: supported_interpretation
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - county_pc_2024_0019
+          - hearing_video_2026_08_20
+        limits: >-
+          Publication or staff custody of a record does not prove final adoption,
+          legal sufficiency, or authority assigned to a different agency.
+  - id: office.ca.swrcb.ddw
+    name: Division of Drinking Water
+    kind: regulatory_division
+    parent_agency_id: agency.ca.swrcb
+    assertions:
+      - id: ddw.permit-role
+        statement: >-
+          DDW issues and revises domestic water supply permits and regulates
+          source, treatment, storage, distribution, quality, operators, and
+          reliability.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids:
+          - ca_drinking_water_lawbook_2026
+          - ddw_permit_application
+          - ddw_amended_permit_application
+        limits: >-
+          A DDW permit regulates operation; it does not itself create the
+          operator's underlying local-government power.
+  - id: office.ca.swrcb.dfa
+    name: Division of Financial Assistance
+    kind: financing_division
+    parent_agency_id: agency.ca.swrcb
+    assertions:
+      - id: dfa.project-financing-role
+        statement: >-
+          DFA administers the cited drinking-water financing agreement and
+          reviews material funded-project scope questions.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [musd_2023_response_and_funding_agreements, ddw_dfa_2023_comment_letter]
+        limits: Financing approval is not a DDW operating permit or LAFCo approval.
+  - id: office.mendocino-county.planning-commission
+    name: Mendocino County Planning Commission
+    kind: appointed_decision_body
+    parent_agency_id: agency.mendocino-county
+    assertions:
+      - id: planning-commission.permit-decision
+        statement: >-
+          The Planning Commission adopted Resolution PC 2024-0019 for the
+          project then numbered UM_2024-0008.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019]
+        limits: >-
+          The resolution is a County permit action, not a DDW permit, LAFCo
+          service authorization, or enlargement of school-district power.
+  - id: office.mendocino-lafco.executive-officer
+    name: Mendocino LAFCo Executive Officer
+    kind: administrative_officer
+    parent_agency_id: agency.mendocino-lafco
+    assertions:
+      - id: lafco-eo.emergency-oas
+        statement: >-
+          LAFCo Policy 12.2.5 provides for Executive Officer approval of an
+          urgent outside-agency service request followed by Commission
+          ratification.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [lafco_2025_07_07_packet, lafco_2025_12_01_packet]
+        limits: >-
+          The procedure applies to a city or LAFCo-defined district; the cited
+          policy does not establish that MUSD acting as a school district is
+          subject to it.

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mendo-agents"
+version = "0.1.0"
+description = "Auditable Microsoft Agent Framework workflows for the Mendocino government casebook"
+requires-python = ">=3.11"
+dependencies = [
+  "agent-framework-core==1.15.0",
+  "agent-framework-foundry==1.11.0",
+  "agent-framework-ollama==1.0.0b260813",
+  "azure-identity>=1.25,<2",
+  "jsonschema[format]>=4.25,<5",
+  "opentelemetry-sdk>=1.39,<2",
+  "pydantic>=2.11,<3",
+  "pypdf>=5.9,<7",
+  "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pip-tools>=7.5,<8",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.25,<1",
+]
+otel = [
+  "opentelemetry-exporter-otlp-proto-grpc>=1.34,<2",
+]
+
+[project.scripts]
+mendo-agents = "mendo_agents.cli:main"
+mendo-chat = "mendo_agents.chat:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mendo_agents"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+testpaths = ["tests"]

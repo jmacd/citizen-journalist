@@ -1,0 +1,370 @@
+schema_version: 1
+run_id: acquire-boundary-records
+case_id: UM_2025-0004
+task: >-
+  Exhaustive official-source search for the native Emergency Water Service
+  Area (EWSA) GIS dataset and parcel-intersection list associated with
+  UM_2025-0004 / Exhibit I.  The Exhibit I PDF footer identifies the source
+  as ArcGIS Pro project 12571432_MCCSD_Figures.aprx, layout 12571432_EWSA,
+  creator ethompson3, on private share
+  10.206.68.4/files/gis2/GIS/PROJECTS/12571000s/12571432
+  (Windows UNC path; private IP not publicly routable).
+run_at: 2026-08-22T05:55:00Z
+outcome: not_recovered
+
+# ─── What was already captured (prior runs) ─────────────────────────────────
+prior_captures:
+  - id: county_exhibit_i
+    description: >-
+      Exhibit I - Emergency Water Service Area PDF map (UM_2024-0008 attachment).
+      This is a rendered cartographic PDF, NOT native GIS data. No parcel
+      boundaries or APN list are included. The PDF legend shows two polygons:
+      MCCSD Boundary and Emergency Water Service Area.
+    capture_path: captures/cases/UM_2025-0004/boundaries/2024-exhibit-i-ewsa.pdf
+    bytes: 1494183
+    sha256: eb10629ce4d15ded1a66fdd644f0048e733d31ad94510be4d76964e1f7940e9d
+    source_url: https://etrakit.mendocinocounty.org/eTRAKiT3/viewAttachment.aspx?Group=PROJECT&key=JFE%3A2412170831411454&ActivityNo=UM_2024-0008
+    http_status: 200
+    mime: application/pdf
+    content_disposition: "filename=UM2024-0008 Exhibit I EWSA.pdf"
+    distinction: >-
+      PDF printout only. Footer identifies native ArcGIS Pro source on a
+      private GHD network share. Does not contain shapefile, geodatabase,
+      GeoJSON, KML, feature class, parcel intersection list, or any
+      machine-readable spatial data. Confirmed HTTP 200 still live as of
+      2026-08-22T05:55:57Z.
+
+  - id: county_2026_mccsd_boundary
+    description: >-
+      Current Mendocino County GIS MCCSD Boundary polygon (GeoJSON, OBJECTID=46).
+      This is the current MCCSD jurisdictional boundary, NOT the Exhibit I EWSA.
+      The EWSA is a distinct, smaller polygon drawn to the Slaughterhouse Gulch
+      and Russian Gulch watershed boundaries within and near the MCCSD district.
+    capture_path: captures/cases/UM_2025-0004/boundaries/2026-county-mccsd-boundary.geojson
+    bytes: 36367
+    sha256: ac8aea155fddbb1c5cb38e78367260b543ac86a774f227b78412dd420d5eabe7
+    source_url: https://services5.arcgis.com/8y4r60VTvWj2wnDH/arcgis/rest/services/Community_Services_Districts/FeatureServer/0/query?where=OBJECTID%3D46&outFields=OBJECTID%2CNAME%2COWNER%2CCITY&returnGeometry=true&outSR=4326&f=geojson
+    bbox:
+      lon_min: -123.811226618858
+      lon_max: -123.782077630761
+      lat_min: 39.3009842059638
+      lat_max: 39.3167333443639
+    distinction: >-
+      Official MCCSD jurisdictional boundary. The EWSA depicted in Exhibit I
+      is a subset polygon and is NOT coterminous with this boundary. Using
+      this for a parcel intersection would produce a materially over-inclusive list.
+
+  - id: ddw_2021_service_area
+    description: >-
+      California State Water Board DDW service area for CA2300584
+      (MENDOCINO SCHOOL DISTRICT-MENDOCINO, 44141 Little Lake Road).
+      This is the formal drinking-water system service boundary, not the EWSA.
+    capture_path: captures/cases/UM_2025-0004/water-law/2021-ddw-service-area.geojson
+    sha256: 86a64e2b2ca32afbee6fb7cb893a8dbc7357a12f4bc6e7fe5f9d2208b3cd2ea3
+    source_url: https://gispublic.waterboards.ca.gov/portalserver/rest/services/Drinking_Water/California_Drinking_Water_System_Area_Boundaries/FeatureServer/0/query?where=WATER_SYSTEM_NUMBER%3D%27CA2300584%27&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson
+    bbox:
+      lon_min: -123.80424301071956
+      lon_max: -123.78213298953226
+      lat_min: 39.30749226485687
+      lat_max: 39.31238925917359
+    area_as_pct_of_mccsd: 23.59
+    distinction: >-
+      Small campus-scale polygon (approx. 24% of MCCSD area). Verified by
+      T. Shatto (State Board staff) 2021-10-22. This is the DDW system-service
+      boundary only; not the Exhibit I EWSA emergency eligibility polygon.
+
+# ─── This run: exhaustive fresh search ──────────────────────────────────────
+searches:
+
+  - id: county-arcgis-rest-catalog-2026-08-22
+    repository: Mendocino County ArcGIS REST Services (ESRI ArcGIS Online hosted)
+    url: https://services5.arcgis.com/8y4r60VTvWj2wnDH/arcgis/rest/services?f=json
+    query: Full service catalog inventory
+    attempted_at: 2026-08-22T05:00:00Z
+    http_status: 200
+    status: not_found
+    result: >-
+      Enumerated all 43 published feature services. Includes
+      Community_Services_Districts, Water_Districts, Parcels_Public_,
+      Planning_Partners_Map_WFL1, Zoning, Coastal_WFL1, FEMA_Flood_Hazard_Zones,
+      and others. No layer named Emergency Water Service Area, EWSA, or
+      equivalent is published. Water_Districts fields are OBJECTID, OWNER,
+      ADDRESS, CITY, STATE, ZIP, SOURCE, DISTRICT_N — a district-boundary
+      layer with no EWSA entry. Planning_Partners_Map_WFL1 contains Cities,
+      Communities, School Districts, Fire Protection Districts, Harbor District,
+      City Boundaries, and Mendocino County only.
+
+  - id: county-arcgis-parcel-bbox-query-2026-08-22
+    repository: Mendocino County ArcGIS Parcels_Public_ FeatureServer
+    url: https://services5.arcgis.com/8y4r60VTvWj2wnDH/arcgis/rest/services/Parcels_Public_/FeatureServer/0/query
+    query: >-
+      geometryType=esriGeometryEnvelope, geometry lon -123.805 to -123.780,
+      lat 39.306 to 39.315 (EWSA bounding box), inSR=4326,
+      outFields=APN,APNFULL,SITUS_ADD,ACRES
+    attempted_at: 2026-08-22T05:10:00Z
+    http_status: 200
+    status: data_available_polygon_needed
+    result: >-
+      Parcel layer is publicly queryable. 462 parcels returned in the EWSA
+      bounding box. The layer fields include APN, APNFULL, SITUS_ADD,
+      SITUS_CITY, SITUS_ZIP, CLASS_CD, ACRES, GEN_PLAN, GlobalID. However,
+      the EWSA polygon geometry is required to execute a proper spatial
+      intersection. Using the bounding box alone produces an over-inclusive
+      result. Using the MCCSD boundary GeoJSON would also be over-inclusive
+      as the EWSA is a distinct smaller polygon.
+    note: >-
+      A parcel intersection can be executed immediately once the native EWSA
+      polygon is obtained, using a POST to the FeatureServer with
+      geometryType=esriGeometryPolygon and spatialRel=esriSpatialRelIntersects.
+
+  - id: etrakit-project-search-um-2025-0004-2026-08-22
+    repository: Mendocino County eTRAKiT3 (Planning module)
+    url: https://etrakit.mendocinocounty.org/eTRAKiT3/Search/project.aspx
+    query: >-
+      POST form search: Project_Main.PROJECT_NO EQUALS UM_2025-0004;
+      also BEGINS WITH UM_2025; also CONTAINS UM 2025
+    attempted_at: 2026-08-22T05:20:00Z
+    http_status: 200
+    status: not_found
+    result: >-
+      All three searches returned "no results". UM_2025-0004 does not appear
+      in the public eTRAKiT project index. The existing Exhibit I attachment
+      URL for UM_2024-0008 (key JFE:2412170831411454) was verified still live
+      and serving the 1,494,183-byte PDF (HTTP 200, content-disposition
+      "UM2024-0008 Exhibit I EWSA.pdf"). No comparable attachment URL was
+      discovered for UM_2025-0004.
+    note: >-
+      eTRAKiT sub-paths /search/projectSearch.aspx, /search/planningSearch.aspx,
+      and /Project/projectDetail.aspx return HTTP 404. Only
+      /Search/project.aspx (POST) and /default.aspx return HTTP 200.
+
+  - id: govaccess-document-ids-deleted-2026-08-22
+    repository: Mendocino County Legistar
+    url: https://mendocino.legistar.com/View.ashx?M=F&ID={79046,79268,79272,63474,63982}
+    query: >-
+      Five document IDs cited in county-condition-versions-and-ewsa-gis
+      records request as GovAccess revision IDs for UM_2025-0004 and
+      related packets including the revised resolution and Exhibit I versions.
+    attempted_at: 2026-08-22T05:15:00Z
+    http_status: 302_to_Gone
+    status: rejected_wrong_repository
+    result: >-
+      All five document IDs (79046, 79268, 79272, 63474, 63982) redirect to
+      /Confirmation.aspx?M1=Gone when supplied to Legistar's unrelated internal
+      attachment-ID route. This does not show that the CivicPlus GovAccess
+      documents were deleted; CivicPlus document IDs are not Legistar file IDs.
+      The canonical mendocinocounty.gov URLs remain separately identified but
+      return Akamai HTTP 403 from this environment.
+    note: >-
+      The GovAccess Legistar instance for Mendocino County is used only for
+      Board of Supervisors and General Government Committee. Planning Commission
+      packets are not published through this system, so this route is a false
+      repository match and carries no inference about document availability.
+
+  - id: govaccess-legistar-calendar-sept-2026-2026-08-22
+    repository: Mendocino County GovAccess (Legistar) calendar
+    url: https://mendocino.legistar.com/Calendar.aspx
+    query: Planning Commission September 3, 2026 meeting
+    attempted_at: 2026-08-22T05:25:00Z
+    http_status: 200
+    status: not_found
+    result: >-
+      Loaded the full Legistar calendar (46 meetings listed). Only Board of
+      Supervisors and General Government Committee meetings appear. No Planning
+      Commission meeting for September 3, 2026 is listed. The most recent
+      upcoming meeting is Board of Supervisors on 9/1/2026. The September 3,
+      2026 Planning Commission meeting (continued from 8/20/2026) is not
+      published in the GovAccess Legistar system.
+
+  - id: wayback-cdx-govaccess-2026-2026-08-22
+    repository: Internet Archive CDX
+    url: https://web.archive.org/cdx/search/cdx?url=mendocino.legistar.com/View.ashx*&from=20260810&to=20261001
+    query: All archived Mendocino GovAccess documents from Aug-Oct 2026
+    attempted_at: 2026-08-22T05:30:00Z
+    status: not_found
+    result: >-
+      No Internet Archive captures of Mendocino GovAccess documents from
+      August-October 2026 were found. An earlier CDX query found 50 PDFs
+      from Jan-May 2026, all Board of Supervisors or committee packets.
+      No Planning Commission content has been archived.
+
+  - id: nextrequest-ewsa-gis-2026-08-22
+    repository: Mendocino County NextRequest public records portal
+    url: https://mendocinocounty.nextrequest.com/requests?q=emergency+water+service+area+GIS
+    query: emergency water service area GIS
+    attempted_at: 2026-08-22T05:35:00Z
+    http_status: 200
+    status: not_found
+    result: >-
+      No matching public records requests found. The portal loaded but
+      returned no responsive entries for the search terms.
+
+  - id: arcgis-online-search-2026-08-22
+    repository: ArcGIS Online (public)
+    urls:
+      - https://www.arcgis.com/sharing/rest/search?q=Emergency+Water+Service+Area+Mendocino
+      - https://www.arcgis.com/sharing/rest/search?q=12571432+EWSA
+      - https://www.arcgis.com/sharing/rest/search?q=12571432+MCCSD+owner%3AGHD
+      - https://www.arcgis.com/sharing/rest/search?q=GHD+Mendocino+water+service+area
+    attempted_at: 2026-08-22T05:05:00Z
+    status: not_found
+    result: >-
+      All four ArcGIS Online searches returned zero results. The native ArcGIS
+      Pro project 12571432_MCCSD_Figures has not been published as a public
+      ArcGIS Online item. No GHD public organization group exists for this
+      project. The EWSA polygon has not been shared publicly on ESRI's platform.
+
+  - id: arcgis-hub-catalog-2026-08-22
+    repository: Mendocino County ArcGIS Hub / Open Data portal
+    url: https://mendocino-county-gis-mendocino.hub.arcgis.com/api/feed/dcat-us/1.1.json
+    query: Full open data catalog
+    attempted_at: 2026-08-22T05:07:00Z
+    status: not_found
+    result: >-
+      The open data catalog returned zero datasets (empty dataset array).
+      No open GIS data is published through the ArcGIS Hub for Mendocino County.
+
+  - id: lafco-gis-portal-2026-08-22
+    repository: Mendocino LAFCo
+    url: https://www.mendolafco.org/gis-maps
+    query: EWSA, service area, GIS maps
+    attempted_at: 2026-08-22T05:40:00Z
+    http_status: 404
+    status: not_found
+    result: >-
+      LAFCo GIS/maps page returned 404. No GIS data portal exists at this URL.
+      The prior lafco-public-record-sweep-2026-08-21 already confirmed no
+      project-specific MCCSD/MUSD proceeding in LAFCo's public docket.
+
+  - id: mccsd-musd-websites-2026-08-22
+    repository: mccsd.com and mendocinousd.org
+    query: GIS, service area, EWSA, shapefile, geojson, boundary
+    attempted_at: 2026-08-22T05:45:00Z
+    status: not_found
+    result: >-
+      MCCSD (mccsd.com): Full site loaded (103 KB). Archives, ordinances,
+      infrastructure-projects, water-feasibility-study, recycled-water-project,
+      and groundwater-management pages examined. File attachments are
+      administrative PDFs and schedule documents only. No GIS data published.
+      MUSD (mendocinousd.org): Access denied from this environment (403/empty).
+      No EWSA GIS data is published by either agency.
+
+  - id: county-mendocinocounty-gov-waf-blocked-2026-08-22
+    repository: Mendocino County main website (mendocinocounty.gov)
+    query: GIS data page, planning-building-services, commission-agendas-and-minutes
+    attempted_at: 2026-08-22T05:50:00Z
+    http_status: 403
+    status: access_denied
+    result: >-
+      Mendocino County's main website is protected by Akamai Edge WAF and
+      returns 403 Access Denied for automated requests. GIS data, planning
+      commission, and agendas pages all blocked. Browser-only access would
+      be needed to confirm whether any download links exist; no evidence
+      of such downloads was found in any prior capture or prior search.
+
+  - id: ddw-mendocino-systems-api-2026-08-22
+    repository: California State Water Board DDW Service Area Boundaries (public API)
+    url: https://gispublic.waterboards.ca.gov/portalserver/rest/services/Drinking_Water/California_Drinking_Water_System_Area_Boundaries/FeatureServer/0/query
+    query: COUNTY=MENDOCINO AND WATER_SYSTEM_NAME LIKE '%MENDOCINO%'
+    attempted_at: 2026-08-22T05:52:00Z
+    http_status: 200
+    status: confirmed_not_ewsa
+    result: >-
+      Ten Mendocino-area water systems returned. CA2300584 (MENDOCINO SCHOOL
+      DISTRICT-MENDOCINO) is the only school-district system. Its DDW service
+      boundary is already captured (2021-ddw-service-area.geojson). No EWSA
+      polygon exists in the DDW public service-area layer; the DDW layer shows
+      only formal water system service boundaries, not emergency-distribution
+      eligibility areas defined in land-use conditions.
+
+# ─── Key provenance facts ────────────────────────────────────────────────────
+key_provenance_facts:
+
+  ewsa_pdf_footer_text: >-
+    The Exhibit I PDF (sha256 eb10629c…) footer states (verbatim from strings
+    extraction):
+    "10.206.68.4\files\gis2\GIS\PROJECTS\12571000s\12571432\02 Mendocino
+    City AR 6917\GIS\Maps\Deliverables\12571432_MCCSD_Figures\
+    12571432_MCCSD_Figures.aprx - 12571432_EWSA
+    Data source: World Imagery: Maxar  Created by: ethompson3"
+
+  ewsa_source_location_type: private_network_share
+  ewsa_source_ip: "10.206.68.4"
+  ewsa_project_number: "12571432"
+  ewsa_layout_name: 12571432_EWSA
+  ewsa_aprx_filename: 12571432_MCCSD_Figures.aprx
+  ewsa_creator: ethompson3
+  ewsa_firm_context: >-
+    GHD project numbers begin with 125-; project 12571432 and AR (Activity
+    Reference) 6917 are consistent with GHD's internal numbering system.
+    The private server at 10.206.68.4 is not publicly accessible.
+
+  geometry_relationships:
+    mccsd_boundary_bbox:
+      lon_min: -123.811226618858
+      lon_max: -123.782077630761
+      lat_min: 39.3009842059638
+      lat_max: 39.3167333443639
+    ddw_service_area_bbox:
+      lon_min: -123.80424301071956
+      lon_max: -123.78213298953226
+      lat_min: 39.30749226485687
+      lat_max: 39.31238925917359
+    ddw_pct_of_mccsd_area: 23.59
+    ewsa_vs_mccsd: >-
+      The EWSA is a distinct polygon, not coterminous with MCCSD boundary.
+      Exhibit I visually shows it encompassing the Slaughterhouse Gulch and
+      Russian Gulch watershed areas. Its precise extent is not recoverable
+      from any public source.
+    ewsa_vs_ddw: >-
+      The EWSA is larger than the DDW service area and encompasses a different
+      concept (emergency tanker-delivery eligibility area vs. formal system
+      service boundary).
+
+  parcel_layer_status: >-
+    The County's public Parcels_Public_ FeatureServer supports spatial queries
+    using esriGeometryPolygon / esriSpatialRelIntersects. A parcel-intersection
+    list can be generated as soon as the EWSA polygon geometry is available.
+    Fields available: APN, APNFULL, SITUS_ADD, SITUS_CITY, SITUS_ZIP,
+    CLASS_CD, ACRES, GEN_PLAN, GlobalID.
+
+# ─── Production request still needed ────────────────────────────────────────
+production_request_still_needed:
+  custodian: Mendocino County Planning and Building Services
+  email: pbs@mendocinocounty.gov
+  existing_draft: county-condition-versions-and-ewsa-gis  # in records-requests.yaml
+  draft_status: draft_not_sent
+  narrowest_path_to_native_gis:
+    description: >-
+      Request production of the native GIS file(s) used to create Exhibit I.
+      The County was given the Exhibit I by GHD (project 12571432_MCCSD_Figures).
+      A copy of the feature class or shapefile defining the EWSA polygon, or a
+      GeoJSON/KML export thereof, satisfies the request. If the County does not
+      hold the native file, GHD (as consultant to MUSD) may be an alternative
+      custodian.
+    specific_request_items:
+      - >-
+          The shapefile, GeoJSON, KML, or feature class defining the Emergency
+          Water Service Area polygon as depicted in Exhibit I of UM_2024-0008
+          and UM_2025-0004 conditions.
+      - >-
+          Any APN list or parcel-intersection analysis prepared by County staff
+          or the applicant to identify parcels within the EWSA.
+      - >-
+          GovAccess CMS metadata and stored versions for document IDs 79046,
+          79268, 79272, 63474, and 63982, including publication and deletion
+          audit records.
+  alternative_custodian:
+    name: GHD Inc. (consultant to MUSD)
+    note: >-
+      As the firm that created the ArcGIS project on their internal server,
+      GHD holds the native GIS data. However, GHD is a private consultant and
+      is not subject to CPRA. The County and MUSD are the public agencies that
+      received the deliverable and are subject to CPRA.
+
+no_captures_in_this_run: true
+captures_dir: captures/cases/UM_2025-0004/recovery/acquire-boundary-records/
+captures_note: >-
+  No new files were recovered in this run. The directory was created and is
+  empty. All relevant records are either already captured in
+  captures/cases/UM_2025-0004/boundaries/ or are not publicly available.

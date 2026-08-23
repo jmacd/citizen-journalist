@@ -1,0 +1,149 @@
+schema_version: 1
+portal:
+  name: Mendocino County NextRequest
+  url: https://mendocinocounty.nextrequest.com/requests
+  request_api: https://mendocinocounty.nextrequest.com/client/requests
+  document_api: https://mendocinocounty.nextrequest.com/client/request_documents
+searched_at: 2026-08-21T18:26:00Z
+search_terms:
+  - UM_2025-0004
+  - UM_2024-0008
+  - U_2023-0004
+  - PC_2024-0019
+  - Mendocino Unified School District
+  - Mendocino City Community Services District
+  - 2020080439
+  - CA2300584
+  - Emergency Water Service Area
+  - Slaughterhouse Gulch
+  - drought water Mendocino
+requests:
+  - id: 22-583
+    request_date: 2022-04-25
+    state: closed
+    visibility: published
+    departments: [Planning & Building]
+    url: https://mendocinocounty.nextrequest.com/requests/22-583
+    request_text: >-
+      Requested the administrative record for coastal development permit
+      CDP_2018-0012, including staff, agency, applicant, and public records.
+    disposition: Fulfilled; all requested documents released.
+    relevance: >-
+      A separate coastal-permit record showing how County planning staff and
+      MCCSD operationally coordinated hydrological review, Groundwater
+      Extraction Permit issuance, sewer rights, and Stage 4 drought timing.
+    capture_note: >-
+      All 17 documents still exposed in the portal catalog were captured and
+      hashed. The four records directly relevant to water authority and drought
+      permitting are registered and page-indexed below.
+    documents:
+      - portal_document_id: 14628657
+        title: 20181220 email MCCSD Comments.pdf
+        url: https://mendocinocounty.nextrequest.com/documents/14628657
+        source_id: nextrequest_22_583_mccsd_2018_letter
+      - portal_document_id: 14628653
+        title: CDP-2018-0012 MCCSD Comment 20191014.pdf
+        url: https://mendocinocounty.nextrequest.com/documents/14628653
+        source_id: nextrequest_22_583_mccsd_2019_comment
+      - portal_document_id: 14628659
+        title: RE CDP_2018-0012 Sheppard and MCCSD Stage 4 drought.pdf
+        url: https://mendocinocounty.nextrequest.com/documents/14628659
+        source_id: nextrequest_22_583_mccsd_drought_email
+      - portal_document_id: 14628663
+        title: CDP_2018-0012 MCCSD Water Sewer March 2022.pdf
+        url: https://mendocinocounty.nextrequest.com/documents/14628663
+        source_id: nextrequest_22_583_mccsd_2022_letter
+  - id: 23-445
+    request_date: 2023-06-20
+    state: closed
+    visibility: published
+    departments:
+      - Executive Office
+      - Transportation
+    url: https://mendocinocounty.nextrequest.com/requests/23-445
+    request_text: >-
+      MCCSD requested records of bulk water transported from Ukiah to Fort
+      Bragg during the 2021 drought and the amount subsequently transported
+      into Mendocino from September through November 2021.
+    disposition: Fulfilled; all requested documents released.
+    relevance: >-
+      Supplies empirical hauled-water volumes and destinations for evaluating
+      historical emergency demand and the later storage project assumptions.
+    documents:
+      - portal_document_id: 21849950
+        title: County of Mendocino Hauled Water PRA.pdf
+        url: https://mendocinocounty.nextrequest.com/documents/21849950
+        source_id: nextrequest_2021_hauled_water
+  - id: 24-31
+    request_date: 2024-01-16
+    state: closed
+    visibility: published
+    departments: [Planning & Building]
+    url: https://mendocinocounty.nextrequest.com/requests/24-31
+    request_text: >-
+      Requested the County's LCP-1-MEN-14-0840-1 Mendocino Town LCP update
+      application, Coastal Commission comments through June 16, 2016, and
+      records specifically concerning water.
+    disposition: Fulfilled; all requested documents released.
+    relevance: >-
+      Identified by request 24-33 as the production containing Town Plan water
+      records. No current public documents were listed when checked.
+    recovery:
+      status: substantive_official_record_set_recovered_elsewhere
+      source_ids:
+        - ccc_2016_town_lcp_report
+        - ccc_2017_town_lcp_report
+        - ccc_2017_town_lcp_exhibits
+        - ccc_2017_town_lcp_appendices
+        - ccc_2017_town_lcp_addenda
+        - ccc_2017_town_lcp_certification
+        - county_mendocino_town_plan
+        - county_ordinance_4395
+      note: >-
+        The former NextRequest binaries are absent, but the Coastal Commission
+        retained the official application transmittal, consistency analysis,
+        County resolution and correspondence, water-supply analyses, drought
+        scenarios, pre- and post-report correspondence, proposed plan and code,
+        water-demand appendices, certification action, and final Town Plan.
+  - id: 24-33
+    request_date: 2024-01-17
+    state: closed
+    visibility: published
+    departments: [Planning & Building]
+    url: https://mendocinocounty.nextrequest.com/requests/24-33
+    request_text: >-
+      Requested County records or action incorporating MCCSD groundwater
+      management extraction-permit provisions into the certified Mendocino
+      Town LCP.
+    disposition: >-
+      Closed as fulfilled through prior request 24-31, where Town Plan water
+      records had been uploaded.
+    relevance: >-
+      Directly concerns the relationship among MCCSD groundwater regulation,
+      County action, and the certified coastal plan.
+    recovery:
+      status: answer_and_supporting_record_recovered
+      source_ids: [ccc_2017_town_lcp_report]
+      note: >-
+        The Commission report states that the County had never applied for an
+        LCP amendment incorporating MCCSD groundwater-extraction permit
+        provisions. It then analyzes the submitted County groundwater
+        evaluation rules and MCCSD's separate permit program.
+  - id: 25-1012
+    request_date: 2025-07-09
+    state: closed
+    visibility: published
+    departments: [Planning & Building]
+    url: https://mendocinocounty.nextrequest.com/requests/25-1012
+    request_text: >-
+      Requested Exhibit A, Final Conditions of Approval, for UM_2024_0008,
+      Mendocino Unified School District.
+    disposition: Fulfilled; all requested documents released.
+    relevance: >-
+      Confirms that the adopted conditions were previously produced through
+      the County PRA portal. No current public documents were listed when
+      checked; the signed resolution is now captured independently from
+      eTRAKiT.
+    recovery:
+      status: exact_requested_record_recovered_elsewhere
+      source_ids: [county_pc_2024_0019]

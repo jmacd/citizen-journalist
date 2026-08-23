@@ -1,0 +1,118 @@
+schema_version: 1
+id: county-nextrequest
+name: Mendocino County NextRequest public archive
+agency_owner:
+  name: Mendocino County
+  jurisdiction: Mendocino County, California
+  unit: Public Records
+official_repository:
+  name: Mendocino County NextRequest
+  kind: public_records_portal
+  base_url: https://mendocinocounty.nextrequest.com/
+  publisher_is_authority: true
+  notes: Request-centered archive; released files may later disappear from a request.
+discovery:
+  method: paginated_api
+  seeds:
+    - purpose: request_search
+      url: https://mendocinocounty.nextrequest.com/client/requests?search_term={query}&page_number={page}
+      template_variables: [query, page]
+    - purpose: request_metadata
+      url: https://mendocinocounty.nextrequest.com/client/requests/{request_id}
+      template_variables: [request_id]
+    - purpose: request_timeline
+      url: https://mendocinocounty.nextrequest.com/client/requests/{request_id}/timeline
+      template_variables: [request_id]
+    - purpose: released_documents
+      url: https://mendocinocounty.nextrequest.com/client/request_documents?request_id={request_id}&page_number={page}
+      template_variables: [request_id, page]
+    - purpose: public_document_catalog
+      url: https://mendocinocounty.nextrequest.com/client/documents?page_number={page}&page_size={page_size}
+      template_variables: [page, page_size]
+  enumeration_unit: request
+  query_terms:
+    - case IDs with underscore and hyphen variants
+    - resolution IDs
+    - applicant and agency names
+    - addresses and APNs
+    - grant and permit identifiers
+    - distinctive phrases
+  notes: Retain each literal query because portal tokenization is fuzzy and can yield false matches.
+cursor:
+  mode: high_water_mark_with_overlap
+  checkpoint_fields: [reported_total, request_id, document_id, page_number, observed_at]
+  ordering: Paginate to reported totals; normalize by immutable portal ID rather than result order.
+  overlap: Re-enumerate known matching requests and the complete public document catalog; overlap search result pages.
+  snapshot_scope: Search results, request metadata, timelines, current request documents, and global public document metadata.
+  absence_semantics: Empty current documents do not negate a timeline showing prior production; route disappearance for investigation.
+fingerprints:
+  - name: request_identity
+    scope: identity
+    algorithm: tuple
+    fields: [request_id, pretty_id]
+  - name: request_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [request_text, status, dates, timeline]
+  - name: released_document_identity
+    scope: identity
+    algorithm: tuple
+    fields: [document_id]
+  - name: released_document_metadata
+    scope: metadata
+    algorithm: sha256_canonical_yaml
+    fields: [pretty_id, title, description, folder_name, document_path]
+  - name: original_content
+    scope: content
+    algorithm: sha256_bytes
+    fields: [response_body]
+cadence:
+  interval: P7D
+  timezone: America/Los_Angeles
+  metadata_only: true
+  active_window: Daily for explicitly tracked open requests; weekly global discovery.
+  jitter: PT6H
+  rationale: Public productions can be added or removed independently of case hearing schedules.
+expected_identifiers:
+  - name: public_request
+    pattern: "^\\d{2}-\\d+$"
+    examples: [23-445, 25-1012]
+    required: true
+  - name: document_id
+    pattern: "^\\d+$"
+    examples: ["21849950"]
+    required: false
+  - name: planning_case
+    pattern: "^(?:U|UM|PC|CDP)_\\d{4}-\\d{4}$"
+    examples: [UM_2025-0004]
+    required: false
+status:
+  state: active
+  verified_at: "2026-08-21"
+  notes: Anonymous request metadata, timelines, and currently public document endpoints are available.
+access:
+  anonymous: true
+  robots_and_terms_respected: true
+  authentication: none
+  constraints:
+    - Do not infer relevance from fuzzy search results without reviewing request text.
+    - Paginate conservatively and respect reported totals and portal rate limits.
+    - Do not attempt access to non-public or requester-only records.
+  failure_policy: Preserve request metadata and production history even when current downloads fail or document lists become empty.
+routing:
+  queue: future_evidence_review
+  event_map:
+    discovered: review_metadata
+    metadata_changed: review_metadata
+    content_changed: register_version
+    disappeared: investigate_removal
+    access_failed: record_access_failure
+  review_workflow:
+    - harvest-nextrequest-public-records
+    - acquire-public-record
+    - register-document-version
+  evidence_targets:
+    manifest: cases/{case_id}/manifest.yaml
+    capture_root: captures/cases/{case_id}/pra/
+    acquisition_log: cases/{case_id}/acquisition-log.yaml
+  notes: Discovered public requests belong in public-request-index.yaml; outbound requests remain separate.

@@ -1,0 +1,168 @@
+schema_version: 1
+requests:
+  - id: ddw-ca2300584-permit-file
+    status: draft_not_sent
+    custodian: State Water Resources Control Board, Division of Drinking Water
+    email: DDW-PRARequest@waterboards.ca.gov
+    office: District 03 - Mendocino, 50 D Street, Suite 200, Santa Rosa, CA 95404
+    subject: Complete permit file for CA2300584 and November 26, 2025 permit amendment
+    requested_records:
+      - Complete November 26, 2025 amended domestic water supply permit, transmittal, findings, exhibits, conditions, and incorporated documents.
+      - Immediately preceding permit and every earlier amendment incorporated, superseded, or remaining operative.
+      - Completed permit-amendment application and all supplements and revisions.
+      - January 15, 2020 GHD Water System Plan Report and later engineering reports, calculations, specifications, review comments, and approved plan sets.
+      - Source-approval records for Wells 1, 2, 6, 7, and every proposed or test well.
+      - January 25, 2021 Well 6 memorandum, April 19, 2023 hydrogeologic report, October 7, 2024 revised hydrogeologic report, and DDW reviews.
+      - Emergency or hauled-water operating plans, including triggers, customers, delivery area, allocations, reserves, filling, metering, backflow, sampling, haulers, logs, tanks, and fire access.
+      - Every service-area or customer description and map reviewed for the permit.
+      - Correspondence among DDW, MUSD, MCCSD, GHD, Mendocino County, DWR, and DFA concerning the amendment.
+      - A permit history identifying issue dates and supersession relationships.
+    basis:
+      source_id: ceqanet_water_supply_amendment
+      note: The signed NOD says permit-approval records are available to the public upon request at the DDW office.
+  - id: dfa-c-06-2300584-001c
+    status: draft_not_sent
+    custodian: State Water Resources Control Board, Division of Financial Assistance
+    email: DFA-DivisionSupportUnit@waterboards.ca.gov
+    subject: DWSRF financing file D2202005 / 2300584-001C
+    requested_records:
+      - Every amendment or executed modification to D2202005, including the document establishing the reported October 30, 2026 construction-completion date.
+      - Current and historical versions of Exhibits A, B, and D and all revised scopes, budgets, schedules, and special conditions.
+      - MUSD's funding-project update request following the June 20, 2023 State Board comment letter and every approval, rejection, or response.
+      - Records approving or rejecting use of DWSRF funds for the combined 615,000-gallon project, additional wells, or emergency community distribution.
+      - Final plans and specifications, engineering reports, bid and construction approvals, change orders, disbursements, inspections, and completion records.
+      - Operation Plan, Emergency Response Plan, and technical, managerial, and financial submissions required by the agreement.
+      - Records addressing ownership, operating covenants, tanker filling, eligibility, triggers, allocations, metering, rates, backflow protection, and service descriptions.
+      - DFA review or approval of the November 2024 MUSD-MCCSD MOU and any transfer, disposition, or changed use of funded assets.
+    basis:
+      source_id: musd_2023_response_and_funding_agreements
+      note: >-
+        Executed D2202005 funds a narrower 115,000-gallon project. The June 20,
+        2023 State Board letter directs MUSD to update the scope, and the March
+        2026 status report gives a completion date different from the original.
+    identifiers:
+      - D2202005
+      - 2300584-001C
+      - C-06-2300584-001C
+      - 2300584-001C4
+      - 2300584-001P
+      - CA2300584
+  - id: dwr-4600014624
+    status: draft_not_sent
+    custodian: California Department of Water Resources
+    email: DWRPRA@water.ca.gov
+    copy_emails:
+      - urbandrought@water.ca.gov
+      - Yuliya.Osetrova@water.ca.gov
+    subject: Complete Urban and Multibenefit Drought Relief file for Agreement 4600014624
+    requested_records:
+      - Original executed agreement and complete original Exhibits A through M.
+      - Amendment 1, including the substantive Exhibit E authorizing resolution omitted from the public appendix.
+      - Every later amendment, including the latest amendment cited in DWR's March 5, 2026 letter, with all revised exhibits.
+      - Every written non-material scope, budget, or schedule change approval.
+      - Current and historical work plans, budgets, schedules, beneficiary or service-area maps, monitoring plans, and project-location records.
+      - Amendment and extension requests supporting the March 31 and April 14, 2026 deadlines and all Extension of Liquidation records.
+      - Original application, scoring, award recommendation, support letters, eligibility analysis, and records identifying intended beneficiaries.
+      - DWR CEQA concurrence and records approving or reviewing the combined DWR and DWSRF project.
+      - Easements, appraisals, title records, recorded instruments, and asset-ownership records.
+      - DWR review or approval of the November 2024 MUSD-MCCSD MOU, MUSD ownership, transfer of operation and maintenance, and emergency-distribution restrictions.
+      - Quarterly reports, invoices, reimbursements, completion or closeout records, and post-performance reports.
+      - Correspondence concerning scope, deadlines, ownership, operation and maintenance, service area, tanker distribution, beneficiaries, and unspent funds.
+    basis:
+      source_id: musd_2026_project_status
+      note: >-
+        The public copy of Amendment 1 ends work in March 2025. DWR's March 2026
+        letter cites a latest amendment with a March 2026 deadline, proving at
+        least one later agreement version is missing.
+  - id: county-condition-versions-and-ewsa-gis
+    status: draft_not_sent
+    custodian: Mendocino County Planning and Building Services
+    email: pbs@mendocinocounty.gov
+    subject: Native condition versions, attachment history, and Exhibit I GIS for U_2023-0004 / UM_2024-0008 / UM_2025-0004
+    requested_records:
+      - Every native Word document, PDF, redline, tracked-changes copy, comparison, memorandum, email attachment, and version-history record containing proposed, revised, adopted, superseded, or alternate findings or conditions.
+      - The 11- and 12-condition U_2023-0004 versions and April 4, 2024 redline.
+      - Every draft and redline between the December 5, 2024 13-condition UM_2024-0008 draft, the December 19 22-condition redline, and adopted 21-condition Resolution PC 2024-0019.
+      - The revised resolution posted as GovAccess document 79272, document 79268, August 19 Coastal Commission language, and every later UM_2025-0004 revision.
+      - GovAccess CMS metadata and stored revisions for documents 63474, 63982, 79046, 79268, and 79272, including publication, replacement, deletion, and employee audit information.
+      - All current and non-current eTRAKiT attachments for U_2023-0004, UM_2024-0008, UM_2025-0004, PC_2024-0004, and PC_2024-0019, including deleted, replaced, superseded, inactive, internal, or staff-only records and attachment audit metadata.
+      - Every document produced through NextRequest matters 24-31, 24-33, and 25-1012, with the original production metadata and any reason those previously released files are no longer listed publicly.
+      - Native GIS records used to create Exhibit I, including APRX, MAPX, LYRX, geodatabases, shapefiles, GeoJSON, KML, feature classes, source tables, metadata, projection information, and geoprocessing history.
+      - Records matching 12571432, 12571432_MCCSD_Figures, 12571432_MCCSD_Figures.aprx, 12571432_EWSA, ethompson3, or the path containing 02 Mendocino City AR 6917.
+      - Every Exhibit I version with assessor parcels and the APN list for parcels wholly or partly intersected by the emergency water service area.
+    basis:
+      source_id: county_exhibit_i
+      note: >-
+        The public Exhibit I footer identifies the native ArcGIS project and
+        layout, while eTRAKiT exposes only current attachments and GovAccess
+        blocks automated retrieval of the August 18 revision.
+  - id: lafco-musd-mccsd-project
+    status: draft_not_sent
+    custodian: Mendocino Local Agency Formation Commission
+    email: eo@mendolafco.org
+    subject: MUSD/MCCSD water project, emergency service area, and LAFCo jurisdiction records
+    requested_records:
+      - All records since January 1, 2020 concerning the MUSD/MCCSD Water Supply and Storage Project, U_2023-0004, UM_2024-0008, UM_2025-0004, CA2300584, the Emergency Water Service Area, or Slaughterhouse Gulch.
+      - Applications, preapplications, intake logs, staff notes, emails, correspondence, legal memoranda, fee estimates, maps, and draft or final determinations.
+      - Records analyzing Government Code section 56133, outside-agency service, emergency or hauled-water service, latent powers, activation of a new or different class of water service, sphere amendment, annexation, or a service-specific sphere.
+      - Records addressing whether ownership and operation by MUSD place the project outside LAFCo jurisdiction.
+      - Communications with MCCSD, MUSD, Mendocino County, GHD, DWR, the State Water Board, DDW, or the Coastal Commission.
+      - If no responsive records exist, a description of the custodians, systems, and search terms used.
+    basis:
+      source_id: lafco_2020_resolution_2020_21_01
+      note: >-
+        The 2020 action grants no new service power or area and the adopted MSR
+        says a municipal central water system requires latent-power approval.
+        No project-specific proceeding is publicly docketed.
+  - id: musd-mccsd-authority-and-agreements
+    status: draft_not_sent
+    custodian: Mendocino Unified School District and Mendocino City Community Services District
+    subject: Legal authority, joint-powers, and implementation records for the MUSD/MCCSD water project
+    requested_records:
+      - MUSD board agendas, packets, staff reports, minutes, resolutions, and executed instruments approving the April 2023 and November 2024 memoranda of understanding.
+      - Every draft, redline, amendment, side letter, operating agreement, service agreement, emergency-water application procedure, allocation protocol, and implementation agreement under either MOU.
+      - Records identifying whether either MOU was intended, approved, or administered as an agreement under Government Code sections 6500 et seq., including the common power asserted by each party.
+      - Any notice or full agreement filed with the Secretary of State or State Controller, and records concerning JPA governance, treasury, audit, liability, indemnity, insurance, or public-record responsibilities.
+      - Legal opinions, counsel memoranda, staff analyses, and correspondence concerning MUSD authority to provide water to non-school users and MCCSD authority to regulate, supply, fund, or arrange that service.
+      - Records analyzing Water Code sections 10707, 10711, 10712, and 10717, including whether the project could constitute a municipal central water system or affect MCCSD groundwater authority.
+      - Original Ordinance 90-1 and amendments 91-3, 92-2, 00-1, 01-1, and 04-1, including exhibits and adoption certifications.
+      - Amendments or implementing agreements under the 1997 MUSD-MCCSD recycled-water MOU and Joint Resolution 97-1 that are not reproduced in the public 2012 Groundwater Management Plan.
+      - Communications with DDW, DFA, DWR, LAFCo, Mendocino County, and agency counsel concerning ownership, operation, customers, service area, emergency distribution, or joint powers.
+    basis:
+      source_id: mccsd_musd_2024_mou
+      note: >-
+        Public records now establish MCCSD's separate November 25, 2024 votes
+        to rescind the April 2023 MOU and adopt the revision. The remaining
+        request is narrowed to MUSD approval, nonpublic implementation and
+        legal analyses, and genuinely missing historical instruments.
+  - id: county-1985-measure-a-canvass
+    status: draft_not_sent
+    custodian: Mendocino County Clerk-Recorder-Assessor, Elections Division
+    office: 501 Low Gap Road, Ukiah, CA 95482
+    subject: Certified November 5, 1985 MCCSD Measure A election record
+    requested_records:
+      - The certified statement of vote, official canvass, and result certification for the November 5, 1985 MCCSD Measure A special election granting water powers.
+      - The ballot label, ballot question, impartial analysis, arguments, rebuttals, sample ballot, and notice of election.
+      - Any Board of Supervisors resolution calling, consolidating, canvassing, or declaring the result of the election.
+    basis:
+      source_id: lafco_2022_groundwater_authority
+      note: >-
+        Official later records report a 141-76 vote, but the contemporaneous
+        certified election record was not found in County, Legistar, state, or
+        archived public repositories.
+  - id: state-archives-ab-786-bill-file
+    status: draft_not_sent
+    custodian: California State Archives, Legislative Records Program
+    email: ArchivesWeb@sos.ca.gov
+    office: 1020 O Street, Sacramento, CA 95814
+    subject: 1987-88 legislative bill file for AB 786 (Hauser), Chapter 472
+    requested_records:
+      - Complete AB 786 bill file, including introduced and amended versions, committee analyses, hearing records, vote records, enrolled bill report, author correspondence, agency correspondence, and Governor's chaptering file.
+      - The complete letter from Assemblymember Dan Hauser urging Governor George Deukmejian to sign AB 786.
+      - Any records connecting AB 786 to the vetoed 1986 AB 792 groundwater legislation.
+    basis:
+      source_id: ca_assembly_final_history_1987_88
+      note: >-
+        The official Final History supplies the procedural history and the
+        published Gomes opinion quotes part of the author letter. Pre-1993
+        committee and Governor files are not publicly digitized.

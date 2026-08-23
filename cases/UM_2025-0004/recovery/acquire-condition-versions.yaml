@@ -1,0 +1,370 @@
+schema_version: 1
+task_id: acquire-condition-versions
+case_id: UM_2025-0004
+created_at: 2026-08-22T05:59:10Z
+
+target:
+  id: county_revised_resolution
+  title: Revised Resolution — UM_2025-0004 (20-condition version)
+  document_id: 79272
+  published_at: 2026-08-18T08:42:20.758Z
+  primary_url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+  revision_token: "639226393407582655"
+  publisher: Mendocino County Planning and Building Services
+  system: GovAccess (CivicPlus CMS) with Akamai CDN
+  version_of: UM_2025-0004_resolution
+  condition_count_basis: strong_hearing_inference_direct_inspection_needed
+  note: >-
+    The transcript of the August 20, 2026 Planning Commission hearing confirms
+    that a "revised resolution" was posted to the County website on Tuesday
+    August 18, 2026. Staff recommended adoption of this revised resolution and
+    characterized it as adding Condition 20 to the prior 19-condition draft.
+    The hearing was continued; no resolution was adopted. The document is
+    registered in the manifest as county_revised_resolution with status
+    identified_unretrieved.
+
+outcome: not_recovered
+blocking_condition: >-
+  The entire mendocinocounty.gov domain is blocked by Akamai WAF for this
+  environment's IP address. Every attempt to access any document under
+  /home/showpublisheddocument/ returned HTTP 403 with Akamai reference
+  #18.ac2d3e17.1787377709.9fcc86d9. This is a site-wide IP-based block, not
+  a document-specific access control. GovAccess is the sole publication channel
+  for document 79272; the document was not uploaded to eTRAKiT, is not archived
+  in the Wayback Machine, and has not been located through any recipient-agency
+  or public-archive route.
+
+preserved_artifacts:
+  - path: captures/cases/UM_2025-0004/recovery/acquire-condition-versions/etrakit-um2025-0004-index.html
+    description: >-
+      eTRAKiT current-attachment index for UM_2025-0004 (showCurrent=true).
+      Confirms 18 current attachments, all with August 7 2026 upload timestamps
+      (AMT:2608070123...) plus one December 2025 referral packet. No August 18
+      2026 upload (which would encode as AMT:2608180123...) is present.
+      The initial-draft resolution PDF and DOCX (AMT:2608070123180891 and
+      AMT:2608070123180890) remain unchanged from the 19-condition version.
+    url: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo=UM_2025-0004&showCurrent=true&postbackid=nothing
+    retrieved_at: 2026-08-22T05:50:00Z
+    mime: text/html; charset=utf-8
+    bytes: 24721
+    sha256: f9095e475d67d8eb7a5fb9dd4d45efd7cb9ba69c037abd93e3e5cf31bd8d64f9
+  - path: captures/cases/UM_2025-0004/recovery/acquire-condition-versions/etrakit-um2025-0004-all.html
+    description: >-
+      eTRAKiT non-current attachment query for UM_2025-0004 (showCurrent=false).
+      Returned no attachment rows, confirming no deleted or superseded attachments
+      are exposed through this endpoint. The revised resolution was not uploaded
+      to eTRAKiT even as a non-current file.
+    url: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo=UM_2025-0004&showCurrent=false&postbackid=nothing
+    retrieved_at: 2026-08-22T05:52:00Z
+    mime: text/html; charset=utf-8
+    bytes: 17340
+    sha256: 62827710d2d93e80214549b5311e43efad1120208255d763f784844fce9c9439
+
+etrakit_attachment_inventory:
+  retrieved_at: 2026-08-22T05:50:00Z
+  source: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo=UM_2025-0004&showCurrent=true&postbackid=nothing
+  current_attachments:
+    - key: JGT%3a2512161038044597
+      filename: UM_2025-0004 referral packet.pdf
+      upload_date_encoded: 2025-12-16
+    - key: AMT%3a2608070123090879
+      filename: 0.UM_2025-0004 Staff Report TO POST.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123020878
+      filename: 00.UM_2025-0004 Notice.doc
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123090880
+      filename: 01.UM_2025-0004 Staff Report signed.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123090881
+      filename: 01.UM_2025-0004 Staff Report.doc
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123120882
+      filename: 02a. UM_2025-0004 Attachment B MND (ON LINE ONLY).pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123130883
+      filename: 02b. 2026 Revised Addendum to Subsequent MND.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123160884
+      filename: 02c. 2025 Hydrological Study.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123160885
+      filename: 02d. LP-101_LP-501_Drainage Channel Reroute.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123170886
+      filename: 02e. UM_2024-0008 Topo.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123170887
+      filename: 02f. UM_2024-0008 Aerial.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123170888
+      filename: 02g. UM_2024-0008 Zoning.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123180889
+      filename: 02h. UM_2024-0008 GP.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123180890
+      filename: 03.UM_2025-0004 Reso.docx
+      upload_date_encoded: 2026-08-07
+      note: >-
+        SHA-256 confirmed unchanged at
+        1c0d8572bd8698785401c57b5520f556b8008e7803b94ac8dcd94905041c0ac0
+        (43,139 bytes). This is the 19-condition initial draft, not the
+        20-condition revised version.
+    - key: AMT%3a2608070123180891
+      filename: 03.UM_2025-0004 Reso.pdf
+      upload_date_encoded: 2026-08-07
+      note: >-
+        SHA-256 confirmed unchanged at
+        cae55b6a6263aa8fa527a0f5099db1e4d1a81a95adebf4db38f7156f0b70d8e8
+        (139,642 bytes). This is the 19-condition initial draft, not the
+        20-condition revised version.
+    - key: AMT%3a2608070123180892
+      filename: adj. mailed.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123180893
+      filename: Plan & Build affidavit 6983431 Proof of Pub.pdf
+      upload_date_encoded: 2026-08-07
+    - key: AMT%3a2608070123190894
+      filename: PROOF OF NEWSPAPER.pdf
+      upload_date_encoded: 2026-08-07
+  finding: >-
+    No attachment key encodes an August 18 2026 date. The revised resolution
+    was posted solely to GovAccess and was not uploaded to eTRAKiT.
+
+attempts:
+  - id: govaccess-primary-url
+    attempted_at: 2026-08-22T05:48:30Z
+    repository: Mendocino County GovAccess (CivicPlus CMS / Akamai CDN)
+    method: direct_http_get_with_standard_user_agent
+    url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+    http_status: 403
+    response_bytes: 440
+    result: blocked_akamai_waf
+    akamai_reference: "18.ac2d3e17.1787377709.9fcc86d9"
+
+  - id: govaccess-bare-id
+    attempted_at: 2026-08-22T05:48:35Z
+    repository: Mendocino County GovAccess
+    method: bare_document_id_without_revision_token
+    url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: govaccess-browser-headers
+    attempted_at: 2026-08-22T05:48:50Z
+    repository: Mendocino County GovAccess
+    method: full_browser_headers_chrome_131
+    url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: govaccess-showdocument-alt-path
+    attempted_at: 2026-08-22T05:49:00Z
+    repository: Mendocino County GovAccess
+    method: alternate_cms_path_showdocument
+    url: https://www.mendocinocounty.gov/home/showdocument/79272
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: govaccess-documentcenter-alt-path
+    attempted_at: 2026-08-22T05:49:05Z
+    repository: Mendocino County GovAccess
+    method: alternate_cms_path_documentcenter
+    url: https://www.mendocinocounty.gov/DocumentCenter/View/79272
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: govaccess-case-variants
+    attempted_at: 2026-08-22T05:52:00Z
+    repository: Mendocino County GovAccess
+    method: url_case_variants
+    urls:
+      - https://mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+      - https://www.mendocinocounty.gov/Home/ShowPublishedDocument/79272/639226393407582655
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: govaccess-adjacent-docs-baseline-test
+    attempted_at: 2026-08-22T05:49:10Z
+    repository: Mendocino County GovAccess
+    method: adjacency_test_with_known_published_urls
+    urls:
+      - https://www.mendocinocounty.gov/home/showpublisheddocument/79270/639226393021135487
+      - https://www.mendocinocounty.gov/home/showpublisheddocument/79030/639219575240200000
+    http_status: 403
+    result: blocked_akamai_waf
+    finding: >-
+      Previously-public documents with known URLs are also 403. The block
+      is site-wide from this IP, not specific to document 79272 or to
+      recently-published documents.
+
+  - id: govaccess-meeting-pages
+    attempted_at: 2026-08-22T05:57:00Z
+    repository: Mendocino County GovAccess
+    method: meeting_page_and_alternate_paths
+    urls:
+      - https://www.mendocinocounty.gov/government/planning-building/planning-commission
+      - https://www.mendocinocounty.gov/government/planning-building/planning-commission/commission-meetings-agendas
+      - https://www.mendocinocounty.gov/cms/One.aspx?pageId=17281888
+    http_status: 403
+    result: blocked_akamai_waf
+
+  - id: wayback-availability-api
+    attempted_at: 2026-08-22T05:49:20Z
+    repository: Internet Archive Wayback Machine availability API
+    method: availability_check_both_url_forms
+    urls:
+      - https://archive.org/wayback/available?url=www.mendocinocounty.gov/home/showpublisheddocument/79272
+      - https://archive.org/wayback/available?url=www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+    result: no_snapshots
+    response: '{"archived_snapshots":{}}'
+
+  - id: wayback-cdx-high-document-ids
+    attempted_at: 2026-08-22T05:49:30Z
+    repository: Internet Archive CDX
+    method: range_query_for_document_ids_79000_plus
+    query: "url=www.mendocinocounty.gov/home/showpublisheddocument/79*&filter=statuscode:200&limit=10"
+    result: no_results
+    note: >-
+      No Wayback Machine captures exist for any mendocinocounty.gov
+      showpublisheddocument URL with ID ≥ 79000. The Akamai block prevents
+      the Wayback crawler from capturing these documents.
+
+  - id: etrakit-current-attachment-index
+    attempted_at: 2026-08-22T05:50:00Z
+    repository: Mendocino County eTRAKiT
+    method: anonymous_current_attachment_index
+    url: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo=UM_2025-0004&showCurrent=true&postbackid=nothing
+    http_status: 200
+    result: document_not_present
+    finding: >-
+      18 current attachments, all August 7 2026 batch. No August 18 upload.
+      The revised resolution exists only on GovAccess, not in eTRAKiT.
+
+  - id: etrakit-noncurrent-attachment-index
+    attempted_at: 2026-08-22T05:52:00Z
+    repository: Mendocino County eTRAKiT
+    method: noncurrent_attachment_showCurrent_false
+    url: https://etrakit.mendocinocounty.org/eTRAKiT3/attachmentUpload.aspx?Group=Project&ActivityNo=UM_2025-0004&showCurrent=false&postbackid=nothing
+    http_status: 200
+    result: no_rows_returned
+
+  - id: etrakit-reso-hash-verification
+    attempted_at: 2026-08-22T05:58:00Z
+    repository: Mendocino County eTRAKiT
+    method: re_fetch_and_hash_comparison
+    note: >-
+      DOCX AMT:2608070123180890 = 43,139 bytes,
+      SHA-256 1c0d8572bd8698785401c57b5520f556b8008e7803b94ac8dcd94905041c0ac0.
+      PDF AMT:2608070123180891 = 139,642 bytes,
+      SHA-256 cae55b6a6263aa8fa527a0f5099db1e4d1a81a95adebf4db38f7156f0b70d8e8.
+      Both match the previously captured 19-condition initial draft.
+    result: unchanged_initial_draft_confirmed
+
+  - id: nextrequest-search
+    attempted_at: 2026-08-22T05:54:00Z
+    repository: Mendocino County NextRequest public archive
+    method: keyword_request_search
+    url: https://mendocinocounty.nextrequest.com/client/requests?search_term=UM_2025-0004+revised+resolution
+    http_status: 200
+    result: no_matching_requests_found
+
+  - id: ccc-documents-august-2026
+    attempted_at: 2026-08-22T05:55:00Z
+    repository: California Coastal Commission documents
+    method: monthly_reports_directory
+    url: https://documents.coastal.ca.gov/reports/2026/8/
+    http_status: 403
+    result: blocked
+
+  - id: granicus-planning-commission-check
+    attempted_at: 2026-08-22T05:56:00Z
+    repository: mendocino.granicus.com
+    method: view_publisher_inventory_all_ids
+    finding: >-
+      view_id=1 unreachable (TLS timeout); view_id=2 = Board of Supervisors
+      (2.2 MB); view_id=3 = BOS alternate (2.2 MB); view_id=4 = Training;
+      view_ids 5-10 = HTTP 404. Planning Commission meetings are not hosted
+      in Granicus. Hearing video is on YouTube (GdWCwPeIcX8), not Granicus.
+    result: planning_commission_not_in_granicus
+
+  - id: google-cache-attempt
+    attempted_at: 2026-08-22T05:58:00Z
+    repository: Google webcache
+    method: cache_url_lookup
+    url: "https://webcache.googleusercontent.com/search?q=cache:mendocinocounty.gov/home/showpublisheddocument/79272"
+    http_status: 200
+    result: bot_challenge_served_not_cached_content
+    note: Google returned a CAPTCHA/bot-challenge page, not cached PDF content.
+
+site_wide_block_analysis:
+  affected_domain: mendocinocounty.gov
+  block_type: Akamai WAF IP-based restriction
+  akamai_reference: "18.ac2d3e17.1787377709.9fcc86d9"
+  evidence: >-
+    Every path tested under mendocinocounty.gov returned HTTP 403 with
+    identical 440-byte Akamai error HTML. Adjacent documents known to be
+    publicly posted also returned 403. The block is environment-specific,
+    not document-specific.
+
+transcript_corroboration:
+  source_id: hearing_video_2026_08_20
+  transcript_path: captures/cases/UM_2025-0004/transcript/august-20-2026-hearing.txt
+  quotes_confirming_revised_resolution_existence:
+    - "all items have been posted to the website"
+    - "staff recommended condition 20 shown on screen and this was also in a staff memo posted on Tuesday"
+    - "condition 14 in the most recently posted resolution"
+    - "what you see before you today and we are recommending adoption of the revised resolution"
+    - "Again, as I mentioned before, our recommendation is that the Planning Commission adopt the revised resolution"
+    - "And then, nope, this is actually not the revised resolution."
+  finding: >-
+    The transcript confirms the revised resolution exists and was publicly
+    posted on Tuesday August 18, 2026. It does not safely establish the exact
+    text of that draft: speakers called stream restoration Condition 14,
+    displayed hydrological-review language as proposed Condition 20, and also
+    discussed the different pump-test Condition 20 in the adopted 2024
+    resolution. The hearing was continued; no resolution was adopted.
+
+remaining_county_production_target:
+  document_id: 79272
+  title: Revised Resolution (20-condition draft, not adopted)
+  url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+  access_routes:
+    - route: browser_or_non_blocked_ip
+      description: >-
+        Direct download from the County website using a browser or any IP
+        not blocked by the Akamai WAF. No authentication required.
+      status: viable_outside_this_environment
+    - route: september_3_etrakit_upload
+      description: >-
+        When the September 3, 2026 continued hearing packet is prepared,
+        the County may upload the revised resolution (or an updated version)
+        to eTRAKiT. The August 7 batch shows this is the County's pattern.
+      status: future_opportunity
+    - route: pra_if_url_becomes_stale
+      description: >-
+        A California Public Records Act request to County Planning for
+        the August 18 revised resolution for UM_2025-0004 would produce
+        the document if the GovAccess URL later becomes inaccessible.
+      status: fallback_not_currently_needed
+  secondary_target:
+    document_id: 79268
+    title: Staff Response to Coastal Commission Comments (published 2026-08-18T08:39:38Z)
+    url: https://www.mendocinocounty.gov/home/showpublisheddocument/79268/639226392582380105
+    note: >-
+      The transcript's "staff memo posted on Tuesday" containing recommended
+      Condition 20 language is likely this document, published nine minutes
+      before doc 79272. It would provide direct evidence of the proposed
+      Condition 20 wording. Also blocked by Akamai.
+
+todo_disposition:
+  todo_id: acquire-condition-versions
+  status: blocked
+  reason: >-
+    The 20-condition revised resolution (GovAccess 79272) was not captured.
+    All official and unofficial retrieval routes from this environment are
+    blocked by the Akamai WAF restriction on mendocinocounty.gov. The document
+    exists, is publicly posted, and is accessible from a standard browser.
+    The eTRAKiT attachment set for UM_2025-0004 was fully inventoried and
+    confirmed to contain only the unchanged 19-condition initial draft.

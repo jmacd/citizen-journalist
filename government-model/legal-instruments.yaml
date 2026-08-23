@@ -1,0 +1,177 @@
+schema_version: 1
+entity_type: legal_instrument
+records:
+  - id: instrument.ca.water-code-10700-10717
+    name: California Water Code sections 10700-10717
+    kind: statute
+    issuing_actor_ids: [agency.ca.legislature]
+    instrument_status: operative
+    assertions:
+      - id: water-code-10700.effect
+        statement: >-
+          The statute authorizes the specified local groundwater program,
+          including extraction regulation and a groundwater-purpose joint
+          powers agreement, within its stated scope and procedures.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [mccsd_water_code_10700_10717, gomes_v_mccsd_2019]
+        limits: >-
+          It does not itself create a municipal central water system; section
+          10717 terminates the special powers when its stated trigger occurs.
+  - id: instrument.ca.gov-code-61100a
+    name: California Government Code section 61100(a)
+    kind: statute
+    issuing_actor_ids: [agency.ca.legislature]
+    instrument_status: operative
+    assertions:
+      - id: gov-code-61100a.effect
+        statement: MCCSD has statutory power to supply water for beneficial uses within its boundary.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [lafco_2005_csd_powers, lafco_2022_groundwater_authority]
+        limits: Particular new or different service classes may still require LAFCo activation.
+  - id: instrument.ca.gov-code-6500-et-seq
+    name: California Joint Exercise of Powers Act
+    kind: statute
+    issuing_actor_ids: [agency.ca.legislature]
+    instrument_status: operative
+    assertions:
+      - id: jpa-act.effect
+        statement: >-
+          Public agencies may jointly exercise a power common to them with
+          governing-body authorization and an agreement specifying the
+          purpose or power and method of exercise.
+        evidence_status: verified_fact
+        acceptance_status: not_applicable
+        case_id: UM_2025-0004
+        source_ids: [state_controller_jpa_guide, mccsd_water_code_10700_10717]
+        limits: >-
+          An agreement cannot manufacture a power not common to the parties or
+          replace DDW, LAFCo, land-use, or funding approval.
+  - id: instrument.mccsd.ordinance-2020-01
+    name: MCCSD Ordinance 2020-01
+    kind: ordinance
+    issuing_actor_ids: [agency.mccsd]
+    instrument_status: adopted
+    assertions:
+      - id: ordinance-2020-01.effect
+        statement: >-
+          The ordinance governs groundwater extraction permits, studies,
+          allotments, meters, referrals, violations, appeals, and emergency permits.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [mccsd_ordinance_2020_01]
+        limits: >-
+          It is not a DDW operating permit and was not incorporated wholesale
+          into the certified Town LCP.
+  - id: instrument.county-mccsd.agreement-90-113
+    name: County-MCCSD Agreement 90-113
+    kind: interagency_agreement
+    issuing_actor_ids: [agency.mendocino-county, agency.mccsd]
+    instrument_status: adopted
+    assertions:
+      - id: agreement-90-113.effect
+        statement: >-
+          The agreement transferred groundwater-extraction regulation within
+          MCCSD to the District to the extent authorized by law while retaining
+          County well-construction standards and specified enforcement.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [mccsd_2012_groundwater_management_plan]
+        limits: >-
+          It does not transfer all County land-use authority, authorize
+          drinking-water operation, or grant authority outside MCCSD.
+  - id: instrument.musd-mccsd.mou-2023
+    name: April 20, 2023 MUSD-MCCSD Memorandum of Understanding
+    kind: cooperative_agreement
+    issuing_actor_ids: [agency.musd, agency.mccsd]
+    instrument_status: superseded
+    assertions:
+      - id: mou-2023.status
+        statement: >-
+          Both boards approved the agreement, and both later rescinded or
+          replaced it in November 2024.
+        evidence_status: verified_fact
+        acceptance_status: superseded
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2023_mou
+          - mccsd_2024_11_25_board_minutes
+          - musd_2024_11_21_board_minutes
+        limits: It must not be treated as the current agreement.
+  - id: instrument.musd-mccsd.mou-2024
+    name: 2024 MUSD-MCCSD Memorandum of Understanding
+    kind: cooperative_agreement
+    issuing_actor_ids: [agency.musd, agency.mccsd]
+    instrument_status: adopted
+    assertions:
+      - id: mou-2024.effect
+        statement: >-
+          The MOU combines funded construction, assigns MUSD project ownership
+          and operation responsibilities, preserves each party's grant control,
+          and describes limited future drought-emergency access.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2024_mou
+          - mccsd_2024_11_25_board_minutes
+          - musd_2024_11_21_board_minutes
+        limits: >-
+          It does not create a separate entity, amend the DDW permit, approve a
+          LAFCo action, or itself establish missing underlying authority.
+      - id: mou-2024.jpa-classification
+        statement: >-
+          The present record does not establish that the parties treated the
+          MOU as a Government Code section 6500 agreement or identify the
+          asserted common power.
+        evidence_status: unresolved
+        acceptance_status: unknown
+        open_question: >-
+          Did the parties invoke Government Code section 6500, and what common
+          power did they assert?
+        case_id: UM_2025-0004
+        source_ids:
+          - mccsd_musd_2024_mou
+          - mccsd_2024_11_25_board_packet
+          - musd_2024_11_21_board_packet
+        limits: The document title alone does not determine its legal classification.
+  - id: instrument.county.pc-2024-0019
+    name: Mendocino County Planning Commission Resolution PC 2024-0019
+    kind: permit_resolution
+    issuing_actor_ids: [office.mendocino-county.planning-commission]
+    instrument_status: adopted
+    assertions:
+      - id: pc-2024-0019.effect
+        statement: >-
+          The signed resolution adopted the County permit and an emergency
+          water eligibility condition and map for UM_2024-0008.
+        evidence_status: verified_fact
+        acceptance_status: accepted
+        case_id: UM_2025-0004
+        source_ids: [county_pc_2024_0019, county_exhibit_i]
+        limits: >-
+          The eligibility area is not thereby a DDW service territory, district
+          annexation, sphere amendment, or LAFCo outside-service approval.
+  - id: instrument.musd.ca2300584-ddw-permit
+    name: CA2300584 domestic water supply permit
+    kind: regulatory_permit
+    issuing_actor_ids: [office.ca.swrcb.ddw]
+    instrument_status: missing
+    assertions:
+      - id: ca2300584-permit.missing-operative-version
+        statement: >-
+          A permit amendment was issued November 26, 2025, but the operative
+          permit text is not in the corpus.
+        evidence_status: unresolved
+        acceptance_status: unknown
+        missing_record: November 26, 2025 CA2300584 amended domestic water supply permit
+        case_id: UM_2025-0004
+        source_ids: [ceqanet_water_supply_amendment]
+        limits: >-
+          Emergency distribution, tanker filling, customers, and service scope
+          cannot be inferred from the amendment notice alone.

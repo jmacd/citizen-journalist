@@ -1,0 +1,367 @@
+schema_version: 1
+case_id: UM_2025-0004
+task_id: recover-historic-authority
+task_status: blocked
+updated_at: 2026-08-22T06:00:00Z
+
+summary: >-
+  Exhaustive online search of California State Archives/Legislature/Secretary of
+  State/leginfo.ca.gov, Mendocino County Elections/NextRequest, MCCSD current and
+  archived sites (Internet Archive CDX spanning 2002-2026), and public-record
+  repositories.  No new standalone originals for the seven listed instruments were
+  found.  The AB 786 chaptered-bill text (Chapter 472, September 9, 1987) is
+  embedded as a photocopy in the already-captured 2012 Groundwater Management Plan
+  (Appendix A, PDF pages 32-34).  The Measure A ballot question and 141-76 vote
+  count appear in secondary narratives already in the record (2012 plan, 2022
+  LAFCo letter).  Signed Ordinance 90-1 and amendments 91-3, 92-2, 00-1, 01-1,
+  and 04-1 are not digitized anywhere publicly accessible.  All seven originals
+  require physical-records requests.
+
+targets:
+  - id: measure_a_1985_canvass
+    description: >-
+      Certified November 5, 1985 MCCSD special election canvass and statement of
+      vote showing Measure A passed 141 to 76.
+    custodian: Mendocino County Clerk-Recorder-Elections
+    status: identified_unretrieved
+    repositories_searched:
+      - name: Mendocino County Elections official website
+        url: https://www.mendocinocounty.gov/departments/elections
+        result: HTTP 403 from this environment; no cached 1985 election-result pages
+      - name: Mendocino County Elections Internet Archive CDX
+        query: url=co.mendocino.ca.us/elections*
+        result: CDX returned no archived pages for this path
+      - name: California Secretary of State prior elections
+        url: https://www.sos.ca.gov/elections/prior-elections
+        result: >-
+          HTTP 404; no online database of 1985 special-district election results
+          exists at the Secretary of State
+      - name: Mendocino County NextRequest
+        url: https://mendocinocounty.nextrequest.com/
+        result: >-
+          No PRA request or responsive document found matching Measure A, 1985
+          MCCSD election, or certified canvass
+    secondary_narrative_sources:
+      - >-
+        2012 Groundwater Management Plan (already captured, OCR lines 115-118):
+        the plan prints: "Shall the District acquire the powers regarding water
+        as set forth in the California Public Contract Code Section 20681(a)?"
+        and reports a 141-to-76 vote. The printed "Public Contract Code" reference
+        conflicts with the 2022 LAFCo letter's Water Code citation and may be a
+        transcription error; only the official ballot can establish the exact wording.
+      - >-
+        2022 LAFCo letter (already captured, p.1): voters approved powers "[t]o
+        supply the inhabitants of the district with water for domestic use,
+        irrigation, sanitation, industrial use, fire protection, and recreation."
+        (citing then Water Code section 20681(a))
+    note: >-
+      The ballot question text and vote count are established by secondary narratives
+      in the already-captured record, but the cited code name conflicts between
+      those narratives. A certified ballot and canvass from the County Clerk are
+      the required originals. These narratives are not substitutes per task rules.
+    pra_request_needed: true
+    pra_custodian: Mendocino County Clerk-Recorder-Elections
+    pra_note: >-
+      Request the Statement of Vote or Canvass for the November 5, 1985 MCCSD
+      special election, the official ballot, and the certificate of election results.
+
+  - id: ab_786_bill_chaptering_file
+    description: >-
+      Complete AB 786 bill file: enrolled bill, Governor signed chaptered copy, bill
+      analyses (Assembly Water Parks and Wildlife; Senate Agriculture and Water
+      Resources), committee vote sheets, amendments, author letter to Governor, and
+      Secretary of State chaptering record for Chapter 472 (September 9, 1987).
+    custodian: California State Archives and Office of the Secretary of State
+    status: identified_unretrieved
+    chaptered_bill_text_status: embedded_in_2012_plan_appendix_a
+    chaptered_bill_text_note: >-
+      The enacted chapter law text (sections 10700-10717) is reproduced as a
+      photocopy scan in Appendix A of the 2012 Groundwater Management Plan (PDF pages
+      32-34), showing "Assembly Bill No. 786 / CHAPTER 472" and the filed-with-
+      Secretary-of-State line.  This is a reproduced image of the chaptered bill
+      text, not the standalone official bill file, and is not a substitute per task
+      rules.
+    repositories_searched:
+      - name: California Legislative Information current site
+        url: https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=198700AB786
+        result: >-
+          Redirects to home page; site states pre-1999 measures are at leginfo.ca.gov
+          archive
+      - name: California Legislative Information pre-1999 archive
+        url: http://leginfo.ca.gov/pub/87-88/bill/asm/ab_0751-0800/
+        result: HTTP 404; 1987-88 session bill directory not in the public archive
+      - name: Internet Archive CDX for leginfo.ca.gov 1987-88 session
+        query: url=leginfo.ca.gov/pub/87-88/bill/asm/ab_0751-0800/*
+        result: No records; leginfo pre-1999 bills were never crawled by the Archive
+      - name: California Secretary of State Archives collections
+        url: https://www.sos.ca.gov/archives/collections
+        result: >-
+          Page loads (HTTP 200); the collections are physical holdings in Sacramento
+          and are not available for online retrieval
+      - name: Online Archive of California (OAC/CDL)
+        url: https://oac.cdlib.org/
+        result: No finding aid for digitized 1987-88 chaptered bill files
+      - name: Internet Archive full-text search
+        queries:
+          - '"AB 786" "Mendocino City Community Services" groundwater'
+          - '"chapter 472" "water code" "1987"'
+        result: No matching text items found in the digital library
+      - name: California Assembly Final History (already captured)
+        note: >-
+          PDF page 586 confirms Chapter 472 passage history and dates; not a
+          substitute for the complete bill file per task rules
+    pra_request_needed: true
+    pra_custodian: California State Archives and California Secretary of State
+    pra_note: >-
+      Request the complete chaptered bill file for Chapter 472 (AB 786, Hauser),
+      1987-88 Regular Session from the California State Archives, including: enrolled
+      bill, Governor signed copy, bill analyses, committee vote sheets, amendments,
+      and the Hauser author letter to the Governor quoted in Gomes v. MCCSD.
+      Also request the chaptering record from the Secretary of State.
+
+  - id: ordinance_90_1_signed
+    description: >-
+      Signed original of MCCSD Ordinance 90-1, the Groundwater Extraction Permit
+      Ordinance, adopted February 26, 1990 following Resolution of Intention No. 113
+      (January 29, 1990).
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - >-
+        2012 plan (OCR lines 695-700): adopted February 26, 1990 following Resolution
+        113; covered groundwater extraction permitting procedures and mandatory water
+        conservation.
+      - >-
+        Gomes v. MCCSD (already captured, pp. 127-129): states it is "the first
+        component of a comprehensive groundwater management program" requiring a
+        permit for new development, change in use, and new or modified wells.
+      - >-
+        2020 GWEP Ordinance preamble (already captured): "amending and replacing
+        Groundwater Extraction Permit Ordinances No. 90-1 and No. 91-3, as amended."
+    repositories_searched:
+      - name: MCCSD current ordinances page
+        result: Lists only Ordinance 2016-1 and later; no pre-2007 ordinances
+      - name: MCCSD archive-ordinances-and-resolutions page
+        result: Lists 2020 ordinances and 2021-2022 resolutions only
+      - name: MCCSD /pdf/ directory CDX inventory (70 PDFs)
+        result: Earliest ordinance is ORD 07-1 (already captured); no 90-1 through 04-1
+      - name: MCCSD /files/ directory CDX inventory (984 PDFs)
+        result: No filenames matching Ordinance 90-1 through 04-1
+      - name: MCCSD legacy website CDX 2002-2008 (73 captures)
+        result: Frameset-based site with no document library; no ordinance PDFs
+      - name: MCCSD membersites.namezero.com CDX (35 captures)
+        result: Same site structure; no ordinance PDFs
+      - name: Mendocino County planning PDF CDX (200 PDFs)
+        result: Only the 2012 plan references Ordinance 90-1 in narrative form
+      - name: Mendocino County NextRequest
+        result: No PRA request or released document matching Ordinance 90-1
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+  - id: amendment_91_3
+    description: MCCSD Ordinance 91-3, first amendment to Ordinance 90-1.
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - >-
+        Named in Ordinance 07-1 preamble (already captured, OCR line 9) and in 2012
+        plan (OCR line 701).
+      - No substantive description found in any captured document.
+    repositories_searched: [same exhaustive sweep as ordinance_90_1_signed above]
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+  - id: amendment_92_2
+    description: MCCSD Ordinance 92-2, second amendment to Ordinance 90-1.
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - Named in Ordinance 07-1 preamble and 2012 plan OCR line 701.
+      - No substantive description found in any captured document.
+    repositories_searched: [same exhaustive sweep as ordinance_90_1_signed above]
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+  - id: amendment_00_1
+    description: >-
+      MCCSD Ordinance 00-1, third amendment; moved aquifer test procedures to
+      appendix and conformed to Questa 1988 Mendocino Coastal Groundwater
+      Development Guidelines.
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - >-
+        2012 plan OCR (lines 701-704): "Ordinance 00-1 placed the aquifer test
+        procedures and the hydrological study outline in an appendix.  The purpose
+        was to clearly outline the hydrological study and aquifer test procedures and
+        methodology, and to conform to the Mendocino Coastal Groundwater Development
+        Guidelines (Questa, 1988) aquifer test and hydrological study model."
+    repositories_searched: [same exhaustive sweep as ordinance_90_1_signed above]
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+  - id: amendment_01_1
+    description: >-
+      MCCSD Ordinance 01-1, fourth amendment; clarified definitions and added
+      Mitigation of Adverse Effect to the study outline.
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - >-
+        2012 plan OCR (lines 704-707): "Ordinance 01-1, the fourth amendment to the
+        Groundwater Extraction Permit Ordinance, was to clarify several of the
+        definitions in the appendix and the definition of adverse effects in the Pump
+        Test Data Analysis section of the Hydrological Study Guidelines, and add
+        Mitigation of Adverse Effect to the report outline."
+      - >-
+        Internet Archive MCCSD board minutes (January 16, 2003) reference "Ordinance
+        No. 01-1, page 5, Section b" and "MCCSD Ordinance No. 01-1, page 11,
+        Section 2" in a groundwater permit appeal, confirming the ordinance was in
+        force by early 2003.  Archive URL:
+        https://web.archive.org/web/20030825022610id_/http://www.mccsd.com:80/011603.html
+    repositories_searched: [same exhaustive sweep as ordinance_90_1_signed above]
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+  - id: amendment_04_1
+    description: >-
+      MCCSD Ordinance 04-1, fifth amendment; modified definitions and addressed
+      cumulative effects to surrounding wells during aquifer testing.
+    custodian: Mendocino City Community Services District
+    status: identified_unretrieved
+    known_from_secondary_sources:
+      - >-
+        2012 plan OCR (lines 707-709): "Ordinance 04-1 modified several of the
+        definitions, and addressed the issue of cumulative effects to surrounding
+        wells during aquifer testing."
+    repositories_searched: [same exhaustive sweep as ordinance_90_1_signed above]
+    pra_request_needed: true
+    pra_custodian: Mendocino City Community Services District
+
+already_captured_supporting_record:
+  - id: mccsd_2012_groundwater_management_plan
+    description: >-
+      Contains photocopy of AB 786 Chapter 472 chaptered-bill text (sections
+      10700-10717) as Appendix A (PDF pages 32-34); Resolution 113; Agreement
+      90-113; and narratives identifying Measure A ballot question, 141-76 vote,
+      Ordinance 90-1 adoption date, and each amendment through 07-1.
+    capture_path: >-
+      captures/cases/UM_2025-0004/water-law/archive-recovery/MCCSD_Groundwater_Management_Plan_and_Programs_2012.pdf
+    sha256: 0772e181af7a1bef992e0792d2f0b32aa1acdeca885deead78b02d04595249a6
+    relevant_ocr_lines: "108-130 (Measure A), 695-710 (ordinance chain), 1245-1400 (AB 786 text)"
+    note: Not a substitute for any standalone original per task rules.
+  - id: ca_assembly_final_history_1987_88
+    description: >-
+      Official Assembly Final History; page 586 confirms AB 786 passage history,
+      committee referrals, unanimous votes, and chaptering as Chapter 472 on
+      September 9, 1987.
+    capture_path: >-
+      captures/cases/UM_2025-0004/water-law/historic-authority-recovery/ca-assembly-final-history-1987-88-asm-bills.pdf
+    sha256: 6da100061a25bbc32624c5116aa2d6fa118ab2433636afde2516c402227e071c
+    note: Not a substitute for the complete bill file per task rules.
+  - id: gomes_v_mccsd_2019
+    description: >-
+      Court of Appeal opinion describing Ordinance 90-1 substance, the Hauser
+      author letter, and the procedural history of the amendment chain.
+    capture_path: >-
+      captures/cases/UM_2025-0004/water-law/historic-authority-recovery/gomes-v-mccsd-2019-a153078-ca-courts-official.pdf
+    sha256: 51a02e17fe55abb9f2fec83b8d382d4e650b4966a56cf5dc04d5bf0e830b2c7a
+    note: Not a substitute for any signed ordinance per task rules.
+  - id: lafco_2022_groundwater_letter
+    description: >-
+      LAFCo letter confirming Measure A ballot purpose and the 1990 ordinance
+      adoption.
+    capture_path: >-
+      captures/cases/UM_2025-0004/water-law/authority/2022-lafco-letter.pdf
+    sha256: bec58a68b98c6c7bd8a2eabe4960a3c38114a445a8a3db9d009fb7148a6e6ea0
+    note: Not a substitute for the certified canvass per task rules.
+  - id: mccsd_ordinance_07_1
+    description: >-
+      Preamble identifies amendment chain 90-1, 91-3, 92-2, 00-1, 01-1, 04-1 by
+      number and states that 07-1 amends and replaces all predecessors.
+    capture_path: >-
+      captures/cases/UM_2025-0004/water-law/archive-recovery/ORD-07-1-Groundwater-Extraction-Permit.pdf
+    sha256: 8ee0c35c414124b6a71c98582fb5a511aaea00b014635b38a053c56cf5dc04d5b
+    note: Not a substitute for any predecessor ordinance per task rules.
+
+negative_search_log:
+  - id: leginfo_pre1999_archive
+    query: http://leginfo.ca.gov/pub/87-88/bill/asm/ab_0751-0800/
+    result: HTTP 404; 1987-88 session bills not digitized
+  - id: leginfo_current
+    query: leginfo.legislature.ca.gov bill_id=198700AB786
+    result: Redirects to home; pre-1999 bills not on current site
+  - id: sos_chaptered_bills_online
+    query: sos.ca.gov/archives/collections
+    result: Physical holdings only; not digitized publicly
+  - id: oac_cdlib_ab786
+    query: oac.cdlib.org — AB 786 1987 chaptered water
+    result: No digitized finding aid
+  - id: mccsd_pdf_dir_cdx
+    query: url=mccsd.com/pdf/*
+    count: 70 PDFs
+    result: Earliest ordinance is ORD 07-1; no pre-2007 ordinances
+  - id: mccsd_files_dir_cdx
+    query: url=mccsd.com/files/*
+    count: 984 PDFs
+    result: No filenames matching Ordinance 90-1 through 04-1
+  - id: mccsd_early_site_cdx
+    query: url=mccsd.com/* 2002-2008
+    count: 73 captures
+    result: Frameset site; no document library; no ordinance PDFs
+  - id: county_planning_cdx
+    query: url=co.mendocino.ca.us/planning/pdf/*
+    count: 200 PDFs
+    result: Only 2012 plan; references ordinances in narrative only
+  - id: mendocino_elections_cdx
+    query: url=co.mendocino.ca.us/elections*
+    result: No archived pages; 1985 results not digitized
+  - id: nextrequest_mccsd_election
+    query: Mendocino County NextRequest — Measure A, Ordinance 90-1
+    result: No responsive PRA request or document
+  - id: internet_archive_full_text
+    queries:
+      - '"AB 786" "Mendocino City Community Services" groundwater'
+      - '"chapter 472" "water code" "1987"'
+    result: No matching text items
+
+remaining_work:
+  - >-
+    Draft and submit PRA to Mendocino County Clerk-Recorder-Elections for
+    certified Measure A canvass and election records (November 5, 1985).
+  - >-
+    Draft and submit PRA to California State Archives for AB 786 chaptered
+    bill file (Chapter 472, 1987-88 Regular Session).
+  - >-
+    Draft and submit PRA to California Secretary of State for AB 786
+    chaptering record.
+  - >-
+    Draft and submit PRA to MCCSD for signed Ordinance 90-1 and Amendments
+    91-3, 92-2, 00-1, 01-1, and 04-1.
+  - >-
+    Upon receipt: verify MIME type, byte count, and SHA-256; register each
+    record in manifest.yaml; preserve originals under
+    captures/cases/UM_2025-0004/recovery/recover-historic-authority/ with
+    full provenance; update this file and acquisition-log.yaml; set SQL
+    status to done only when all seven target originals are in hand.
+blockers:
+  - >-
+    All seven target originals are held exclusively in physical records at
+    the California State Archives (AB 786 bill file), California Secretary
+    of State (chaptering record), Mendocino County Clerk-Recorder-Elections
+    (Measure A canvass), and MCCSD (Ordinances 90-1, 91-3, 92-2, 00-1,
+    01-1, 04-1).  None are publicly available in any online digital
+    repository searched.
+  - >-
+    Mendocino County government websites (elections, planning) returned
+    HTTP 403 from this environment; direct portal access blocked.
+  - >-
+    The California leginfo.ca.gov pre-1999 archive does not include
+    1987-88 session bill files.
+provenance_note: >-
+  This file records the findings of the online recovery attempt conducted
+  2026-08-22.  No new captures were placed in the recovery directory because no
+  new original instruments were located in any online repository.  The recovery
+  directory captures/cases/UM_2025-0004/recovery/recover-historic-authority/ is
+  created and reserved for originals received through future PRA production.  No
+  shared files were modified.

@@ -1,0 +1,69 @@
+schema_version: 1
+organization:
+  id: mendocino_government_observatory
+  name: Mendocino Government Observatory
+  chief_information_officer: human
+  purpose: >-
+    Build a source-grounded, reviewable model of Mendocino County government
+    within State and federal legal frameworks.
+
+roles:
+  - id: case_worker
+    name: Case Worker
+    instructions: >-
+      Preserve the CIO's question, expose hidden premises, route typed work,
+      enforce budgets, and return explicit dispositions without inventing evidence.
+    allowed_tools: [search_corpus, read_source, read_acquisition_log, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, access_control_bypass]
+  - id: scout
+    name: Scout
+    instructions: >-
+      Search official repositories first, preserve negative search provenance,
+      and propose precisely identified records without treating index entries as evidence.
+    allowed_tools: [search_official_repository, fetch_public_url, record_acquisition_attempt]
+    prohibited_actions: [canonical_write, external_communication, access_control_bypass]
+  - id: archivist
+    name: Archivist
+    instructions: >-
+      Validate identity, MIME, bytes, hashes, versions, OCR alignment, and
+      duplicate status before proposing canonical registration.
+    allowed_tools: [inspect_staged_file, hash_file, validate_mime, validate_ocr, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, legal_conclusion]
+  - id: analyst
+    name: Analyst
+    instructions: >-
+      Produce atomic claims with precise source locators, confidence, version
+      status, and an express statement of what each authority does not establish.
+    allowed_tools: [search_corpus, read_source, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, unsupported_claim]
+  - id: skeptic
+    name: Skeptic
+    instructions: >-
+      Test premises, locators, contradictions, supersession, authority limits,
+      and bounded negative findings. Block promotion when evidence is inadequate.
+    allowed_tools: [search_corpus, read_source, validate_locator, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, evidence_creation]
+
+approval_policy:
+  mode: balanced
+  auto_allowed:
+    - search_public_sources
+    - download_public_records
+    - hash_and_validate
+    - ocr_staged_records
+    - index_staging_corpus
+    - draft_analysis
+  required_for:
+    - document_registration
+    - knowledge_promotion
+    - supersession
+    - publication
+    - external_communication
+
+limits:
+  max_research_rounds: 2
+  max_workflow_iterations: 12
+  arbitrary_shell: false
+  direct_canonical_writes: false
+  external_communication_without_approval: false
+  bypass_access_controls: false

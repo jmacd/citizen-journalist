@@ -1,0 +1,285 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://github.com/jmacd/mendo-codebook/monitors/schemas/v1/monitor.schema.yaml
+title: Publication monitor definition
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - id
+  - name
+  - agency_owner
+  - official_repository
+  - discovery
+  - cursor
+  - fingerprints
+  - cadence
+  - expected_identifiers
+  - status
+  - access
+  - routing
+properties:
+  schema_version:
+    const: 1
+  id:
+    type: string
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+  name:
+    type: string
+    minLength: 1
+  agency_owner:
+    $ref: "#/$defs/agency"
+  official_repository:
+    $ref: "#/$defs/repository"
+  discovery:
+    $ref: "#/$defs/discovery"
+  cursor:
+    $ref: "#/$defs/cursor"
+  fingerprints:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/fingerprint"
+  cadence:
+    $ref: "#/$defs/cadence"
+  expected_identifiers:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/identifier"
+  status:
+    $ref: "#/$defs/status"
+  access:
+    $ref: "#/$defs/access"
+  routing:
+    $ref: "#/$defs/routing"
+$defs:
+  agency:
+    type: object
+    additionalProperties: false
+    required: [name, jurisdiction]
+    properties:
+      name:
+        type: string
+        minLength: 1
+      jurisdiction:
+        type: string
+        minLength: 1
+      unit:
+        type: string
+  repository:
+    type: object
+    additionalProperties: false
+    required: [name, kind, base_url]
+    properties:
+      name:
+        type: string
+      kind:
+        enum:
+          - case_portal
+          - meeting_archive
+          - public_records_portal
+          - document_archive
+          - environmental_register
+          - regulatory_database
+          - agency_website
+      base_url:
+        type: string
+        format: uri
+      publisher_is_authority:
+        type: boolean
+      notes:
+        type: string
+  discovery:
+    type: object
+    additionalProperties: false
+    required: [method, seeds, enumeration_unit]
+    properties:
+      method:
+        enum:
+          - meeting_archive_inventory
+          - case_record_inventory
+          - paginated_api
+          - document_index_inventory
+          - project_history_inventory
+          - record_and_dataset_inventory
+          - meeting_and_project_archive_inventory
+      seeds:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [purpose, url]
+          properties:
+            purpose:
+              type: string
+            url:
+              type: string
+              format: uri-template
+            template_variables:
+              type: array
+              items:
+                type: string
+      enumeration_unit:
+        enum:
+          - meeting
+          - case_record
+          - request
+          - document
+          - project_entry
+          - water_system
+          - agenda_packet
+      query_terms:
+        type: array
+        items:
+          type: string
+      notes:
+        type: string
+  cursor:
+    type: object
+    additionalProperties: false
+    required: [mode, checkpoint_fields, ordering, snapshot_scope, absence_semantics]
+    properties:
+      mode:
+        enum:
+          - full_snapshot
+          - high_water_mark_with_overlap
+          - per_target_full_snapshot
+      checkpoint_fields:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      ordering:
+        type: string
+        minLength: 1
+      overlap:
+        type: string
+      snapshot_scope:
+        type: string
+        minLength: 1
+      absence_semantics:
+        type: string
+        minLength: 1
+  fingerprint:
+    type: object
+    additionalProperties: false
+    required: [name, scope, algorithm, fields]
+    properties:
+      name:
+        type: string
+      scope:
+        enum: [identity, metadata, content, collection]
+      algorithm:
+        enum: [tuple, sha256_canonical_yaml, sha256_bytes]
+      fields:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      notes:
+        type: string
+  cadence:
+    type: object
+    additionalProperties: false
+    required: [interval, timezone, metadata_only, rationale]
+    properties:
+      interval:
+        type: string
+        pattern: "^P(?!$).+"
+      timezone:
+        type: string
+      metadata_only:
+        const: true
+      active_window:
+        type: string
+      jitter:
+        type: string
+      rationale:
+        type: string
+  identifier:
+    type: object
+    additionalProperties: false
+    required: [name, pattern, examples, required]
+    properties:
+      name:
+        type: string
+      pattern:
+        type: string
+      examples:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      required:
+        type: boolean
+  status:
+    type: object
+    additionalProperties: false
+    required: [state, verified_at]
+    properties:
+      state:
+        enum: [active, active_with_constraints, blocked, experimental]
+      verified_at:
+        type: string
+        format: date
+      notes:
+        type: string
+  access:
+    type: object
+    additionalProperties: false
+    required:
+      - anonymous
+      - robots_and_terms_respected
+      - authentication
+      - constraints
+      - failure_policy
+    properties:
+      anonymous:
+        type: boolean
+      robots_and_terms_respected:
+        const: true
+      authentication:
+        enum: [none, not_supported]
+      constraints:
+        type: array
+        items:
+          type: string
+      failure_policy:
+        type: string
+        minLength: 1
+  routing:
+    type: object
+    additionalProperties: false
+    required: [queue, event_map, review_workflow, evidence_targets]
+    properties:
+      queue:
+        const: future_evidence_review
+      event_map:
+        type: object
+        minProperties: 1
+        additionalProperties:
+          enum:
+            - acquire
+            - review_metadata
+            - register_version
+            - investigate_removal
+            - record_access_failure
+      review_workflow:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      evidence_targets:
+        type: object
+        additionalProperties: false
+        required: [manifest, capture_root, acquisition_log]
+        properties:
+          manifest:
+            type: string
+          capture_root:
+            type: string
+          acquisition_log:
+            type: string
+      notes:
+        type: string

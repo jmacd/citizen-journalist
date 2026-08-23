@@ -1,0 +1,41 @@
+schema_version: 1
+fixture: true
+monitor_id: planning-commission-govaccess
+observed_at: "2026-08-21T12:00:00Z"
+snapshot:
+  scope: Planning Commission hearing 2026-08-20
+  complete: true
+  cursor:
+    meeting_date: "2026-08-20"
+    maximum_document_id: "79272"
+  limitation: Fixture values illustrate normalization; they are not a live monitor observation.
+records:
+  - repository_id: "79046"
+    canonical_url: https://www.mendocinocounty.gov/home/showpublisheddocument/79046/639219587006230000
+    title: Draft Resolution
+    identifiers:
+      planning_case: UM_2025-0004
+      govaccess_document_id: "79046"
+      revision_token: "639219587006230000"
+    fingerprints:
+      identity: "79046"
+      metadata: fixture-not-a-computed-hash
+      content: cae55b6a6263aa8fa527a0f5099db1e4d1a81a95adebf4db38f7156f0b70d8e8
+    state: downloadable
+    first_seen_at: "2026-08-10T18:38:20Z"
+    last_seen_at: "2026-08-21T12:00:00Z"
+    notes: Content hash comes from the separately retrieved matching eTRAKiT PDF in the case manifest.
+  - repository_id: "79272"
+    canonical_url: https://www.mendocinocounty.gov/home/showpublisheddocument/79272/639226393407582655
+    title: Revised Resolution
+    identifiers:
+      planning_case: UM_2025-0004
+      govaccess_document_id: "79272"
+      revision_token: "639226393407582655"
+    fingerprints:
+      identity: "79272"
+      metadata: fixture-not-a-computed-hash
+    state: identified_unretrieved
+    first_seen_at: "2026-08-18T15:42:20Z"
+    last_seen_at: "2026-08-21T12:00:00Z"
+    notes: The public link is known, but content must not be inferred from its label.

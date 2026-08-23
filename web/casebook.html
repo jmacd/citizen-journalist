@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UM_2025-0004 | Mendocino Planning Casebook</title>
+    <link rel="stylesheet" href="casebook.css">
+  </head>
+  <body>
+    <header class="case-header">
+      <div>
+        <p class="kicker">Mendocino Planning Casebook</p>
+        <h1><span id="case-id">UM_2025-0004</span> <small id="case-title"></small></h1>
+        <p id="case-description" class="description"></p>
+      </div>
+      <dl class="case-facts">
+        <div><dt>Status</dt><dd><span class="status warning" id="case-status"></span></dd></div>
+        <div><dt>Next hearing</dt><dd id="next-hearing"></dd></div>
+        <div><dt>Applicant</dt><dd id="applicant"></dd></div>
+        <div><dt>Site</dt><dd id="project-site"></dd></div>
+        <div><dt>Parcels</dt><dd id="project-apns"></dd></div>
+      </dl>
+    </header>
+
+    <nav class="jump-nav" aria-label="Page sections">
+      <a href="#chat">Ask the casebook</a>
+      <a href="#lineage">Lineage</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#authority">Water authority</a>
+      <a href="#records">Records <span id="record-total"></span></a>
+      <a href="#questions">Open questions</a>
+      <a href="index.html">Coastal code explorer ↗</a>
+    </nav>
+
+    <main>
+      <section id="chat" class="chat-section">
+        <header class="section-header">
+          <div><span>01</span><h2>Ask the casebook</h2></div>
+          <p>Answers come from the registered UM_2025-0004 corpus. Every published claim must survive an independent citation check.</p>
+        </header>
+        <div id="chat-result" class="chat-result" hidden aria-live="polite"></div>
+        <div class="chat-layout">
+          <form id="chat-form" class="chat-form">
+            <label id="chat-question-label" for="chat-question">Question about this case</label>
+            <textarea id="chat-question" name="question" rows="3" maxlength="2000" required
+              placeholder="What did the Planning Commission decide on August 20, 2026?"></textarea>
+            <div class="chat-actions">
+              <button id="chat-submit" type="submit">Ask</button>
+              <button id="chat-new" type="button" class="secondary">New conversation</button>
+              <span id="chat-state" role="status" aria-live="polite">Read-only evidence workflow</span>
+            </div>
+            <p id="chat-model" class="chat-model">Checking answer runtime…</p>
+          </form>
+          <aside class="chat-suggestions" aria-label="Suggested questions">
+            <strong>Try a starting question</strong>
+            <button type="button">What did "most recently posted resolution" mean at the August 20 hearing, and what is the version timeline for UM_2025-0004?</button>
+            <button type="button">What are the 20 recent conditions placed at the last meeting?</button>
+            <button type="button">What did the Planning Commission decide on August 20, 2026?</button>
+            <button type="button">Can MCCSD provide water outside its district boundary?</button>
+            <button type="button">What records are still missing from the case?</button>
+          </aside>
+        </div>
+        <p class="chat-policy">This is an evidence navigator, not legal advice. If the corpus cannot support an answer, the system reports the gap instead of filling it with a guess.</p>
+      </section>
+
+      <section id="lineage">
+        <header class="section-header">
+          <div><span>02</span><h2>Permit lineage</h2></div>
+          <p>Direct ancestry, appeals, and regulatory authorizations. Select an identifier to filter its records.</p>
+        </header>
+        <div id="lineage-list" class="lineage-strip"></div>
+        <details class="related-details">
+          <summary>Related and excluded identifiers</summary>
+          <div class="related-columns">
+            <div><h3>Related, not direct</h3><div id="related-list"></div></div>
+            <div><h3>False matches</h3><div id="excluded-list"></div></div>
+          </div>
+        </details>
+      </section>
+
+      <section id="timeline">
+        <header class="section-header">
+          <div><span>03</span><h2>Meeting and review cycles</h2></div>
+          <p>Proceedings are grouped as people encountered them: a review cycle, its hearings or decisions, and the documents produced around it.</p>
+        </header>
+        <div id="meeting-cycles" class="meeting-cycles"></div>
+      </section>
+
+      <section id="authority">
+        <header class="section-header">
+          <div><span>04</span><h2>Water authority chain</h2></div>
+          <p>Separate powers, regulatory approvals, agreements, and limits. Cooperation does not merge the agencies or erase independent approvals.</p>
+        </header>
+        <p id="authority-conclusion" class="authority-conclusion"></p>
+        <div id="authority-actors" class="authority-actors"></div>
+        <h3 class="authority-heading">Reasoning chain</h3>
+        <ol id="authority-chain" class="authority-steps"></ol>
+        <details class="authority-unresolved">
+          <summary>Unresolved legal and factual links</summary>
+          <ul id="authority-unresolved-list"></ul>
+        </details>
+      </section>
+
+      <section id="records">
+        <header class="section-header records-heading">
+          <div><span>05</span><h2>Source records</h2></div>
+          <p>Documents are grouped by origin and presented as linked records rather than table rows.</p>
+        </header>
+        <div class="filters">
+          <label>
+            <span>Search</span>
+            <input id="record-search" type="search" placeholder="resolution, CEQA, Yeh, biological…">
+          </label>
+          <label>
+            <span>Publisher</span>
+            <select id="publisher-filter"><option value="">All publishers</option></select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select id="status-filter"><option value="">All statuses</option></select>
+          </label>
+          <button id="clear-filters" type="button">Clear</button>
+          <strong id="record-count"></strong>
+        </div>
+        <div id="record-groups" class="record-groups"></div>
+      </section>
+
+      <section id="questions">
+        <header class="section-header">
+          <div><span>06</span><h2>Open questions</h2></div>
+          <p>Questions become durable records containing an answer, evidence, confidence, and the next data needed.</p>
+        </header>
+        <div id="answered-questions" class="answered-questions"></div>
+        <h3 class="open-heading">Still open</h3>
+        <ol id="question-list" class="question-list"></ol>
+      </section>
+    </main>
+
+    <footer>
+      <span id="case-generated-at"></span>
+      <span>Evidence navigator—not a legal determination.</span>
+    </footer>
+
+    <script src="casebook-data.js"></script>
+    <script src="casebook.js"></script>
+  </body>
+</html>

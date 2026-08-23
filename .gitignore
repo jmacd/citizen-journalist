@@ -1,0 +1,8 @@
+node_modules/
+captures/
+web/generated-data.js
+agents/.venv/
+agents/.pytest_cache/
+agents/**/__pycache__/
+agents/.env
+/-.png

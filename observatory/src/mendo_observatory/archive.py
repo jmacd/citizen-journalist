@@ -22,8 +22,13 @@ from .contracts import (
     utc_now,
 )
 from .errors import ArchiveWriteError, IntegrityError
-
-BUFFER_SIZE = 1024 * 1024
+from .storage import (
+    BUFFER_SIZE,
+    ensure_directory,
+    install_create_only,
+    sync_directory,
+    write_create_only,
+)
 
 
 @dataclass(frozen=True)
@@ -51,7 +56,7 @@ class ArchiveStore:
 
     def initialize(self, *, birthplace: str) -> ArchiveIdentity:
         for relative in ("objects/sha256", "events", "envelopes", "exports"):
-            (self.root / relative).mkdir(parents=True, exist_ok=True)
+            ensure_directory(self.root / relative)
         identity_path = self.root / "archive.json"
         if identity_path.exists():
             identity = self.load_identity()
@@ -75,7 +80,7 @@ class ArchiveStore:
             )
             + "\n"
         ).encode("utf-8")
-        self._write_create_only_payload(identity_path, payload)
+        write_create_only(identity_path, payload, file_mode=self.file_mode)
         return identity
 
     def load_identity(self) -> ArchiveIdentity:
@@ -118,18 +123,18 @@ class ArchiveStore:
         digest, byte_count, temporary_path = self._stage_object(source_path)
         relative_object_path = Path("objects") / "sha256" / digest[:2] / digest
         object_path = self.root / relative_object_path
-        object_path.parent.mkdir(parents=True, exist_ok=True)
+        ensure_directory(object_path.parent)
 
         try:
-            object_created = self._install_create_only(temporary_path, object_path)
+            object_created = install_create_only(temporary_path, object_path)
             if not object_created:
                 self._verify_existing_object(object_path, digest, byte_count)
         except IntegrityError:
             quarantine = self.root / "objects" / ".quarantine"
-            quarantine.mkdir(parents=True, exist_ok=True)
+            ensure_directory(quarantine)
             quarantine_path = quarantine / f"{digest}-{uuid.uuid4()}"
             os.replace(temporary_path, quarantine_path)
-            self._sync_directory(quarantine)
+            sync_directory(quarantine)
             raise IntegrityError(
                 f"existing object {object_path} is corrupt; staged bytes retained at "
                 f"{quarantine_path}"
@@ -169,7 +174,7 @@ class ArchiveStore:
 
     def _stage_object(self, source_path: Path) -> tuple[str, int, Path]:
         staging_dir = self.root / "objects" / ".staging"
-        staging_dir.mkdir(parents=True, exist_ok=True)
+        ensure_directory(staging_dir)
         descriptor, temporary_name = tempfile.mkstemp(prefix="object-", dir=staging_dir)
         digest = hashlib.sha256()
         byte_count = 0
@@ -187,16 +192,6 @@ class ArchiveStore:
             raise
         return digest.hexdigest(), byte_count, Path(temporary_name)
 
-    def _install_create_only(self, temporary_path: Path, final_path: Path) -> bool:
-        try:
-            os.link(temporary_path, final_path)
-        except FileExistsError:
-            return False
-        except OSError as error:
-            raise ArchiveWriteError(f"cannot install archive object {final_path}: {error}") from error
-        self._sync_directory(final_path.parent)
-        return True
-
     def _verify_existing_object(
         self, object_path: Path, expected_digest: str, expected_bytes: int
     ) -> None:
@@ -213,7 +208,7 @@ class ArchiveStore:
 
     def _write_event(self, event: ObjectStoredEvent) -> Path:
         event_directory = self.root / "events" / event.occurred_at.strftime("%Y-%m-%d")
-        event_directory.mkdir(parents=True, exist_ok=True)
+        ensure_directory(event_directory)
         event_path = event_directory / f"{event.event_id}.json"
         payload = (
             json.dumps(
@@ -224,42 +219,5 @@ class ArchiveStore:
             )
             + "\n"
         ).encode("utf-8")
-        self._write_create_only_payload(event_path, payload)
+        write_create_only(event_path, payload, file_mode=self.file_mode)
         return event_path
-
-    def _write_create_only_payload(self, path: Path, payload: bytes) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{path.name}-", dir=path.parent
-        )
-        temporary_path = Path(temporary_name)
-        try:
-            with os.fdopen(descriptor, "wb") as destination:
-                os.fchmod(destination.fileno(), self.file_mode)
-                destination.write(payload)
-                destination.flush()
-                os.fsync(destination.fileno())
-            if not self._install_create_only(temporary_path, path):
-                try:
-                    existing_payload = path.read_bytes()
-                except OSError as error:
-                    raise ArchiveWriteError(
-                        f"file exists but cannot be verified: {path}: {error}"
-                    ) from error
-                if existing_payload != payload:
-                    raise ArchiveWriteError(
-                        f"create-only file contains different data: {path}"
-                    )
-        finally:
-            temporary_path.unlink(missing_ok=True)
-
-    @staticmethod
-    def _sync_directory(directory: Path) -> None:
-        flags = os.O_RDONLY
-        if hasattr(os, "O_DIRECTORY"):
-            flags |= os.O_DIRECTORY
-        descriptor = os.open(directory, flags)
-        try:
-            os.fsync(descriptor)
-        finally:
-            os.close(descriptor)

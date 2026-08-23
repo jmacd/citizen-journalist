@@ -12,9 +12,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import ValidationError
 
-from .archive import BUFFER_SIZE
 from .contracts import ArchiveIdentity, ObjectStoredEvent
 from .errors import IntegrityError, InvalidEventError
+from .storage import BUFFER_SIZE
 
 
 CATALOG_SCHEMAS: dict[str, pa.Schema] = {

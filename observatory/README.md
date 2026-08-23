@@ -86,6 +86,25 @@ catalog/collection-memberships.parquet
 Records and objects are global. Collections are many-to-many groupings such as
 planning cases, legal repositories, agency archives, or meeting series.
 
+## Create and materialize a release
+
+```sh
+observatory/.venv/bin/mendo-release create \
+  --root /home/shared/observatory/archive \
+  --channel private
+
+observatory/.venv/bin/mendo-release materialize \
+  --root /home/shared/observatory/archive \
+  --channel private \
+  --destination /home/jmacd/observatory/releases/private-current
+```
+
+Release creation verifies the archive, freezes catalog copies, records every
+referenced object and file hash in an immutable manifest, then atomically
+updates the optional channel pointer. Materialization requires a new
+destination, verifies every source and copied file, and renames the completed
+temporary directory into place. A failure leaves no partial destination.
+
 ## Tests
 
 ```sh

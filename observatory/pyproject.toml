@@ -21,6 +21,7 @@ dev = [
 [project.scripts]
 mendo-archive = "mendo_observatory.archive_cli:main"
 mendo-corpus = "mendo_observatory.corpus_cli:main"
+mendo-release = "mendo_observatory.release_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mendo_observatory"]

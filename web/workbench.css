@@ -255,6 +255,8 @@ textarea:focus-visible {
 }
 .decision-status.error { border-left-color: var(--danger); color: var(--danger); background: var(--danger-light); }
 .decision-status.success { border-left-color: var(--success); color: #205a3c; background: var(--success-light); }
+.decision-complete { border-color: #9bc9ae; background: var(--success-light); }
+.decision-guidance { margin: .8rem 0; color: #205a3c; font-weight: 650; }
 
 @media (max-width: 1100px) {
   .workbench { grid-template-columns: minmax(230px, .75fr) minmax(270px, 1fr); }

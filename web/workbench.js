@@ -278,9 +278,59 @@ function decisionSummary(decision) {
   };
 }
 
-function decisionPanel(candidate) {
+function nextPendingCandidateId(candidateId) {
+  return candidates.find(
+    (item) => item.id !== candidateId && !item.latest_decision,
+  )?.id || null;
+}
+
+function completedDecisionPanel(candidate) {
+  const section = element("section", { className: "decision-section decision-complete" });
+  section.append(element("h4", { text: "Review decision complete" }));
+
+  const summary = decisionSummary(candidate.latest_decision);
+  const status = element("p", {
+    className: "decision-status success",
+    text: summary.message,
+  });
+  status.setAttribute("role", "status");
+  section.append(status);
+
+  const guidance = candidate.latest_decision.action === "approve_registration"
+    ? "No further action is needed for this candidate. Its exact reviewed file is authorized and waiting for the separate deterministic registration process."
+    : "No further action is needed for this candidate unless you want to revise the audited decision.";
+  section.append(element("p", { className: "decision-guidance", text: guidance }));
+
+  const actions = element("div", { className: "decision-actions" });
+  const nextId = nextPendingCandidateId(candidate.id);
+  if (nextId) {
+    const next = element("button", { text: "Review next pending candidate" });
+    next.type = "button";
+    next.addEventListener("click", () => selectCandidate(nextId));
+    actions.append(next);
+  }
+  const revise = element("button", {
+    className: "secondary",
+    text: "Record a revised decision",
+  });
+  revise.type = "button";
+  revise.addEventListener("click", () => {
+    section.replaceWith(decisionPanel(candidate, true));
+  });
+  actions.append(revise);
+  section.append(actions);
+  return section;
+}
+
+function decisionPanel(candidate, revising = false) {
+  if (candidate.latest_decision && !revising) {
+    return completedDecisionPanel(candidate);
+  }
+
   const section = element("section", { className: "decision-section" });
-  section.append(element("h4", { text: "Record an audited decision" }));
+  section.append(element("h4", {
+    text: revising ? "Record a revised audited decision" : "Record an audited decision",
+  }));
   const label = element("label", { text: "Reviewer note (optional)" });
   label.htmlFor = "decision-note";
   const note = element("textarea");
@@ -366,6 +416,7 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
     status.textContent = stored.message;
     status.classList.add(stored.kind);
     await Promise.all([refreshCandidateIndex(), loadQueue()]);
+    await loadCandidateDetail(candidateId);
   } catch (error) {
     const stored = { message: `Decision was not recorded: ${error.message}`, kind: "error" };
     decisionMessages.set(candidateId, stored);

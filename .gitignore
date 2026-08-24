@@ -9,3 +9,4 @@ agents/.env
 observatory/.venv/
 observatory/.pytest_cache/
 observatory/**/__pycache__/
+terraform/**/__pycache__/

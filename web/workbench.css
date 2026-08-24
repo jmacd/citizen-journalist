@@ -73,18 +73,45 @@ textarea:focus-visible {
 }
 .audit-banner strong { margin-right: .35rem; }
 
+.research-drawer {
+  max-width: 1800px;
+  margin: 0 auto;
+  border-inline: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.research-drawer summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 58px;
+  padding: .65rem 1rem;
+  cursor: pointer;
+  background: #fbfcf9;
+  list-style-position: inside;
+}
+.research-drawer summary::marker { color: var(--accent); }
+.research-drawer summary span:first-child { flex: 1; }
+.research-drawer summary .eyebrow { display: block; }
+.drawer-title { font-size: 1rem; font-weight: 750; }
+.research-drawer-content { border-top: 1px solid var(--line); }
+.research-drawer .queue-list {
+  max-height: min(48vh, 520px);
+  overflow: auto;
+}
+
 .workbench {
   display: grid;
-  grid-template-columns: minmax(230px, .75fr) minmax(270px, .9fr) minmax(480px, 2fr);
+  grid-template-columns: minmax(280px, .7fr) minmax(520px, 2.3fr);
   gap: 1px;
   max-width: 1800px;
-  min-height: calc(100vh - 145px);
+  min-height: calc(100vh - 205px);
   margin: 0 auto;
   background: var(--line);
   border-inline: 1px solid var(--line);
 }
 .pane { min-width: 0; background: var(--panel); }
-.queue-pane,
 .candidates-pane { border-bottom: 1px solid var(--line); }
 .pane-header {
   display: flex;
@@ -275,17 +302,12 @@ textarea:focus-visible {
 .decision-complete { border-color: #9bc9ae; background: var(--success-light); }
 .decision-guidance { margin: .8rem 0; color: #205a3c; font-weight: 650; }
 
-@media (max-width: 1100px) {
-  .workbench { grid-template-columns: minmax(230px, .75fr) minmax(270px, 1fr); }
-  .detail-pane { grid-column: 1 / -1; }
-}
-@media (max-width: 680px) {
+@media (max-width: 800px) {
   .site-header { align-items: flex-start; padding: 1rem; }
   .privacy-mark { display: none; }
   .audit-banner { padding: .75rem 1rem; }
   .workbench { display: block; min-height: 0; border: 0; }
   .pane { border-bottom: 1px solid var(--line); }
-  .queue-list,
   .candidate-list { max-height: 310px; overflow: auto; }
   #candidate-detail { padding-inline: 1rem; }
   .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }

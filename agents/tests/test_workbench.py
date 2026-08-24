@@ -221,6 +221,7 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "canonical registration is a separate, deterministic step" in html
     assert "Agent-produced evidence gaps" in html
     assert "not questions awaiting your response" in html
+    assert '<details class="research-drawer">' in html
     assert "innerHTML" not in javascript
     assert "canonical_registration_performed" in javascript
     assert "window.confirm" in javascript

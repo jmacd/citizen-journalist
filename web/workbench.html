@@ -23,23 +23,25 @@
       evidence; canonical registration is a separate, deterministic step.
     </aside>
 
-    <main class="workbench">
-      <section class="pane queue-pane" aria-labelledby="queue-heading">
-        <header class="pane-header">
-          <div>
-            <p class="eyebrow">Discovery backlog</p>
-            <h2 id="queue-heading">Agent-produced evidence gaps</h2>
-          </div>
-          <span id="queue-count" class="count" aria-label="Queue item count">—</span>
-        </header>
+    <details class="research-drawer">
+      <summary>
+        <span>
+          <span class="eyebrow">Discovery backlog</span>
+          <span id="queue-heading" class="drawer-title">Agent-produced evidence gaps</span>
+        </span>
+        <span id="queue-count" class="count" aria-label="Queue item count">—</span>
+      </summary>
+      <div class="research-drawer-content" aria-labelledby="queue-heading">
         <p class="pane-explainer">
           These are records the analysis identified as missing, not questions awaiting your response.
           Parent prompts are shown only as context and may include operator test runs.
         </p>
         <div id="queue-state" class="state" role="status" aria-live="polite">Loading queue…</div>
         <ol id="queue-list" class="item-list queue-list" aria-label="Agent-produced evidence gaps"></ol>
-      </section>
+      </div>
+    </details>
 
+    <main class="workbench">
       <section class="pane candidates-pane" aria-labelledby="candidates-heading">
         <header class="pane-header">
           <div>

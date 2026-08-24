@@ -232,6 +232,24 @@ textarea:focus-visible {
   border: 1px solid var(--line);
   background: #edf0eb;
 }
+.geo-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  background: #f4f5ef;
+}
+.map-status {
+  margin: .5rem 0 0;
+  padding: .55rem .65rem;
+  color: var(--muted);
+  background: #f8f9f6;
+  font-size: .76rem;
+}
+.map-status.success { color: #205a3c; background: var(--success-light); }
+.map-status.warning { color: var(--warning); background: var(--warning-light); }
+.map-status.error { color: var(--danger); background: var(--danger-light); }
+.map-attribution { margin: .35rem 0 0; color: var(--muted); font-size: .68rem; text-align: right; }
 .image-preview {
   display: block;
   max-width: 100%;

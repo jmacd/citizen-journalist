@@ -227,6 +227,9 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "window.confirm" in javascript
     assert "Review decision complete" in javascript
     assert "Review next pending candidate" in javascript
+    assert "OpenStreetMap basemap" in javascript
+    assert "Promise.allSettled(tileJobs)" in javascript
+    assert "not a water-service area" in javascript
     assert "--host 127.0.0.1 --port 4180" in unit
     assert "EnvironmentFile=/home/jmacd/observatory/env/workbench.env" in unit
     assert "basic_auth" in caddy

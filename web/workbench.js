@@ -231,6 +231,184 @@ function factList(candidate) {
   return facts;
 }
 
+function geoJsonPolygons(payload) {
+  if (payload?.type !== "FeatureCollection" || !Array.isArray(payload.features)) {
+    throw new Error("GeoJSON preview requires a FeatureCollection.");
+  }
+  const polygons = [];
+  payload.features.forEach((feature) => {
+    const geometry = feature?.geometry;
+    if (geometry?.type === "Polygon" && Array.isArray(geometry.coordinates)) {
+      polygons.push(geometry.coordinates);
+    } else if (geometry?.type === "MultiPolygon" && Array.isArray(geometry.coordinates)) {
+      polygons.push(...geometry.coordinates);
+    } else {
+      throw new Error(`Unsupported GeoJSON geometry: ${valueOrDash(geometry?.type)}`);
+    }
+  });
+  if (!polygons.length) throw new Error("GeoJSON contains no polygon geometry.");
+  return polygons;
+}
+
+function webMercatorPoint([longitude, latitude], zoom) {
+  const scale = (2 ** zoom) * 256;
+  const boundedLatitude = Math.max(-85.05112878, Math.min(85.05112878, latitude));
+  const latitudeRadians = boundedLatitude * Math.PI / 180;
+  return [
+    ((longitude + 180) / 360) * scale,
+    (
+      1 -
+      (Math.log(Math.tan(latitudeRadians) + (1 / Math.cos(latitudeRadians))) / Math.PI)
+    ) / 2 * scale,
+  ];
+}
+
+function loadMapTile(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.addEventListener("load", () => resolve(image), { once: true });
+    image.addEventListener("error", () => reject(new Error(`Could not load map tile ${url}`)), { once: true });
+    image.src = url;
+  });
+}
+
+async function renderGeoJsonMap(canvas, status, fileUrl) {
+  const payload = await getJSON(fileUrl);
+  const polygons = geoJsonPolygons(payload);
+  const points = polygons.flat(2);
+  if (!points.every(
+    (point) => Array.isArray(point) &&
+      point.length >= 2 &&
+      Number.isFinite(point[0]) &&
+      Number.isFinite(point[1]),
+  )) {
+    throw new Error("GeoJSON contains invalid polygon coordinates.");
+  }
+
+  let minLongitude = Infinity;
+  let maxLongitude = -Infinity;
+  let minLatitude = Infinity;
+  let maxLatitude = -Infinity;
+  points.forEach(([longitude, latitude]) => {
+    minLongitude = Math.min(minLongitude, longitude);
+    maxLongitude = Math.max(maxLongitude, longitude);
+    minLatitude = Math.min(minLatitude, latitude);
+    maxLatitude = Math.max(maxLatitude, latitude);
+  });
+  if (minLongitude === maxLongitude || minLatitude === maxLatitude) {
+    throw new Error("GeoJSON boundary has an empty geographic extent.");
+  }
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("This browser cannot render a map canvas.");
+  const width = canvas.width;
+  const height = canvas.height;
+  const margin = 70;
+  const footer = 95;
+  const mapWidth = width - (margin * 2);
+  const mapHeight = height - margin - footer;
+
+  context.fillStyle = "#f4f5ef";
+  context.fillRect(0, 0, width, height);
+
+  let zoom = 2;
+  for (let candidateZoom = 16; candidateZoom >= 2; candidateZoom -= 1) {
+    const northwest = webMercatorPoint([minLongitude, maxLatitude], candidateZoom);
+    const southeast = webMercatorPoint([maxLongitude, minLatitude], candidateZoom);
+    if (
+      southeast[0] - northwest[0] <= mapWidth * .88 &&
+      southeast[1] - northwest[1] <= mapHeight * .88
+    ) {
+      zoom = candidateZoom;
+      break;
+    }
+  }
+
+  const northwest = webMercatorPoint([minLongitude, maxLatitude], zoom);
+  const southeast = webMercatorPoint([maxLongitude, minLatitude], zoom);
+  const centerX = (northwest[0] + southeast[0]) / 2;
+  const centerY = (northwest[1] + southeast[1]) / 2;
+  const originX = centerX - (mapWidth / 2);
+  const originY = centerY - (mapHeight / 2);
+  const project = (point) => {
+    const [worldX, worldY] = webMercatorPoint(point, zoom);
+    return [margin + worldX - originX, margin + worldY - originY];
+  };
+
+  const firstTileX = Math.floor(originX / 256);
+  const lastTileX = Math.floor((originX + mapWidth) / 256);
+  const firstTileY = Math.floor(originY / 256);
+  const lastTileY = Math.floor((originY + mapHeight) / 256);
+  const tileCount = (lastTileX - firstTileX + 1) * (lastTileY - firstTileY + 1);
+  if (tileCount > 30) {
+    throw new Error(`Basemap preview unexpectedly requires ${tileCount} tiles.`);
+  }
+  context.save();
+  context.beginPath();
+  context.rect(margin, margin, mapWidth, mapHeight);
+  context.clip();
+  const tileJobs = [];
+  for (let tileX = firstTileX; tileX <= lastTileX; tileX += 1) {
+    for (let tileY = firstTileY; tileY <= lastTileY; tileY += 1) {
+      const url = `https://tile.openstreetmap.org/${zoom}/${tileX}/${tileY}.png`;
+      tileJobs.push(
+        loadMapTile(url).then((image) => {
+          context.drawImage(
+            image,
+            margin + (tileX * 256) - originX,
+            margin + (tileY * 256) - originY,
+            256,
+            256,
+          );
+        }),
+      );
+    }
+  }
+  const tileResults = await Promise.allSettled(tileJobs);
+  const failedTiles = tileResults.filter((result) => result.status === "rejected");
+
+  context.fillStyle = "rgba(18, 101, 112, .25)";
+  context.strokeStyle = "#126570";
+  context.lineWidth = 5;
+  polygons.forEach((polygon) => {
+    context.beginPath();
+    polygon.forEach((ring) => {
+      ring.forEach((point, index) => {
+        const [x, y] = project(point);
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      context.closePath();
+    });
+    context.fill("evenodd");
+    context.stroke();
+  });
+  context.restore();
+
+  context.strokeStyle = "#8a8f89";
+  context.lineWidth = 2;
+  context.strokeRect(margin, margin, mapWidth, mapHeight);
+  context.fillStyle = "#1c2925";
+  context.font = "700 25px system-ui, sans-serif";
+  context.fillText("Mendocino Unified School District governance boundary", margin, height - 54);
+  context.fillStyle = "#5d6a65";
+  context.font = "18px system-ui, sans-serif";
+  context.fillText(
+    `County GIS geometry · ${Math.abs(minLongitude).toFixed(4)}°W to ${Math.abs(maxLongitude).toFixed(4)}°W · ` +
+      `${minLatitude.toFixed(4)}° to ${maxLatitude.toFixed(4)}° N`,
+    margin,
+    height - 22,
+  );
+  if (failedTiles.length) {
+    status.textContent = `Boundary rendered, but ${failedTiles.length} of ${tileCount} OpenStreetMap basemap tiles failed to load. This is a school-district governance boundary, not a water-service area.`;
+    status.classList.add("warning");
+  } else {
+    status.textContent = "Verified County GeoJSON boundary over an OpenStreetMap basemap. This is a school-district governance boundary, not a water-service area.";
+    status.classList.add("success");
+  }
+}
+
 function preview(candidate) {
   const section = element("section", { className: "preview-section" });
   section.append(element("h4", { text: "Evidence preview" }));
@@ -252,11 +430,36 @@ function preview(candidate) {
     section.append(object);
   } else if (mime === "application/geo+json" || mime === "application/vnd.geo+json") {
     const panel = element("div", { className: "geo-preview" });
+    const canvas = element("canvas", { className: "geo-map" });
+    canvas.width = 1200;
+    canvas.height = 900;
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute(
+      "aria-label",
+      `Boundary map derived from ${valueOrDash(candidate.title)}`,
+    );
+    const mapStatus = element("p", {
+      className: "map-status",
+      text: "Rendering verified GeoJSON boundary…",
+    });
+    const attribution = element("p", {
+      className: "map-attribution",
+      text: "Basemap ",
+    });
+    attribution.append(
+      externalLink("https://www.openstreetmap.org/copyright", "© OpenStreetMap contributors"),
+    );
     panel.append(
-      element("p", { text: "GeoJSON candidate. Review the verified file and proposed manifest metadata before deciding." }),
-      externalLink(fileUrl, "Open GeoJSON file ↗"),
+      canvas,
+      mapStatus,
+      attribution,
     );
     section.append(panel);
+    renderGeoJsonMap(canvas, mapStatus, fileUrl).catch((error) => {
+      canvas.hidden = true;
+      mapStatus.textContent = `Map preview failed: ${error.message}`;
+      mapStatus.classList.add("error");
+    });
   } else {
     section.append(element("p", { className: "empty-copy", text: "No inline preview is available for this file type." }));
   }

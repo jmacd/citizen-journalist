@@ -100,6 +100,24 @@ textarea:focus-visible {
   max-height: min(48vh, 520px);
   overflow: auto;
 }
+.research-activity-section { border-bottom: 1px solid var(--line); }
+.research-activity-section h3,
+.gap-heading {
+  margin: 0;
+  padding: .7rem .85rem;
+  font-size: .82rem;
+  background: #eef4f1;
+}
+.activity-error {
+  margin-top: .4rem;
+  color: var(--danger);
+  font-size: .74rem;
+  font-weight: 700;
+}
+.directive-approve {
+  align-self: flex-start;
+  margin-top: .55rem;
+}
 
 .workbench {
   display: grid;

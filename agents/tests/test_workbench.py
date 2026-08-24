@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from mendo_agents.models import EvidenceGap
+from mendo_agents.research_dispatch import ResearchDirectiveStore
 from mendo_agents.research_queue import ResearchQueue
 from mendo_agents.workbench import CandidateStore, WorkbenchStore
 
@@ -172,6 +173,47 @@ def test_workbench_decision_survives_missing_related_lead(tmp_path: Path) -> Non
     ] == "continue_research"
 
 
+def test_workbench_exposes_and_approves_bounded_research_directive(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    queue = ResearchQueue(queue_path)
+    lead = queue.enqueue(
+        "CASE-1",
+        "Which permit is operative?",
+        (
+            EvidenceGap(
+                description="The operative permit is missing.",
+                deciding_record="Current permit",
+                likely_custodian="State regulator",
+            ),
+        ),
+    )[0]
+    directive_store = ResearchDirectiveStore(queue_path)
+    directive = directive_store.create(
+        case_id="CASE-1",
+        title="Locate the current permit",
+        search_brief="Find the current official permit PDF.",
+        lead_ids=[lead.id],
+        allowed_hosts=["waterboards.ca.gov"],
+    )
+    store = WorkbenchStore(queue_path, CandidateStore(tmp_path / "staging"))
+
+    activity = store.research_activity()
+    assert activity[0]["id"] == directive.id
+    assert activity[0]["status"] == "pending_approval"
+    assert activity[0]["latest_run"] is None
+
+    approved = store.approve_research_directive(directive.id, "cio")
+    assert approved["status"] == "approved"
+    assert approved["approved_by"] == "cio"
+    with sqlite3.connect(queue_path) as connection:
+        status = connection.execute(
+            "SELECT status FROM research_queue WHERE id = ?", (lead.id,)
+        ).fetchone()[0]
+    assert status == "approved_search"
+
+
 def test_workbench_rejects_decision_for_different_candidate_digest(
     tmp_path: Path,
 ) -> None:
@@ -237,6 +279,7 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
 
     assert "canonical registration is a separate, deterministic step" in html
     assert "Agent-produced evidence gaps" in html
+    assert "Search directives and outcomes" in html
     assert "not questions awaiting your response" in html
     assert '<details class="research-drawer">' in html
     assert "innerHTML" not in javascript
@@ -246,6 +289,7 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "Review next pending candidate" in javascript
     assert "OpenStreetMap basemap" in javascript
     assert "Promise.allSettled(tileJobs)" in javascript
+    assert "Approve this bounded search" in javascript
     assert "not a water-service area" in javascript
     assert "--host 127.0.0.1 --port 4180" in unit
     assert "EnvironmentFile=/home/jmacd/observatory/env/workbench.env" in unit

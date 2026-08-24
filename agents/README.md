@@ -96,24 +96,52 @@ deduplicate evidence gaps into triage, but it does not browse arbitrary sites,
 download records, or send requests. A prompt that says “search the web” does
 not expand those permissions.
 
-Use a CIO research directive in Copilot CLI to activate repository skills and
-bounded acquisition work. State the act, actors, authority question, required
-primary records, and publication/request limits. For example:
+Create a grouped research directive from selected queue lead IDs and an
+explicit official-host allowlist:
 
-```text
-Research the authority to supply potable emergency water outside MCCSD's
-boundary. Distinguish MUSD, MCCSD, County, DDW, LAFCo, hauler, and recipient.
-Retrieve primary authority and determine where possession transfers. Treat the
-Emergency Water Service Area only as an eligibility map. Record what each
-source does not establish. Do not send a PRA request without CIO approval.
+```sh
+agents/.venv/bin/mendo-agents --repo-root . research prepare \
+  --title "Locate operative water-hauler rules" \
+  --brief "Find current official PDF records governing potable-water haulers." \
+  --lead <queue-lead-id> \
+  --allow-host www.waterboards.ca.gov \
+  --allow-host www.cdph.ca.gov
 ```
 
-Copilot should invoke `trace-legal-authority` and `acquire-public-record`, write
-the durable directive and provenance under the case, search official public
-sources first, and leave inaccessible deciding records as explicit acquisition
-tasks. `mendo-agents ask` analyzes the local corpus; it is not a general web
-search command. `observe --url` stages a known allowlisted official URL through
-Scout and Archivist.
+Review and explicitly approve the exact brief, lead set, and hosts:
+
+```sh
+agents/.venv/bin/mendo-agents --repo-root . research list
+agents/.venv/bin/mendo-agents --repo-root . research approve <directive-id>
+```
+
+Then dispatch it through Foundry:
+
+```sh
+export MENDO_FOUNDRY_WEB_SEARCH_ENABLED=true
+export FOUNDRY_PROJECT_ENDPOINT='https://.../api/projects/...'
+export FOUNDRY_MODEL='<deployment>'
+agents/.venv/bin/mendo-agents --repo-root . --provider foundry \
+  research dispatch <directive-id>
+```
+
+Foundry's server-side Web Search tool receives only the public search brief,
+not corpus text. Microsoft documents that web-search data leaves Azure's
+compliance and geographic boundary, incurs separate cost, and is governed by
+the Grounding with Bing terms. The explicit environment switch acknowledges
+that boundary.
+
+Only URLs returned as Foundry citations can become candidates. The local
+fetcher then independently enforces HTTPS, exact approved hosts, public DNS/IP
+resolution, redirect policy, byte limits, immutable staging, MIME validation,
+SHA-256, PDF integrity, and corpus duplicate detection. Validated records are
+written to a Workbench review bundle; malformed output, uncited URLs, blocked
+downloads, and validation errors fail loudly. Foundry cannot write canonical
+evidence.
+
+`mendo-agents ask` analyzes the local corpus; it is not a general web search
+command. `observe --url` stages a known allowlisted official URL through Scout
+and Archivist.
 
 For noninteractive test fixtures only, pass `--auto-approve`.
 

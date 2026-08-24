@@ -127,6 +127,54 @@ class EvidenceGap:
 
 
 @dataclass(frozen=True)
+class ResearchDirective:
+    id: str
+    case_id: str
+    title: str
+    search_brief: str
+    lead_ids: tuple[str, ...]
+    allowed_hosts: tuple[str, ...]
+    status: str
+    created_at: str
+    updated_at: str
+    approved_by: str | None = None
+    approved_at: str | None = None
+
+
+@dataclass(frozen=True)
+class SearchCandidate:
+    target_id: str
+    url: str
+    issuing_body: str
+    title: str
+    relevance: str
+    establishes: tuple[str, ...]
+    does_not_establish: tuple[str, ...]
+    document_date: str | None = None
+    document_id: str | None = None
+    version: str | None = None
+    signature_status: str | None = None
+
+
+@dataclass(frozen=True)
+class NegativeSearchFinding:
+    repository: str
+    query: str
+    result: str
+    limitation: str
+
+
+@dataclass(frozen=True)
+class ScoutSearchReport:
+    summary: str
+    candidates: tuple[SearchCandidate, ...]
+    negative_findings: tuple[NegativeSearchFinding, ...]
+    citations: tuple[str, ...]
+    provider: str
+    model: str
+
+
+@dataclass(frozen=True)
 class InstitutionalRuleProposal:
     actor: str
     action: str

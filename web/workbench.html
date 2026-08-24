@@ -32,6 +32,14 @@
         <span id="queue-count" class="count" aria-label="Queue item count">—</span>
       </summary>
       <div class="research-drawer-content" aria-labelledby="queue-heading">
+        <section class="research-activity-section" aria-labelledby="activity-heading">
+          <h3 id="activity-heading">Search directives and outcomes</h3>
+          <div id="research-activity-state" class="state" role="status" aria-live="polite">
+            Loading search activity…
+          </div>
+          <ol id="research-activity-list" class="item-list research-activity-list"></ol>
+        </section>
+        <h3 class="gap-heading">Individual evidence gaps</h3>
         <p class="pane-explainer">
           These are records the analysis identified as missing, not questions awaiting your response.
           Parent prompts are shown only as context and may include operator test runs.

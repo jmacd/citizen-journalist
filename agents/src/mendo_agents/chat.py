@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from uuid import uuid4
 import mimetypes
 from dataclasses import asdict
 from http import HTTPStatus
@@ -72,6 +73,7 @@ class PublicChatService:
                 f"Question exceeds {MAX_QUESTION_CHARACTERS} characters."
             )
         normalized_history = self._normalize_history(history)
+        origin_run_id = str(uuid4())
         contextual_question = self._contextual_question(
             normalized,
             normalized_history,
@@ -120,6 +122,9 @@ class PublicChatService:
                 self.settings.case_id,
                 normalized,
                 output.analysis.gaps,
+                origin_type="foundry_public_chat",
+                origin_run_id=origin_run_id,
+                initiating_actor="public_cio",
             )
         result = self._serialize(output)
         result["queued_research"] = [asdict(item) for item in queued]

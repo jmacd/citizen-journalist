@@ -12,6 +12,7 @@ import re
 import shutil
 import sqlite3
 import tempfile
+from dataclasses import asdict
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -21,6 +22,7 @@ from urllib.parse import quote, unquote, urlsplit
 
 from .config import Settings
 from .research_queue import ResearchQueue
+from .research_dispatch import ResearchDirectiveStore, ResearchDispatchError
 
 MAX_DECISION_BYTES = 16_384
 MAX_NOTE_CHARACTERS = 2_000
@@ -292,6 +294,7 @@ class WorkbenchStore:
         self.queue_path = queue_path
         self.candidates = candidates
         ResearchQueue(self.queue_path)
+        self.directive_store = ResearchDirectiveStore(self.queue_path)
         with self._connect() as connection:
             connection.execute(
                 """
@@ -349,6 +352,29 @@ class WorkbenchStore:
                 """
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def research_activity(self) -> list[dict[str, object]]:
+        result = []
+        for directive in self.directive_store.list():
+            public = asdict(directive)
+            runs = self.directive_store.runs(directive.id)
+            latest = runs[0] if runs else None
+            if latest is not None and latest.get("report_json"):
+                try:
+                    latest["report"] = json.loads(str(latest["report_json"]))
+                except json.JSONDecodeError as error:
+                    raise RuntimeError(
+                        f"Dispatch report is corrupt for {directive.id}"
+                    ) from error
+                del latest["report_json"]
+            public["latest_run"] = latest
+            result.append(public)
+        return result
+
+    def approve_research_directive(
+        self, directive_id: str, actor: str
+    ) -> dict[str, object]:
+        return asdict(self.directive_store.approve(directive_id, actor=actor))
 
     def candidates_with_decisions(self) -> list[dict[str, object]]:
         with self._connect() as connection:
@@ -594,7 +620,8 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
         self.send_header(
             "Content-Security-Policy",
             "default-src 'self'; style-src 'self'; script-src 'self'; "
-            "connect-src 'self'; img-src 'self' data:; object-src 'self'; "
+            "connect-src 'self'; img-src 'self' data: "
+            "https://tile.openstreetmap.org; object-src 'self'; "
             "frame-src 'self'; frame-ancestors 'none'; base-uri 'none'; "
             "form-action 'self'",
         )
@@ -624,6 +651,10 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/workbench/queue":
                 items = self.workbench_server.store.queue()
+                self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            if path == "/api/workbench/research-activity":
+                items = self.workbench_server.store.research_activity()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
                 return
             if path == "/api/workbench/candidates":
@@ -670,7 +701,21 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         if not self._require_authorized():
             return
-        if urlsplit(self.path).path != "/api/workbench/decisions":
+        path = urlsplit(self.path).path
+        directive_match = re.fullmatch(
+            r"/api/workbench/research-directives/([^/]+)/approval", path
+        )
+        if directive_match:
+            try:
+                actor = self.headers.get("X-Mendo-Workbench-User", "cio")
+                result = self.workbench_server.store.approve_research_directive(
+                    unquote(directive_match.group(1)), actor
+                )
+                self._json(HTTPStatus.OK, result)
+            except (ResearchDispatchError, ValueError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        if path != "/api/workbench/decisions":
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return
         if self.headers.get_content_type() != "application/json":

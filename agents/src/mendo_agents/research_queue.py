@@ -48,6 +48,26 @@ class ResearchQueue:
                 )
                 """
             )
+            columns = {
+                str(row["name"])
+                for row in connection.execute("PRAGMA table_info(research_queue)")
+            }
+            migrations = {
+                "origin_type": (
+                    "ALTER TABLE research_queue ADD COLUMN origin_type TEXT "
+                    "NOT NULL DEFAULT 'legacy_unknown'"
+                ),
+                "origin_run_id": (
+                    "ALTER TABLE research_queue ADD COLUMN origin_run_id TEXT"
+                ),
+                "initiating_actor": (
+                    "ALTER TABLE research_queue ADD COLUMN initiating_actor TEXT "
+                    "NOT NULL DEFAULT 'unknown'"
+                ),
+            }
+            for name, statement in migrations.items():
+                if name not in columns:
+                    connection.execute(statement)
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
@@ -60,9 +80,20 @@ class ResearchQueue:
         case_id: str,
         question: str,
         gaps: tuple[EvidenceGap, ...],
+        *,
+        origin_type: str = "agent_analysis",
+        origin_run_id: str | None = None,
+        initiating_actor: str = "unknown",
     ) -> tuple[QueuedResearch, ...]:
         if self._json_mode:
-            return self._enqueue_json(case_id, question, gaps)
+            return self._enqueue_json(
+                case_id,
+                question,
+                gaps,
+                origin_type=origin_type,
+                origin_run_id=origin_run_id,
+                initiating_actor=initiating_actor,
+            )
         now = datetime.now(UTC).isoformat()
         queued: list[QueuedResearch] = []
         with self._connect() as connection:
@@ -78,8 +109,9 @@ class ResearchQueue:
                     """
                     INSERT INTO research_queue
                       (id, case_id, question, description, deciding_record,
-                       likely_custodian, status, created_at, last_seen_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 'triage', ?, ?)
+                       likely_custodian, status, created_at, last_seen_at,
+                       origin_type, origin_run_id, initiating_actor)
+                    VALUES (?, ?, ?, ?, ?, ?, 'triage', ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                       last_seen_at = excluded.last_seen_at,
                       occurrence_count = occurrence_count + 1
@@ -93,6 +125,9 @@ class ResearchQueue:
                         gap.likely_custodian,
                         now,
                         now,
+                        origin_type,
+                        origin_run_id,
+                        initiating_actor,
                     ),
                 )
                 queued.append(
@@ -109,6 +144,10 @@ class ResearchQueue:
         case_id: str,
         question: str,
         gaps: tuple[EvidenceGap, ...],
+        *,
+        origin_type: str,
+        origin_run_id: str | None,
+        initiating_actor: str,
     ) -> tuple[QueuedResearch, ...]:
         now = datetime.now(UTC).isoformat()
         state = self._read_json()
@@ -134,6 +173,9 @@ class ResearchQueue:
                     "created_at": now,
                     "last_seen_at": now,
                     "occurrence_count": 1,
+                    "origin_type": origin_type,
+                    "origin_run_id": origin_run_id,
+                    "initiating_actor": initiating_actor,
                 }
             else:
                 existing["last_seen_at"] = now

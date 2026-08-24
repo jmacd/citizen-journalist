@@ -1,6 +1,8 @@
 const queueList = document.getElementById("queue-list");
 const queueState = document.getElementById("queue-state");
 const queueCount = document.getElementById("queue-count");
+const researchActivityList = document.getElementById("research-activity-list");
+const researchActivityState = document.getElementById("research-activity-state");
 const candidateList = document.getElementById("candidate-list");
 const candidatesState = document.getElementById("candidates-state");
 const candidateCount = document.getElementById("candidate-count");
@@ -73,6 +75,100 @@ function actionLabel(action) {
     reject: "Rejected",
     continue_research: "Continue research",
   }[action] || valueOrDash(action);
+}
+
+async function loadResearchActivity() {
+  setState(researchActivityState, "Loading search activity…");
+  try {
+    const payload = await getJSON("/api/workbench/research-activity");
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    researchActivityList.replaceChildren();
+    if (!items.length) {
+      setState(
+        researchActivityState,
+        "No grouped search directive has been prepared yet.",
+      );
+      return;
+    }
+    researchActivityState.hidden = true;
+    items.forEach((directive) => {
+      const row = element("li");
+      const card = element("article", { className: "item-button" });
+      const report = directive.latest_run?.report;
+      const candidateCountValue = Array.isArray(report?.candidates)
+        ? report.candidates.length
+        : 0;
+      const negativeCount = Array.isArray(report?.negative_findings)
+        ? report.negative_findings.length
+        : 0;
+      card.append(
+        element("span", { className: "item-id", text: directive.id }),
+        element("strong", { text: valueOrDash(directive.title) }),
+        element("span", {
+          className: "item-summary",
+          text: report?.summary || directive.search_brief,
+        }),
+        element("span", {
+          className: "item-meta",
+          text: [
+            directive.latest_run?.provider,
+            directive.latest_run?.model,
+            report ? `${candidateCountValue} candidate(s)` : null,
+            report ? `${negativeCount} negative finding(s)` : null,
+          ].filter(Boolean).join(" · ") || "Not dispatched",
+        }),
+        element("span", {
+          className: "item-meta",
+          text: `Approved official hosts: ${directive.allowed_hosts.join(", ")}`,
+        }),
+        element("span", {
+          className: `status-pill${directive.status === "completed" ? " decided" : ""}`,
+          text: valueOrDash(directive.status),
+        }),
+      );
+      if (directive.latest_run?.error) {
+        card.append(element("span", {
+          className: "activity-error",
+          text: `Dispatch failed: ${directive.latest_run.error}`,
+        }));
+      }
+      if (directive.status === "pending_approval") {
+        const approve = element("button", {
+          className: "secondary-button directive-approve",
+          text: "Approve this bounded search",
+        });
+        approve.type = "button";
+        approve.addEventListener("click", async () => {
+          approve.disabled = true;
+          approve.textContent = "Approving…";
+          try {
+            await getJSON(
+              `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
+              { method: "POST" },
+            );
+            await Promise.all([loadResearchActivity(), loadQueue()]);
+          } catch (error) {
+            approve.disabled = false;
+            approve.textContent = "Approve this bounded search";
+            setState(
+              researchActivityState,
+              `Could not approve search: ${error.message}`,
+              true,
+            );
+          }
+        });
+        card.append(approve);
+      }
+      row.append(card);
+      researchActivityList.append(row);
+    });
+  } catch (error) {
+    setState(
+      researchActivityState,
+      `Could not load search activity: ${error.message}`,
+      true,
+    );
+  }
 }
 
 async function loadQueue() {
@@ -729,4 +825,4 @@ async function loadCandidateDetail(candidateId) {
   }
 }
 
-await Promise.all([loadQueue(), loadCandidates()]);
+await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);

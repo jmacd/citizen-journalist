@@ -16,6 +16,7 @@ from urllib.parse import urlsplit, urlunsplit
 from .acquisition import PublicRecordFetcher
 from .models import (
     AcquisitionCandidate,
+    CandidateDispatchOutcome,
     NegativeSearchFinding,
     ResearchDirective,
     ScoutSearchReport,
@@ -94,6 +95,16 @@ class ResearchDirectiveStore:
                   review_bundle_path TEXT,
                   error TEXT,
                   FOREIGN KEY (directive_id) REFERENCES research_directives(id)
+                );
+                CREATE TABLE IF NOT EXISTS research_dispatch_candidate_outcomes (
+                  run_id INTEGER NOT NULL,
+                  target_id TEXT NOT NULL,
+                  source_url TEXT NOT NULL,
+                  disposition TEXT NOT NULL,
+                  sha256 TEXT NOT NULL,
+                  duplicate_of TEXT,
+                  PRIMARY KEY (run_id, target_id),
+                  FOREIGN KEY (run_id) REFERENCES research_dispatch_runs(id)
                 );
                 """
             )
@@ -329,6 +340,7 @@ class ResearchDirectiveStore:
         run_id: int,
         report: ScoutSearchReport,
         review_bundle_path: str | None,
+        candidate_outcomes: tuple[CandidateDispatchOutcome, ...],
     ) -> None:
         timestamp = _now()
         lead_status = (
@@ -371,6 +383,25 @@ class ResearchDirectiveStore:
                 raise ResearchDispatchError(
                     "Dispatch run disappeared before completion"
                 )
+            connection.executemany(
+                """
+                INSERT INTO research_dispatch_candidate_outcomes
+                  (run_id, target_id, source_url, disposition, sha256,
+                   duplicate_of)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    (
+                        run_id,
+                        outcome.target_id,
+                        outcome.source_url,
+                        outcome.disposition,
+                        outcome.sha256,
+                        outcome.duplicate_of,
+                    )
+                    for outcome in candidate_outcomes
+                ),
+            )
             connection.execute(
                 f"""
                 UPDATE research_queue
@@ -439,7 +470,24 @@ class ResearchDirectiveStore:
                     """,
                     (directive_id,),
                 ).fetchall()
-        return [dict(row) for row in rows]
+            results = []
+            for row in rows:
+                run = dict(row)
+                outcomes = connection.execute(
+                    """
+                    SELECT target_id, source_url, disposition, sha256,
+                           duplicate_of
+                      FROM research_dispatch_candidate_outcomes
+                     WHERE run_id = ?
+                     ORDER BY target_id
+                    """,
+                    (row["id"],),
+                ).fetchall()
+                run["candidate_outcomes"] = [
+                    dict(outcome) for outcome in outcomes
+                ]
+                results.append(run)
+        return results
 
 
 class FoundryWebSearchScout:
@@ -490,6 +538,11 @@ class FoundryWebSearchScout:
             '"result":"...","limitation":"..."}]}. '
             "Every candidate URL must be a direct underlying record from one of "
             f"these approved hosts: {', '.join(directive.allowed_hosts)}. "
+            "Copy each candidate URL verbatim from a web-search result that you "
+            "cite in this response. If the direct record URL is not available "
+            "as a citable web-search result, omit it from candidates and record "
+            "that limitation as a negative finding; never construct, predict, "
+            "or rewrite a URL. "
             "Do not include Markdown or text outside the JSON."
         )
         prompt = (
@@ -568,7 +621,7 @@ class FoundryWebSearchScout:
             raise ResearchDispatchError(
                 "Foundry Scout negative findings must be an array of at most 20"
             )
-        cited = set(citations)
+        cited = {_normalized_url(url) for url in citations}
         candidates = tuple(
             self._candidate(item, cited) for item in raw_candidates
         )
@@ -689,7 +742,7 @@ class ResearchDispatcher:
         directive = self.store.get(directive_id)
         try:
             report = self.scout.search(directive)
-            bundle_path = self._stage(directive, report)
+            bundle_path, candidate_outcomes = self._stage(directive, report)
             relative_bundle = (
                 str(bundle_path)
                 if bundle_path is not None
@@ -700,6 +753,7 @@ class ResearchDispatcher:
                 run_id,
                 report,
                 relative_bundle,
+                candidate_outcomes,
             )
             return {
                 "directive": asdict(self.store.get(directive_id)),
@@ -715,10 +769,11 @@ class ResearchDispatcher:
         self,
         directive: ResearchDirective,
         report: ScoutSearchReport,
-    ) -> Path | None:
+    ) -> tuple[Path | None, tuple[CandidateDispatchOutcome, ...]]:
         directory = self.staging_root / directive.id
         fetcher = PublicRecordFetcher(set(directive.allowed_hosts))
         review_candidates: list[dict[str, object]] = []
+        outcomes: list[CandidateDispatchOutcome] = []
         for candidate in report.candidates:
             host = (urlsplit(candidate.url).hostname or "").lower()
             if host not in directive.allowed_hosts:
@@ -751,6 +806,15 @@ class ResearchDispatcher:
                     f"Archivist rejected {candidate.target_id}: {error}"
                 ) from error
             if record.duplicate_of is not None:
+                outcomes.append(
+                    CandidateDispatchOutcome(
+                        target_id=candidate.target_id,
+                        source_url=download.final_url or candidate.url,
+                        disposition="already_in_corpus",
+                        sha256=record.sha256,
+                        duplicate_of=record.duplicate_of,
+                    )
+                )
                 continue
             path = Path(record.staging_path)
             review_candidates.append(
@@ -785,8 +849,16 @@ class ResearchDispatcher:
                     },
                 }
             )
+            outcomes.append(
+                CandidateDispatchOutcome(
+                    target_id=candidate.target_id,
+                    source_url=download.final_url or candidate.url,
+                    disposition="staged_for_review",
+                    sha256=record.sha256,
+                )
+            )
         if not review_candidates:
-            return None
+            return None, tuple(outcomes)
         bundle = directory / "review-bundle.json"
         if bundle.exists():
             raise ResearchDispatchError(
@@ -809,4 +881,4 @@ class ResearchDispatcher:
             encoding="utf-8",
         )
         os.replace(temporary, bundle)
-        return bundle
+        return bundle, tuple(outcomes)

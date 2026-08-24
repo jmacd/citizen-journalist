@@ -157,6 +157,15 @@ class SearchCandidate:
 
 
 @dataclass(frozen=True)
+class CandidateDispatchOutcome:
+    target_id: str
+    source_url: str
+    disposition: str
+    sha256: str
+    duplicate_of: str | None = None
+
+
+@dataclass(frozen=True)
 class NegativeSearchFinding:
     repository: str
     query: str

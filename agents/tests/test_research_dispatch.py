@@ -186,6 +186,36 @@ def test_foundry_report_rejects_uncited_candidate(
         scout._parse(raw, ())
 
 
+def test_foundry_report_accepts_only_exact_cited_candidate_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MENDO_FOUNDRY_WEB_SEARCH_ENABLED", "true")
+    monkeypatch.setenv("FOUNDRY_PROJECT_ENDPOINT", "https://example.test/project")
+    monkeypatch.setenv("FOUNDRY_MODEL", "test-model")
+    scout = FoundryWebSearchScout()
+    url = "https://records.example.gov/final.pdf"
+    raw = json.dumps(
+        {
+            "summary": "Found the final record.",
+            "candidates": [
+                {
+                    "target_id": "final-record",
+                    "url": url,
+                    "issuing_body": "Example",
+                    "title": "Final record",
+                    "relevance": "Direct record.",
+                    "establishes": ["Its own contents."],
+                    "does_not_establish": ["Compliance."],
+                }
+            ],
+            "negative_findings": [],
+        }
+    )
+
+    report = scout._parse(raw, (f"{url}#page=1",))
+    assert report.candidates[0].url == url
+
+
 def test_queue_records_prompt_origin(tmp_path: Path) -> None:
     queue, lead_id = make_queue(tmp_path)
     with sqlite3.connect(queue.path) as connection:

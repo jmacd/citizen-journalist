@@ -118,6 +118,29 @@ textarea:focus-visible {
   align-self: flex-start;
   margin-top: .55rem;
 }
+.negative-findings {
+  margin-top: .55rem;
+  border: 1px solid var(--line);
+  border-radius: .35rem;
+  background: #fff;
+}
+.negative-findings summary {
+  padding: .45rem .55rem;
+  cursor: pointer;
+  font-size: .76rem;
+  font-weight: 700;
+}
+.negative-findings ol {
+  margin: 0;
+  padding: 0 .8rem .65rem 2rem;
+}
+.negative-findings li { margin-top: .6rem; }
+.negative-findings p {
+  margin: .2rem 0;
+  font-size: .74rem;
+  line-height: 1.35;
+}
+.finding-limitation { color: var(--muted); }
 
 .workbench {
   display: grid;

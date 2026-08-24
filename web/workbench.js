@@ -98,6 +98,15 @@ async function loadResearchActivity() {
       const candidateCountValue = Array.isArray(report?.candidates)
         ? report.candidates.length
         : 0;
+      const outcomes = Array.isArray(directive.latest_run?.candidate_outcomes)
+        ? directive.latest_run.candidate_outcomes
+        : [];
+      const stagedCount = outcomes.filter(
+        (item) => item.disposition === "staged_for_review",
+      ).length;
+      const duplicateCount = outcomes.filter(
+        (item) => item.disposition === "already_in_corpus",
+      ).length;
       const negativeCount = Array.isArray(report?.negative_findings)
         ? report.negative_findings.length
         : 0;
@@ -113,7 +122,9 @@ async function loadResearchActivity() {
           text: [
             directive.latest_run?.provider,
             directive.latest_run?.model,
-            report ? `${candidateCountValue} candidate(s)` : null,
+            report ? `${candidateCountValue} discovered` : null,
+            outcomes.length ? `${stagedCount} new document(s)` : null,
+            duplicateCount ? `${duplicateCount} already indexed` : null,
             report ? `${negativeCount} negative finding(s)` : null,
           ].filter(Boolean).join(" · ") || "Not dispatched",
         }),
@@ -131,6 +142,29 @@ async function loadResearchActivity() {
           className: "activity-error",
           text: `Dispatch failed: ${directive.latest_run.error}`,
         }));
+      }
+      if (negativeCount) {
+        const findings = element("details", {
+          className: "negative-findings",
+        });
+        findings.append(element("summary", {
+          text: `View ${negativeCount} negative finding(s)`,
+        }));
+        const list = element("ol");
+        report.negative_findings.forEach((finding) => {
+          const item = element("li");
+          item.append(
+            element("strong", { text: finding.repository }),
+            element("p", { text: finding.result }),
+            element("p", {
+              className: "finding-limitation",
+              text: `Limitation: ${finding.limitation}`,
+            }),
+          );
+          list.append(item);
+        });
+        findings.append(list);
+        card.append(findings);
       }
       if (directive.status === "pending_approval") {
         const approve = element("button", {

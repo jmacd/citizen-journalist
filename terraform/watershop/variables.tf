@@ -4,6 +4,12 @@ variable "deploy_observatory" {
   default     = false
 }
 
+variable "deploy_workbench" {
+  description = "Provision the private Observatory evidence Workbench on watershop."
+  type        = bool
+  default     = false
+}
+
 variable "observatory_revision" {
   description = "Complete committed mendo-codebook Git revision to deploy."
   type        = string

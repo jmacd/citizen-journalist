@@ -9,6 +9,7 @@
     "build:explorer": "node scripts/build-explorer-data.mjs",
     "explorer": "npm run build:explorer && npm run build:casebook && node scripts/serve-explorer.mjs",
     "chat": "npm run build:case-db && npm run build:casebook && agents/.venv/bin/python -m mendo_agents.chat --repo-root .",
+    "workbench": "agents/.venv/bin/python -m mendo_agents.workbench --repo-root . --allow-unauthenticated-loopback",
     "fetch": "node scripts/fetch-municode.mjs",
     "fetch:pra-docs": "node scripts/fetch-nextrequest-documents.mjs",
     "fetch:section": "node scripts/fetch-section.mjs",

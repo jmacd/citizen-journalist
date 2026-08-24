@@ -240,3 +240,23 @@ The bundled server is an MVP application server bound to localhost by default.
 A public deployment must put it behind HTTPS, request-rate controls, process
 supervision, and normal service monitoring. It must not expose the research CLI
 or writable capture directories.
+
+## Private evidence Workbench
+
+Run the local approval UI with:
+
+```sh
+npm run workbench
+```
+
+Open `http://127.0.0.1:4180/workbench`. The Workbench reads the durable research
+queue and validated `review-bundle.json` files below the configured research
+staging root. It shows candidate previews, provenance, hashes, limitations, and
+proposed manifest metadata. Decisions are appended to SQLite and update the
+related lead status, but the Workbench does not write canonical manifests or
+move evidence into the archive.
+
+On watershop the service remains loopback-only behind Caddy authentication.
+Set `MENDO_WORKBENCH_PROXY_TOKEN`; Caddy must inject the same value through
+`X-Mendo-Workbench-Auth`. The shared Caddy installation remains outside this
+repository's Terraform state.

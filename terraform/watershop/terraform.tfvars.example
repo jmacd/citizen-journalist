@@ -1,4 +1,5 @@
 deploy_observatory = false
+deploy_workbench   = false
 
 observatory_revision = "0000000000000000000000000000000000000000"
 

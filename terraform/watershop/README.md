@@ -41,3 +41,23 @@ terraform -chdir=terraform/watershop \
 
 No Terraform resource in this root manages the watershop host, NFS exports,
 MinIO service, unrelated buckets, Caddy, or any other project.
+
+## Private Workbench
+
+Set `deploy_workbench = true` to install the repository's Workbench application,
+native Python environment, user systemd unit, and mode-`0600` environment. It
+binds only to `127.0.0.1:4180`. The candidate staging root is
+`/home/shared/observatory/staging/research`; the operational SQLite queue stays
+under `/home/jmacd/observatory/run`.
+
+Terraform generates a stable proxy token protected from destruction. Retrieve
+it for the host-owned Caddy configuration with:
+
+```sh
+terraform -chdir=terraform/watershop output -raw workbench_proxy_token
+```
+
+Use `deploy/watershop/Caddyfile.workbench.example` to configure a dedicated
+private hostname, Caddy `basic_auth`, and the matching proxy header. Terraform
+does not install or reload that snippet because Caddy is shared host
+infrastructure.

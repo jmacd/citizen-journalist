@@ -17,3 +17,14 @@ output "observatory_source_sha256" {
   description = "SHA-256 of the deterministic committed-source deployment archive."
   value       = var.deploy_observatory ? local.source_hash : null
 }
+
+output "workbench_proxy_token" {
+  description = "Sensitive token Caddy must inject when proxying Workbench requests."
+  value       = random_password.workbench_proxy.result
+  sensitive   = true
+}
+
+output "workbench_source_sha256" {
+  description = "SHA-256 of the deterministic committed Workbench source archive."
+  value       = var.deploy_workbench ? local.workbench_source_hash : null
+}

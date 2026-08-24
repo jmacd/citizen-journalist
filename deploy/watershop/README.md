@@ -120,6 +120,16 @@ Only the first manual units currently exist:
   retained directory, re-verifies its complete file set, and writes an
   immutable content-addressed staging receipt under
   `/home/jmacd/observatory/run/staging-receipts/`.
+- `mendo-workbench.service` serves the private evidence inbox and candidate
+  review API on `127.0.0.1:4180`. It records audited CIO decisions but does not
+  itself mutate canonical manifests.
+
+The Workbench is intended to sit behind the existing host-owned Caddy service.
+This repository provides `Caddyfile.workbench.example` for a dedicated private
+hostname with Caddy `basic_auth` and a proxy-only shared token. The Workbench
+rejects requests that do not carry that token when it is configured. Importing
+the snippet into the shared Caddy configuration remains an explicit host
+administration action; this repository does not own or replace Caddy.
 
 Terraform is the supported installer. The standalone script only refreshes
 units and scripts after a native virtual environment and environment file

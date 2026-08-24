@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Evidence Approval Workbench | Mendo Observatory</title>
+    <link rel="stylesheet" href="workbench.css">
+    <script src="workbench.js" type="module"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div>
+        <p class="kicker">Private · Mendo Observatory</p>
+        <h1>Evidence approval Workbench</h1>
+        <p>Review research leads, staged evidence, provenance, and proposed registration metadata.</p>
+      </div>
+      <div class="privacy-mark" aria-label="Private review interface">Private review</div>
+    </header>
+
+    <aside class="audit-banner" aria-label="Important decision notice">
+      <strong>Decisions are audited.</strong>
+      Approval here records an authorization for registration. It does not change canonical
+      evidence; canonical registration is a separate, deterministic step.
+    </aside>
+
+    <main class="workbench">
+      <section class="pane queue-pane" aria-labelledby="queue-heading">
+        <header class="pane-header">
+          <div>
+            <p class="eyebrow">Inbox</p>
+            <h2 id="queue-heading">Research queue</h2>
+          </div>
+          <span id="queue-count" class="count" aria-label="Queue item count">—</span>
+        </header>
+        <div id="queue-state" class="state" role="status" aria-live="polite">Loading queue…</div>
+        <ol id="queue-list" class="item-list queue-list" aria-label="Research leads"></ol>
+      </section>
+
+      <section class="pane candidates-pane" aria-labelledby="candidates-heading">
+        <header class="pane-header">
+          <div>
+            <p class="eyebrow">Staging</p>
+            <h2 id="candidates-heading">Candidates</h2>
+          </div>
+          <span id="candidate-count" class="count" aria-label="Candidate count">—</span>
+        </header>
+        <div id="candidates-state" class="state" role="status" aria-live="polite">Loading candidates…</div>
+        <ol id="candidate-list" class="item-list candidate-list" aria-label="Evidence candidates"></ol>
+      </section>
+
+      <section class="pane detail-pane" aria-labelledby="detail-heading">
+        <header class="pane-header detail-header">
+          <div>
+            <p class="eyebrow">Evidence review</p>
+            <h2 id="detail-heading">Candidate detail</h2>
+          </div>
+        </header>
+        <div id="detail-state" class="state detail-placeholder" role="status" aria-live="polite">
+          Loading candidate details…
+        </div>
+        <div id="candidate-detail" hidden></div>
+      </section>
+    </main>
+  </body>
+</html>

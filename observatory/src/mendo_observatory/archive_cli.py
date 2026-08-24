@@ -16,6 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
     initialize = subparsers.add_parser("init", help="create an empty archive identity")
     initialize.add_argument("--root", type=Path, required=True)
     initialize.add_argument("--birthplace", required=True)
+    initialize.add_argument("--archive-id")
     ingest = subparsers.add_parser("ingest", help="store one original and its event")
     ingest.add_argument("source", type=Path)
     ingest.add_argument("--root", type=Path, required=True)
@@ -37,7 +38,10 @@ def main() -> None:
     args = build_parser().parse_args()
     store = ArchiveStore(args.root)
     if args.command == "init":
-        identity = store.initialize(birthplace=args.birthplace)
+        identity = store.initialize(
+            birthplace=args.birthplace,
+            archive_id=args.archive_id,
+        )
         print(json.dumps(identity.model_dump(mode="json", by_alias=True), sort_keys=True))
         return
     result = store.ingest_file(

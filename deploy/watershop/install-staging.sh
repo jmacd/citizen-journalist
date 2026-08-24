@@ -27,15 +27,21 @@ install -m 0644 \
   "${unit_root}/mendo-corpus-smoke.service"
 
 environment_file="${target_root}/env/staging.env"
+receipt_environment_file="${target_root}/env/receipt.env"
 if [[ ! -f "${environment_file}" ]]; then
-  install -m 0600 \
-    "${repo_root}/deploy/watershop/staging.env.example" \
-    "${environment_file}"
-  echo "created ${environment_file}; set its image digest and MinIO credentials" >&2
-  systemctl --user daemon-reload
+  echo "${environment_file} is absent; provision staging with terraform/watershop" >&2
+  exit 2
+fi
+if [[ ! -f "${receipt_environment_file}" ]]; then
+  echo "${receipt_environment_file} is absent; provision staging with terraform/watershop" >&2
+  exit 2
+fi
+if [[ ! -x "${target_root}/venv/bin/mendo-release" ]]; then
+  echo "${target_root}/venv is absent; provision staging with terraform/watershop" >&2
   exit 2
 fi
 chmod 0600 "${environment_file}"
+chmod 0600 "${receipt_environment_file}"
 
 systemctl --user daemon-reload
 printf 'installed manual staging units; start with:\n'

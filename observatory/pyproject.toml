@@ -9,6 +9,8 @@ description = "Home-primary preservation and corpus services for Mendo Observato
 requires-python = ">=3.11"
 dependencies = [
   "boto3>=1.40,<2",
+  "cryptography>=46,<47",
+  "hatchling>=1.27,<2",
   "pyarrow>=25,<26",
   "pydantic>=2.11,<3",
 ]
@@ -24,6 +26,7 @@ dev = [
 mendo-archive = "mendo_observatory.archive_cli:main"
 mendo-corpus = "mendo_observatory.corpus_cli:main"
 mendo-release = "mendo_observatory.release_cli:main"
+mendo-promote = "mendo_observatory.promotion_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mendo_observatory"]

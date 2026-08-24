@@ -18,6 +18,7 @@ from .contracts import (
     CorpusRelease,
     ReleaseChannel,
     ReleaseEntry,
+    StrictModel,
     utc_now,
 )
 from .corpus import CorpusBuilder
@@ -45,13 +46,17 @@ class ReleaseResult:
 
 @dataclass(frozen=True)
 class MaterializationResult:
+    archive_id: str
     release_id: str
+    manifest_sha256: str
     destination: Path
     file_count: int
     materialized_bytes: int
 
 
-def serialize_model(model: CorpusRelease | ReleaseChannel) -> bytes:
+def serialize_model(
+    model: StrictModel,
+) -> bytes:
     return (
         json.dumps(
             model.model_dump(mode="json", by_alias=True),
@@ -337,7 +342,11 @@ class ReleaseBuilder:
             sync_directory(destination.parent)
 
         return MaterializationResult(
+            archive_id=release.archive_id,
             release_id=release.release_id,
+            manifest_sha256=hash_file(
+                self.root / "releases" / release.release_id / "manifest.json"
+            )[0],
             destination=destination,
             file_count=len(release.entries),
             materialized_bytes=materialized_bytes,

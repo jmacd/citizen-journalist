@@ -50,7 +50,9 @@ class FakeBuilder:
             "channel": channel,
         }
         return MaterializationResult(
+            archive_id="archive",
             release_id="release",
+            manifest_sha256="a" * 64,
             destination=destination,
             file_count=1,
             materialized_bytes=10,
@@ -108,7 +110,9 @@ class FakeRemoteStore:
             "expected_manifest_sha256": expected_manifest_sha256,
         }
         return MaterializationResult(
+            archive_id=archive_id,
             release_id="release",
+            manifest_sha256="a" * 64,
             destination=destination,
             file_count=1,
             materialized_bytes=10,

@@ -14,8 +14,14 @@ botocore==1.43.78
     #   s3transfer
 build==1.5.0
     # via pip-tools
+cffi==2.1.1
+    # via cryptography
 click==8.4.2
     # via pip-tools
+cryptography==46.0.7
+    # via mendo-observatory (observatory/pyproject.toml)
+hatchling==1.32.0
+    # via mendo-observatory (observatory/pyproject.toml)
 iniconfig==2.3.0
     # via pytest
 jmespath==1.1.0
@@ -25,14 +31,21 @@ jmespath==1.1.0
 packaging==26.3
     # via
     #   build
+    #   hatchling
     #   pytest
     #   wheel
+pathspec==1.1.1
+    # via hatchling
 pip-tools==7.6.1
     # via mendo-observatory (observatory/pyproject.toml)
 pluggy==1.6.0
-    # via pytest
+    # via
+    #   hatchling
+    #   pytest
 pyarrow==25.0.1
     # via mendo-observatory (observatory/pyproject.toml)
+pycparser==3.0
+    # via cffi
 pydantic==2.13.4
     # via mendo-observatory (observatory/pyproject.toml)
 pydantic-core==2.46.4
@@ -53,6 +66,10 @@ s3transfer==0.19.2
     # via boto3
 six==1.17.0
     # via python-dateutil
+tomlkit==0.15.1
+    # via hatchling
+trove-classifiers==2026.6.1.19
+    # via hatchling
 typing-extensions==4.16.0
     # via
     #   pydantic

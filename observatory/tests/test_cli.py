@@ -27,10 +27,13 @@ def test_cli_initializes_ingests_builds_and_verifies(tmp_path: Path) -> None:
         str(archive_root),
         "--birthplace",
         "test-station",
+        "--archive-id",
+        "00000000-0000-4000-8000-000000000001",
     )
     identity = json.loads(initialized.stdout)
     assert identity["schema"] == "mendo-archive/v1"
     assert identity["birthplace"] == "test-station"
+    assert identity["archive_id"] == "00000000-0000-4000-8000-000000000001"
 
     ingested = run_module(
         "mendo_observatory.archive_cli",

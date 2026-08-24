@@ -168,6 +168,23 @@ class S3ReleaseStore:
             channel_key=channel_key,
         )
 
+    def ensure_bucket(self, *, region_name: str = "us-east-1") -> bool:
+        try:
+            self.client.head_bucket(Bucket=self.bucket)
+            return False
+        except ClientError as error:
+            if not self._is_not_found(error):
+                raise
+
+        arguments: dict[str, object] = {"Bucket": self.bucket}
+        if region_name != "us-east-1":
+            arguments["CreateBucketConfiguration"] = {
+                "LocationConstraint": region_name
+            }
+        self.client.create_bucket(**arguments)
+        self.client.head_bucket(Bucket=self.bucket)
+        return True
+
     def materialize(
         self,
         destination: Path,
@@ -285,7 +302,9 @@ class S3ReleaseStore:
             sync_directory(destination.parent)
 
         return MaterializationResult(
+            archive_id=release.archive_id,
             release_id=release.release_id,
+            manifest_sha256=actual_manifest_sha256,
             destination=destination,
             file_count=len(release.entries),
             materialized_bytes=materialized_bytes,

@@ -5,10 +5,14 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
 from pathlib import Path
 
+from .errors import InvalidEventError
 from .remote import S3ReleaseStore
+from .receipt import create_staging_receipt, sign_staging_receipt
 from .release import ReleaseBuilder
+from .release import serialize_model
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="download and hash remote immutable keys that would otherwise be reused",
     )
 
+    ensure_bucket = subparsers.add_parser("ensure-s3-bucket")
+    add_s3_arguments(ensure_bucket)
+
     pull = subparsers.add_parser("materialize-s3")
     pull.add_argument("--destination", type=Path, required=True)
     pull.add_argument("--archive-id", required=True)
@@ -54,6 +61,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--expected-manifest-sha256",
         help="required integrity anchor when materializing by release ID",
     )
+
+    receipt = subparsers.add_parser("receipt")
+    receipt.add_argument("--materialized-root", type=Path, required=True)
+    receipt.add_argument("--materialized-path", required=True)
+    receipt.add_argument("--source-revision", required=True)
+    receipt.add_argument("--source-sha256", required=True)
+    receipt.add_argument("--runtime-lock-sha256", required=True)
+    receipt.add_argument("--python-version", required=True)
+    receipt.add_argument("--channel", required=True)
+    receipt.add_argument("--expected-archive-id", required=True)
+    receipt.add_argument("--expected-release-id", required=True)
+    receipt.add_argument("--expected-manifest-sha256", required=True)
     return parser
 
 
@@ -105,7 +124,18 @@ def main() -> None:
             verify_reused=args.verify_reused,
         )
         payload = dataclasses.asdict(result)
-    else:
+    elif args.command == "ensure-s3-bucket":
+        store = S3ReleaseStore.from_boto3(
+            bucket=args.bucket,
+            endpoint_url=args.endpoint_url,
+            region_name=args.region,
+            prefix=args.prefix,
+        )
+        payload = {
+            "bucket": args.bucket,
+            "created": store.ensure_bucket(region_name=args.region),
+        }
+    elif args.command == "materialize-s3":
         store = S3ReleaseStore.from_boto3(
             bucket=args.bucket,
             endpoint_url=args.endpoint_url,
@@ -121,6 +151,33 @@ def main() -> None:
         )
         payload = dataclasses.asdict(result)
         payload["destination"] = str(payload["destination"])
+    else:
+        receipt = create_staging_receipt(
+            args.materialized_root,
+            source_revision=args.source_revision,
+            source_sha256=args.source_sha256,
+            runtime_lock_sha256=args.runtime_lock_sha256,
+            python_version=args.python_version,
+            channel=args.channel,
+            materialized_path=args.materialized_path,
+            expected_archive_id=args.expected_archive_id,
+            expected_release_id=args.expected_release_id,
+            expected_manifest_sha256=args.expected_manifest_sha256,
+        )
+        private_key = os.environ.get("MENDO_STAGING_RECEIPT_PRIVATE_KEY")
+        key_id = os.environ.get("MENDO_STAGING_RECEIPT_KEY_ID")
+        if not private_key or not key_id:
+            raise InvalidEventError(
+                "MENDO_STAGING_RECEIPT_PRIVATE_KEY and "
+                "MENDO_STAGING_RECEIPT_KEY_ID are required"
+            )
+        signed = sign_staging_receipt(
+            receipt,
+            private_key=private_key,
+            key_id=key_id,
+        )
+        print(serialize_model(signed).decode("utf-8"), end="")
+        return
     print(json.dumps(payload, sort_keys=True))
 
 

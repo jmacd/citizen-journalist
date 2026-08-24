@@ -153,6 +153,12 @@ observatory/.venv/bin/mendo-release materialize-s3 \
   --endpoint-url http://localhost:9000
 ```
 
+`mendo-release receipt` re-verifies a clean materialization against the
+archive, release, and manifest identity returned by `materialize-s3`. Watershop
+uses that contract as the input to `mendo-promote`, which verifies the
+multi-platform image index and emits an immutable production-candidate record.
+Candidate creation does not rebuild or deploy either artifact.
+
 Every downloaded file is hashed before the completed temporary tree becomes
 visible. MinIO transports a release; it does not replace the NFS Archive.
 

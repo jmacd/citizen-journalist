@@ -54,7 +54,23 @@ class ArchiveStore:
         self.producer = Producer(name=producer_name, version=producer_version)
         self.file_mode = file_mode
 
-    def initialize(self, *, birthplace: str) -> ArchiveIdentity:
+    def initialize(
+        self,
+        *,
+        birthplace: str,
+        archive_id: str | None = None,
+    ) -> ArchiveIdentity:
+        if archive_id is not None:
+            try:
+                canonical_archive_id = str(uuid.UUID(archive_id))
+            except ValueError as error:
+                raise ArchiveWriteError(
+                    f"invalid archive ID: {archive_id!r}"
+                ) from error
+            if canonical_archive_id != archive_id:
+                raise ArchiveWriteError(
+                    f"archive ID is not canonical: {archive_id!r}"
+                )
         for relative in ("objects/sha256", "events", "envelopes", "exports"):
             ensure_directory(self.root / relative)
         identity_path = self.root / "archive.json"
@@ -64,10 +80,14 @@ class ArchiveStore:
                 raise ArchiveWriteError(
                     f"archive birthplace is {identity.birthplace!r}, not {birthplace!r}"
                 )
+            if archive_id is not None and identity.archive_id != archive_id:
+                raise ArchiveWriteError(
+                    f"archive ID is {identity.archive_id!r}, not {archive_id!r}"
+                )
             return identity
 
         identity = ArchiveIdentity(
-            archive_id=str(uuid.uuid4()),
+            archive_id=archive_id or str(uuid.uuid4()),
             birthplace=birthplace,
             created_at=utc_now(),
         )

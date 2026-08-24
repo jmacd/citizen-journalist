@@ -1,8 +1,5 @@
 [Unit]
 Description=Mendo Observatory corpus staging release
-After=network-online.target
-Wants=network-online.target
-
 [Service]
 Type=oneshot
 EnvironmentFile=/home/jmacd/observatory/env/staging.env

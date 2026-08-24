@@ -77,6 +77,11 @@ class FakeS3Client:
         Path(filename).write_bytes(self.objects[key][0])
         self.operations.append(("download", key))
 
+    def create_bucket(self, **arguments: object) -> dict[str, object]:
+        assert arguments["Bucket"] == self.bucket
+        self.operations.append(("create_bucket", self.bucket))
+        return {}
+
 
 class FailingS3Client(FakeS3Client):
     def __init__(self, bucket: str, *, fail_after: int) -> None:
@@ -114,6 +119,30 @@ def seed_release(root: Path) -> tuple[ReleaseBuilder, str]:
     builder = ReleaseBuilder(root)
     release = builder.create(channel="private")
     return builder, release.release.archive_id
+
+
+def test_ensures_missing_bucket_and_reuses_existing(tmp_path: Path) -> None:
+    class MissingBucketClient(FakeS3Client):
+        exists = False
+
+        def head_bucket(self, *, Bucket: str) -> dict[str, object]:
+            if not self.exists:
+                raise ClientError(
+                    {"Error": {"Code": "404", "Message": "Not Found"}},
+                    "HeadBucket",
+                )
+            return super().head_bucket(Bucket=Bucket)
+
+        def create_bucket(self, **arguments: object) -> dict[str, object]:
+            self.exists = True
+            return super().create_bucket(**arguments)
+
+    client = MissingBucketClient("mendo-releases")
+    store = S3ReleaseStore(client, bucket="mendo-releases")
+
+    assert store.ensure_bucket() is True
+    assert store.ensure_bucket() is False
+    assert client.operations == [("create_bucket", "mendo-releases")]
 
 
 def test_pushes_release_then_publishes_channel_last(tmp_path: Path) -> None:
@@ -219,6 +248,34 @@ def test_failed_entry_upload_never_publishes_channel(tmp_path: Path) -> None:
         store.push(builder, channel="private")
 
     assert not any("/channels/" in key for key in client.objects)
+
+
+def test_failed_entry_upload_can_be_retried_without_new_release(
+    tmp_path: Path,
+) -> None:
+    builder, _ = seed_release(tmp_path / "archive")
+    release_id = builder.load_release(channel="private").release_id
+    client = FailingS3Client("mendo-releases", fail_after=1)
+    store = S3ReleaseStore(client, bucket="mendo-releases")
+
+    with pytest.raises(RuntimeError, match="injected upload failure"):
+        store.push(builder, channel="private")
+
+    first_uploaded_key = client.operations[0][1]
+    reused_release = builder.create(channel="private", reuse_unchanged=True)
+    assert reused_release.reused is True
+    assert reused_release.release.release_id == release_id
+
+    client.fail_after = 100
+    result = store.push(builder, channel="private", verify_reused=True)
+
+    assert result.release_id == release_id
+    assert result.reused_count == 1
+    assert result.verified_reused_count == 1
+    assert result.uploaded_count > 0
+    assert result.channel_key is not None
+    assert ("download", first_uploaded_key) in client.operations
+    assert client.operations[-1] == ("put", result.channel_key)
 
 
 def test_release_id_materialization_requires_manifest_hash(tmp_path: Path) -> None:

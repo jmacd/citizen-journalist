@@ -6,14 +6,38 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-observatory
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14.7"
+          cache: pip
+          cache-dependency-path: observatory/requirements.lock
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r observatory/requirements.lock
+          python -m pip install -e observatory --no-deps
+
+      - name: Run Observatory tests
+        run: python -m pytest observatory/tests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +75,7 @@ jobs:
 
       - name: Record immutable image
         run: |
-          printf '%s@%s\n' \
-            '${{ env.IMAGE_NAME }}' \
-            '${{ steps.build.outputs.digest }}'
+          image_ref='${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}'
+          printf '%s\n' "${image_ref}"
+          printf '### Immutable Observatory image\n\n`%s`\n' "${image_ref}" \
+            >> "${GITHUB_STEP_SUMMARY}"

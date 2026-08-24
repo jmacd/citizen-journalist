@@ -12,6 +12,39 @@ from mendo_observatory.errors import ArchiveWriteError
 from mendo_observatory.contracts import ObjectStoredEvent
 
 
+def test_initializes_with_pinned_archive_identity(tmp_path: Path) -> None:
+    archive_id = "00000000-0000-4000-8000-000000000001"
+    store = ArchiveStore(tmp_path / "archive")
+
+    identity = store.initialize(
+        birthplace="watershop-staging",
+        archive_id=archive_id,
+    )
+
+    assert identity.archive_id == archive_id
+    assert (
+        store.initialize(
+            birthplace="watershop-staging",
+            archive_id=archive_id,
+        ).archive_id
+        == archive_id
+    )
+
+
+def test_existing_archive_rejects_different_pinned_identity(tmp_path: Path) -> None:
+    store = ArchiveStore(tmp_path / "archive")
+    store.initialize(
+        birthplace="watershop-staging",
+        archive_id="00000000-0000-4000-8000-000000000001",
+    )
+
+    with pytest.raises(ArchiveWriteError, match="archive ID is"):
+        store.initialize(
+            birthplace="watershop-staging",
+            archive_id="00000000-0000-4000-8000-000000000002",
+        )
+
+
 def test_ingest_writes_content_addressed_object_and_event(tmp_path: Path) -> None:
     source = tmp_path / "resolution.pdf"
     source.write_bytes(b"%PDF fixture")

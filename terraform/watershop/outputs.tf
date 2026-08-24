@@ -1,16 +1,16 @@
 output "observatory_archive_id" {
   description = "Pinned identity of the watershop staging archive."
-  value       = local.archive_id
+  value       = local.archive_id != "" ? local.archive_id : null
 }
 
 output "observatory_receipt_key_id" {
   description = "Identifier embedded in signed staging receipts."
-  value       = local.receipt_key_id
+  value       = local.receipt_key_id != "" ? local.receipt_key_id : null
 }
 
 output "observatory_receipt_public_key" {
   description = "Non-secret OpenSSH public key for GitHub receipt verification."
-  value       = tls_private_key.staging_receipt.public_key_openssh
+  value       = var.observatory_identity_enabled ? tls_private_key.staging_receipt[0].public_key_openssh : null
 }
 
 output "observatory_source_sha256" {
@@ -20,7 +20,7 @@ output "observatory_source_sha256" {
 
 output "workbench_proxy_token" {
   description = "Sensitive token Caddy must inject when proxying Workbench requests."
-  value       = random_password.workbench_proxy.result
+  value       = var.workbench_identity_enabled ? random_password.workbench_proxy[0].result : null
   sensitive   = true
 }
 

@@ -44,13 +44,16 @@ MinIO service, unrelated buckets, Caddy, or any other project.
 
 ## Private Workbench
 
-Set `deploy_workbench = true` to install the repository's Workbench application,
+Set `workbench_identity_enabled = true` to create and retain the private proxy
+token, then set `deploy_workbench = true` to install the Workbench application,
 native Python environment, user systemd unit, and mode-`0600` environment. It
 binds only to `127.0.0.1:4180`. The candidate staging root is
 `/home/shared/observatory/staging/research`; the operational SQLite queue stays
 under `/home/jmacd/observatory/run`.
 
-Terraform generates a stable proxy token protected from destruction. Retrieve
+Terraform generates a stable proxy token protected from destruction. Leave
+`workbench_identity_enabled` enabled after its first apply, even when pausing
+the runtime. Retrieve
 it for the host-owned Caddy configuration with:
 
 ```sh
@@ -61,3 +64,9 @@ Use `deploy/watershop/Caddyfile.workbench.example` to configure a dedicated
 private hostname, Caddy `basic_auth`, and the matching proxy header. Terraform
 does not install or reload that snippet because Caddy is shared host
 infrastructure.
+
+The corpus archive UUID and receipt key use a separate
+`observatory_identity_enabled` lifecycle. Enable it before the first corpus
+runtime deployment and leave it enabled thereafter; `prevent_destroy` blocks
+accidental identity rotation. A Workbench-only plan does not create those
+corpus identities.

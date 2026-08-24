@@ -4,8 +4,20 @@ variable "deploy_observatory" {
   default     = false
 }
 
+variable "observatory_identity_enabled" {
+  description = "Create and retain the staging archive UUID and receipt key independently of runtime deployment."
+  type        = bool
+  default     = false
+}
+
 variable "deploy_workbench" {
   description = "Provision the private Observatory evidence Workbench on watershop."
+  type        = bool
+  default     = false
+}
+
+variable "workbench_identity_enabled" {
+  description = "Create and retain the private Caddy-to-Workbench proxy token independently of runtime deployment."
   type        = bool
   default     = false
 }

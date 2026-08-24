@@ -1,5 +1,5 @@
 window.MENDO_CASEBOOK_DATA = {
-  "generatedAt": "2026-08-22T16:08:57.430Z",
+  "generatedAt": "2026-08-24T01:06:33.746Z",
   "schema_version": 1,
   "case": {
     "id": "UM_2025-0004",
@@ -2128,8 +2128,8 @@ window.MENDO_CASEBOOK_DATA = {
         "title": "Service outside a city or district boundary",
         "topic": "lafco_out_of_area_service",
         "url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=56133.&lawCode=GOV",
-        "effect": "Generally requires LAFCo's prior written approval for a city or district to provide new or extended service outside its boundary.",
-        "does_not_establish": "The Cortese-Knox-Hertzberg definition of district excludes school districts, so this section governs an MCCSD extension but does not answer MUSD's authority."
+        "effect": "Requires a city or LAFCo-defined district to obtain prior written LAFCo approval before providing new or extended service outside its boundary. Outside its sphere, LAFCo may approve service responding to a documented existing or impending public-health or safety threat after notice to alternate providers. Listed exceptions include qualifying substitute public-agency service, transfers of nonpotable or untreated water, specified surplus agricultural water, service existing by January 1, 2001, and fire-protection contracts.",
+        "does_not_establish": "The Cortese-Knox-Hertzberg definition of district excludes school districts, so this section governs an MCCSD extension but does not answer MUSD's authority. The exclusion is not an affirmative grant allowing MUSD to furnish water to unrelated non-school users. No current source establishes that potable emergency water here falls within a listed exception."
       },
       {
         "id": "gov_61100_a",
@@ -2137,7 +2137,8 @@ window.MENDO_CASEBOOK_DATA = {
         "title": "Community services district water power",
         "topic": "district_power",
         "url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=61100.&lawCode=GOV",
-        "effect": "Allows a community services district to supply water within its boundaries."
+        "effect": "Allows a community services district to supply water within its boundaries.",
+        "does_not_establish": "It does not itself authorize MCCSD to furnish potable water outside its boundary or make the County Emergency Water Service Area part of MCCSD."
       },
       {
         "id": "gov_6500",
@@ -2215,6 +2216,21 @@ window.MENDO_CASEBOOK_DATA = {
         "cannot_establish_alone": "Drinking-water operating authority or groundwater rights."
       }
     ],
+    "current_authority_gap": {
+      "action": "Supply potable emergency water to users outside MCCSD's boundary.",
+      "status": "unresolved",
+      "supported_interpretation": "The present documents identify MUSD, not MCCSD, as owner and operator of the water-system assets. Condition 18 says stored water can be supplied by MUSD. The MOU says MUSD will make excess water available and that MUSD and MCCSD will jointly determine an application process. These records do not establish that MCCSD takes title to, hauls, sells, or legally supplies the water outside its boundary.",
+      "mccsd_rule": "Government Code section 61100(a) states MCCSD's water-supply power within its boundaries. If MCCSD itself provides new or extended potable service outside that boundary, section 56133 generally requires prior written LAFCo approval unless a documented exception applies.",
+      "musd_rule": "Government Code section 56036 excludes school districts from the LAFCo definition of district, so section 56133 does not directly decide MUSD's conduct. That exclusion does not establish MUSD's underlying school-district authority to serve non-MUSD users.",
+      "does_not_establish": "The County Emergency Water Service Area is a permit eligibility map. It is not itself an MCCSD annexation, LAFCo outside-agency-service approval, DDW service authorization, school-district power, or proof that delivery occurs at an out-of-boundary service connection rather than at an authorized MUSD filling point.",
+      "deciding_records": [
+        "Operative November 26, 2025 DDW permit and incorporated emergency-delivery plan.",
+        "Any LAFCo section 56133 request, written approval, exemption analysis, or no-jurisdiction determination.",
+        "MUSD board resolution, counsel opinion, or specific statutory analysis authorizing supply to non-MUSD users.",
+        "Final application, eligibility, allocation, pickup, hauling, billing, and chain-of-custody procedure.",
+        "Records identifying whether MUSD, MCCSD, a hauler, or the recipient takes possession and where title and physical custody transfer."
+      ]
+    },
     "priority_missing_records": [
       {
         "id": "ddw_2025_amended_permit",
@@ -2244,7 +2260,17 @@ window.MENDO_CASEBOOK_DATA = {
       {
         "id": "lafco_project_correspondence",
         "title": "Any LAFCo determination or correspondence concerning the MUSD/MCCSD project",
-        "why": "Shows whether district powers, annexation, or out-of-area service were considered."
+        "why": "Shows whether district powers, annexation, or out-of-area service were considered, including any section 56133 approval, exception analysis, or determination that MUSD's school-district status places the activity outside LAFCo jurisdiction."
+      },
+      {
+        "id": "emergency_delivery_operating_plan",
+        "title": "Final emergency-water application, pickup, hauling, billing, and delivery procedure",
+        "why": "Identifies the legal supplier, eligible recipient, pickup point, hauler, transfer of possession, destination, price or fee, and agency responsible for approving each delivery."
+      },
+      {
+        "id": "musd_non_school_water_authority",
+        "title": "MUSD governing-board and legal authority for supplying potable water to non-MUSD users",
+        "why": "A DDW permit regulates safe operation but does not itself establish the school district's underlying corporate authority to furnish water to unrelated users."
       },
       {
         "id": "measure_a_canvass",

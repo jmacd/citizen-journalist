@@ -101,6 +101,23 @@ def test_workbench_lists_validated_candidate_and_records_approval(
         ).fetchone()[0]
     assert status == "registration_approved"
 
+    registration = store.record_registration(
+        "official-record",
+        candidates[0]["sha256"],
+        "official_record",
+        "captures/cases/CASE-1/official-record.pdf",
+    )
+    assert registration["source_id"] == "official_record"
+    registered_candidate = store.candidate_with_decision("official-record")
+    assert registered_candidate["canonical_registration"]["source_id"] == (
+        "official_record"
+    )
+    with sqlite3.connect(queue_path) as connection:
+        status = connection.execute(
+            "SELECT status FROM research_queue WHERE id = ?", (lead.id,)
+        ).fetchone()[0]
+    assert status == "registered"
+
 
 def test_workbench_rejects_candidate_hash_mismatch(tmp_path: Path) -> None:
     staging = tmp_path / "research-staging"

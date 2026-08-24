@@ -141,8 +141,10 @@ function renderCandidateList() {
         text: [candidate.publisher, candidate.document_date].filter(Boolean).join(" · ") || "Issuer and date not supplied",
       }),
     );
-    const status = candidate.latest_decision
-      ? actionLabel(candidate.latest_decision.action)
+    const status = candidate.canonical_registration
+      ? "Registered"
+      : candidate.latest_decision
+        ? actionLabel(candidate.latest_decision.action)
       : valueOrDash(candidate.status);
     button.append(element("span", {
       className: `status-pill${candidate.latest_decision ? " decided" : ""}`,
@@ -484,11 +486,14 @@ function claimCard(title, values, className = "") {
   return card;
 }
 
-function decisionSummary(decision) {
+function decisionSummary(decision, registration = null) {
   if (!decision) return null;
   const note = decision.note ? `\nNote: ${decision.note}` : "";
+  const registrationMessage = registration
+    ? `\nCanonical registration completed: ${valueOrDash(registration.registered_at)} · source ${valueOrDash(registration.source_id)}`
+    : "\nCanonical registration is not represented as complete by this decision.";
   return {
-    message: `Latest audited decision: ${actionLabel(decision.action)} · ${valueOrDash(decision.created_at)} · ${valueOrDash(decision.actor)}${note}\nCanonical registration is not represented as complete by this decision.`,
+    message: `Latest audited decision: ${actionLabel(decision.action)} · ${valueOrDash(decision.created_at)} · ${valueOrDash(decision.actor)}${note}${registrationMessage}`,
     kind: "success",
   };
 }
@@ -503,7 +508,10 @@ function completedDecisionPanel(candidate) {
   const section = element("section", { className: "decision-section decision-complete" });
   section.append(element("h4", { text: "Review decision complete" }));
 
-  const summary = decisionSummary(candidate.latest_decision);
+  const summary = decisionSummary(
+    candidate.latest_decision,
+    candidate.canonical_registration,
+  );
   const status = element("p", {
     className: "decision-status success",
     text: summary.message,
@@ -511,8 +519,10 @@ function completedDecisionPanel(candidate) {
   status.setAttribute("role", "status");
   section.append(status);
 
-  const guidance = candidate.latest_decision.action === "approve_registration"
-    ? "No further action is needed for this candidate. Its exact reviewed file is authorized and waiting for the separate deterministic registration process."
+  const guidance = candidate.canonical_registration
+    ? "This exact reviewed file is registered in the canonical case corpus and is available to corpus-backed analysis."
+    : candidate.latest_decision.action === "approve_registration"
+      ? "No further action is needed for this candidate. Its exact reviewed file is authorized and waiting for the separate deterministic registration process."
     : "No further action is needed for this candidate unless you want to revise the audited decision.";
   section.append(element("p", { className: "decision-guidance", text: guidance }));
 
@@ -590,7 +600,8 @@ function decisionPanel(candidate, revising = false) {
   const status = element("p", { className: "decision-status" });
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
-  const stored = decisionMessages.get(candidate.id) || decisionSummary(candidate.latest_decision);
+  const stored = decisionMessages.get(candidate.id) ||
+    decisionSummary(candidate.latest_decision, candidate.canonical_registration);
   if (stored) {
     status.textContent = stored.message;
     status.classList.add(stored.kind);

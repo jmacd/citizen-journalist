@@ -774,6 +774,38 @@ sources:
     note: >-
       Signed action making the MCCSD sphere coterminous with its jurisdictional
       boundary. It expressly grants no new municipal service powers or areas.
+  - id: lafco_2020_june_mccsd_workshop_packet
+    title: Mendocino LAFCo Commission Packet - June 1, 2020
+    publisher: Mendocino LAFCo
+    document_date: 2020-06-01
+    url: https://www.mendolafco.org/files/5ba36b845/2020-06-01+LAFCo+Agenda+Packet.pdf
+    status: captured
+    capture_path: captures/cases/UM_2025-0004/boundaries/2020-06-01-lafco-mccsd-workshop-packet.pdf
+    bytes: 47040270
+    sha256: 761e4e7be4ad86fe721e9f67fe577e4737a084f7b167df5e58c023f7539edd05
+    version_of: MCCSD_2020_MSR_SOI_update
+    version: second_workshop_packet
+    note: >-
+      Official 268-page packet for LAFCo's second workshop on the draft MCCSD
+      MSR/SOI Update. The agenda expressly states that no formal action would
+      be taken at this workshop; it is not the adopted resolution or final
+      proof of Commission action.
+  - id: lafco_2020_august_3_approved_minutes
+    title: Approved Minutes - August 3, 2020 LAFCo Regular Meeting
+    publisher: Mendocino LAFCo
+    document_date: 2020-08-03
+    url: https://www.mendolafco.org/files/a761fc424/2020-09-14+Approved+August+3+Regular+Mtg+Minutes.pdf
+    status: captured
+    capture_path: captures/cases/UM_2025-0004/boundaries/2020-09-14-lafco-approved-august-3-minutes.pdf
+    bytes: 407626
+    sha256: a2cf17aeabf9ba08e8b1f6c9a394158a776696feb8d52ee972d99af751ce38b1
+    version: approved_2020-09-14
+    note: >-
+      Commission-approved minutes. At PDF pages 7-8, they record the unanimous
+      August 3 motion adopting Resolution 2020-21-01, adding water to the list
+      of MCCSD services in study section 3.1.1, and reducing the 2008 sphere to
+      a sphere coterminous with the District boundary. The minutes do not grant
+      MUSD authority or define a drinking-water service area.
   - id: county_2026_mccsd_boundary
     title: Mendocino County GIS - MCCSD Boundary
     publisher: Mendocino County GIS

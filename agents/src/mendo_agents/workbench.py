@@ -317,6 +317,19 @@ class WorkbenchStore:
                     "ALTER TABLE workbench_decisions "
                     "ADD COLUMN candidate_sha256 TEXT"
                 )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS workbench_registrations (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  candidate_id TEXT NOT NULL,
+                  candidate_sha256 TEXT NOT NULL,
+                  source_id TEXT NOT NULL,
+                  capture_path TEXT NOT NULL,
+                  registered_at TEXT NOT NULL,
+                  UNIQUE(candidate_id, candidate_sha256)
+                )
+                """
+            )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.queue_path, timeout=30)
@@ -352,9 +365,20 @@ class WorkbenchStore:
                   ) latest ON latest.id = d.id
                 """
             ).fetchall()
+            registrations = connection.execute(
+                """
+                SELECT candidate_id, candidate_sha256, source_id, capture_path,
+                       registered_at
+                  FROM workbench_registrations
+                """
+            ).fetchall()
         latest = {
             (str(row["candidate_id"]), str(row["candidate_sha256"])): dict(row)
             for row in decisions
+        }
+        registered = {
+            (str(row["candidate_id"]), str(row["candidate_sha256"])): dict(row)
+            for row in registrations
         }
         result = []
         for candidate in self.candidates.list_candidates():
@@ -364,6 +388,9 @@ class WorkbenchStore:
                 if not key.startswith("_")
             }
             public["latest_decision"] = latest.get(
+                (str(candidate["id"]), str(candidate["sha256"]))
+            )
+            public["canonical_registration"] = registered.get(
                 (str(candidate["id"]), str(candidate["sha256"]))
             )
             result.append(public)
@@ -389,8 +416,88 @@ class WorkbenchStore:
                 """,
                 (candidate_id, candidate["sha256"]),
             ).fetchone()
+            registration = connection.execute(
+                """
+                SELECT candidate_sha256, source_id, capture_path, registered_at
+                  FROM workbench_registrations
+                 WHERE candidate_id = ? AND candidate_sha256 = ?
+                 LIMIT 1
+                """,
+                (candidate_id, candidate["sha256"]),
+            ).fetchone()
         public["latest_decision"] = dict(decision) if decision else None
+        public["canonical_registration"] = (
+            dict(registration) if registration else None
+        )
         return public
+
+    def record_registration(
+        self,
+        candidate_id: str,
+        candidate_sha256: str,
+        source_id: str,
+        capture_path: str,
+    ) -> dict[str, str]:
+        candidate = self.candidates.get_candidate(candidate_id)
+        if not hmac.compare_digest(
+            str(candidate["sha256"]), candidate_sha256
+        ):
+            raise WorkbenchError(
+                "Candidate bytes changed after approval; registration refused"
+            )
+        normalized_source_id = source_id.strip()
+        normalized_capture_path = capture_path.strip()
+        if not normalized_source_id or not normalized_capture_path:
+            raise WorkbenchError(
+                "Registration requires a source ID and canonical capture path"
+            )
+        registered_at = datetime.now(UTC).isoformat()
+        with self._connect() as connection:
+            decision = connection.execute(
+                """
+                SELECT action
+                  FROM workbench_decisions
+                 WHERE candidate_id = ? AND candidate_sha256 = ?
+                 ORDER BY id DESC
+                 LIMIT 1
+                """,
+                (candidate_id, candidate_sha256),
+            ).fetchone()
+            if decision is None or decision["action"] != "approve_registration":
+                raise WorkbenchError(
+                    "Candidate lacks a current approval for registration"
+                )
+            connection.execute(
+                """
+                INSERT INTO workbench_registrations
+                  (candidate_id, candidate_sha256, source_id, capture_path,
+                   registered_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    candidate_id,
+                    candidate_sha256,
+                    normalized_source_id,
+                    normalized_capture_path,
+                    registered_at,
+                ),
+            )
+            for lead_id in candidate.get("related_lead_ids", []):
+                cursor = connection.execute(
+                    "UPDATE research_queue SET status = 'registered' WHERE id = ?",
+                    (lead_id,),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError(
+                        f"Registered candidate refers to missing lead: {lead_id}"
+                    )
+        return {
+            "candidate_id": candidate_id,
+            "candidate_sha256": candidate_sha256,
+            "source_id": normalized_source_id,
+            "capture_path": normalized_capture_path,
+            "registered_at": registered_at,
+        }
 
     def decide(
         self,

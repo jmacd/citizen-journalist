@@ -138,6 +138,23 @@ textarea:focus-visible {
 .item-button strong { margin: .14rem 0; line-height: 1.3; }
 .item-id { color: var(--accent); font: 700 .7rem ui-monospace, SFMono-Regular, Consolas, monospace; }
 .item-meta { margin-top: .3rem; color: var(--muted); font-size: .74rem; }
+.item-summary { margin-top: .3rem; color: var(--ink); font-size: .78rem; line-height: 1.35; }
+.parent-prompt {
+  margin-top: .35rem;
+  color: var(--muted);
+  font-size: .7rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+.pane-explainer {
+  margin: 0;
+  padding: .65rem .85rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  background: #f8f9f6;
+  font-size: .76rem;
+  line-height: 1.4;
+}
 .status-pill {
   display: inline-block;
   width: fit-content;

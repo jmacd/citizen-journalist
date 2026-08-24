@@ -92,10 +92,22 @@ async function loadQueue() {
       const card = element("article", { className: "item-button" });
       card.append(
         element("span", { className: "item-id", text: item.id }),
-        element("strong", { text: valueOrDash(item.question || item.description) }),
+        element("strong", { text: valueOrDash(item.deciding_record || item.description) }),
+        element("span", {
+          className: "item-summary",
+          text: valueOrDash(item.description),
+        }),
         element("span", {
           className: "item-meta",
-          text: [item.case_id, item.likely_custodian].filter(Boolean).join(" · ") || "No case or custodian supplied",
+          text: [
+            "Agent evidence gap",
+            item.case_id,
+            item.likely_custodian,
+          ].filter(Boolean).join(" · "),
+        }),
+        element("span", {
+          className: "parent-prompt",
+          text: `Parent prompt context: ${valueOrDash(item.question)}`,
         }),
         element("span", {
           className: "status-pill",

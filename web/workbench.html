@@ -27,13 +27,17 @@
       <section class="pane queue-pane" aria-labelledby="queue-heading">
         <header class="pane-header">
           <div>
-            <p class="eyebrow">Inbox</p>
-            <h2 id="queue-heading">Research queue</h2>
+            <p class="eyebrow">Discovery backlog</p>
+            <h2 id="queue-heading">Agent-produced evidence gaps</h2>
           </div>
           <span id="queue-count" class="count" aria-label="Queue item count">—</span>
         </header>
+        <p class="pane-explainer">
+          These are records the analysis identified as missing, not questions awaiting your response.
+          Parent prompts are shown only as context and may include operator test runs.
+        </p>
         <div id="queue-state" class="state" role="status" aria-live="polite">Loading queue…</div>
-        <ol id="queue-list" class="item-list queue-list" aria-label="Research leads"></ol>
+        <ol id="queue-list" class="item-list queue-list" aria-label="Agent-produced evidence gaps"></ol>
       </section>
 
       <section class="pane candidates-pane" aria-labelledby="candidates-heading">

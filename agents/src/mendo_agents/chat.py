@@ -18,7 +18,13 @@ from urllib.parse import urlsplit
 from agent_framework import FileCheckpointStorage
 
 from .config import Settings
-from .models import CaseQuestion, DispositionKind, RunDisposition
+from .models import (
+    CaseQuestion,
+    Claim,
+    DispositionKind,
+    EvidenceGap,
+    RunDisposition,
+)
 from .policy import load_society_policy
 from .providers import create_reasoner, provider_identity
 from .repository import CorpusRepository
@@ -93,6 +99,7 @@ class PublicChatService:
             max_iterations=self.settings.max_iterations,
             max_research_rounds=0,
             auto_publish_read_only=True,
+            max_review_revisions=1,
         )
         output: RunDisposition | None = None
         async for event in workflow.run(
@@ -111,17 +118,22 @@ class PublicChatService:
                 output = event.data
         if output is None:
             raise RuntimeError("Public workflow ended without a disposition")
+        public_gaps = self._public_gaps(output)
         queued = ()
-        if (
-            output.kind == DispositionKind.ANSWER_READY
-            and output.analysis is not None
-            and output.review is not None
-            and output.review.accepted
+        if output.analysis is not None and output.review is not None and (
+            (
+                output.kind == DispositionKind.ANSWER_READY
+                and output.review.accepted
+            )
+            or (
+                output.kind == DispositionKind.BLOCKED
+                and not output.review.accepted
+            )
         ):
             queued = self.research_queue.enqueue(
                 self.settings.case_id,
                 normalized,
-                output.analysis.gaps,
+                public_gaps,
                 origin_type="foundry_public_chat",
                 origin_run_id=origin_run_id,
                 initiating_actor="public_cio",
@@ -195,21 +207,56 @@ class PublicChatService:
 
     def _serialize(self, output: RunDisposition) -> dict[str, object]:
         if output.kind != DispositionKind.ANSWER_READY or output.analysis is None:
+            withheld_claims = (
+                self._serialize_claims(output.analysis.claims)
+                if output.analysis is not None
+                else []
+            )
             return {
                 "status": output.kind.value,
                 "summary": output.summary,
                 "answer": None,
                 "claims": [],
-                "gaps": [asdict(gap) for gap in output.gaps],
+                "withheld_answer": (
+                    output.analysis.short_answer
+                    if output.analysis is not None
+                    else None
+                ),
+                "withheld_claims": withheld_claims,
+                "gaps": [asdict(gap) for gap in self._public_gaps(output)],
                 "review_findings": (
-                    [asdict(finding) for finding in output.review.findings]
+                    [
+                        {
+                            **asdict(finding),
+                            "claim_number": (
+                                finding.claim_index + 1
+                                if finding.claim_index is not None
+                                and 0
+                                <= finding.claim_index
+                                < len(withheld_claims)
+                                else None
+                            ),
+                        }
+                        for finding in output.review.findings
+                    ]
                     if output.review is not None
                     else []
                 ),
             }
 
-        claims = []
-        for claim in output.analysis.claims:
+        return {
+            "status": output.kind.value,
+            "summary": output.summary,
+            "answer": output.analysis.short_answer,
+            "claims": self._serialize_claims(output.analysis.claims),
+            "gaps": [asdict(gap) for gap in self._public_gaps(output)],
+        }
+
+    def _serialize_claims(
+        self, source_claims: tuple[Claim, ...]
+    ) -> list[dict[str, object]]:
+        claims: list[dict[str, object]] = []
+        for claim in source_claims:
             citations = []
             for locator in claim.locators:
                 source = self.corpus.document_metadata(locator.document_id)
@@ -234,14 +281,23 @@ class PublicChatService:
                     "citations": citations,
                 }
             )
-        gaps = output.analysis.gaps or output.gaps
-        return {
-            "status": output.kind.value,
-            "summary": output.summary,
-            "answer": output.analysis.short_answer,
-            "claims": claims,
-            "gaps": [asdict(gap) for gap in gaps],
-        }
+        return claims
+
+    @staticmethod
+    def _public_gaps(output: RunDisposition) -> tuple[EvidenceGap, ...]:
+        candidates = list(output.gaps)
+        if output.analysis is not None:
+            candidates.extend(output.analysis.gaps)
+        if output.review is not None:
+            candidates.extend(output.review.targeted_gaps)
+        unique = {}
+        for gap in candidates:
+            key = (
+                gap.description.strip().lower(),
+                gap.deciding_record.strip().lower(),
+            )
+            unique.setdefault(key, gap)
+        return tuple(unique.values())
 
 
 class ChatRequestHandler(BaseHTTPRequestHandler):

@@ -303,6 +303,12 @@ async def test_provider_answer_retains_curated_research_gaps(
     class GroundedReasoner:
         async def respond(self, role_id, instructions, prompt):
             if role_id == "analyst":
+                request = json.loads(prompt.splitlines()[-1])
+                assert request["output_limits"]["maximum_claims"] == 6
+                assert request["output_limits"]["maximum_gaps"] == 6
+                assert "rules" not in request["requirements"]
+                assert "watches" not in request["requirements"]
+                assert "request_drafts" not in request["requirements"]
                 return (
                     '{"short_answer":"The commission continued the hearing.",'
                     '"claims":[{"text":"The commission continued the hearing.",'
@@ -336,6 +342,52 @@ async def test_provider_answer_retains_curated_research_gaps(
 
     assert output.kind == DispositionKind.ANSWER_READY
     assert output.analysis.gaps[0].deciding_record == "The final signed hearing order"
+
+
+async def test_public_analyst_repairs_invalid_json_once(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class RepairingReasoner:
+        analyst_calls = 0
+
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                self.analyst_calls += 1
+                if self.analyst_calls == 1:
+                    return '{"short_answer":"The commission continued'
+                assert "Repair invalid Analyst JSON" in instructions
+                return (
+                    '{"short_answer":"The commission continued the hearing.",'
+                    '"claims":[{"text":"The commission continued the hearing.",'
+                    '"confidence":"supported_interpretation",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"The final outcome."}],'
+                    '"answer_claim_indices":[0],"gaps":[]}'
+                )
+            if role_id == "skeptic":
+                return '{"accepted":true,"findings":[]}'
+            return "{}"
+
+    reasoner = RepairingReasoner()
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        reasoner,
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="What happened?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert reasoner.analyst_calls == 2
+    assert output.kind == DispositionKind.ANSWER_READY
+    assert output.analysis.short_answer == "The commission continued the hearing."
 
 
 async def test_persistent_skeptic_rejection_blocks_after_two_revisions(
@@ -383,6 +435,56 @@ async def test_persistent_skeptic_rejection_blocks_after_two_revisions(
 
     assert reasoner.analyst_calls == 3
     assert reasoner.skeptic_calls == 3
+    assert output.kind == DispositionKind.BLOCKED
+
+
+async def test_public_review_stops_after_one_revision(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class RejectingReasoner:
+        analyst_calls = 0
+        skeptic_calls = 0
+
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                self.analyst_calls += 1
+                return (
+                    '{"short_answer":"The permit was approved.",'
+                    '"claims":[{"text":"The permit was approved.",'
+                    '"confidence":"supported_interpretation",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"The permit itself."}],'
+                    '"answer_claim_indices":[0],"gaps":[]}'
+                )
+            if role_id == "skeptic":
+                self.skeptic_calls += 1
+                return (
+                    '{"accepted":false,"findings":[{"severity":"error",'
+                    '"code":"overclaim","message":"Approval is not established.",'
+                    '"claim_index":0}]}'
+                )
+            return "{}"
+
+    reasoner = RejectingReasoner()
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        reasoner,
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+        max_review_revisions=1,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="Was it approved?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert reasoner.analyst_calls == 2
+    assert reasoner.skeptic_calls == 2
     assert output.kind == DispositionKind.BLOCKED
 
 

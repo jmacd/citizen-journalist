@@ -12,6 +12,15 @@ agents/tests/
 !agents/src/**
 !agents/organization/
 !agents/organization/**
+!observatory/
+observatory/.venv/
+observatory/.pytest_cache/
+observatory/tests/
+!observatory/pyproject.toml
+!observatory/requirements.lock
+!observatory/requirements.runtime.lock
+!observatory/src/
+!observatory/src/**
 !web/
 !web/**
 !captures/

@@ -1,0 +1,18 @@
+FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY observatory/requirements.runtime.lock /tmp/requirements.lock
+RUN python -m pip install --no-cache-dir -r /tmp/requirements.lock
+
+COPY observatory/pyproject.toml ./observatory/pyproject.toml
+COPY observatory/src ./observatory/src
+RUN python -m pip install --no-cache-dir -e observatory --no-deps \
+    && useradd --create-home --uid 10001 observatory
+
+USER observatory
+
+CMD ["mendo-corpus", "--help"]

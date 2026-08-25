@@ -1,0 +1,72 @@
+# Watershop Terraform
+
+This root provisions only the Mendo Observatory staging application on the
+existing `watershop` host. It has independent local state and does not import,
+modify, or depend on Terraform from another repository.
+
+Existing host services are prerequisites:
+
+- SSH access for the unprivileged service user;
+- Python 3.11, `venv`, `flock`, `findmnt`, and user systemd;
+- an NFS mount containing the configured staging archive path; and
+- a reachable MinIO service and credentials authorized for the dedicated
+  release bucket.
+
+Copy `terraform.tfvars.example` to the ignored `terraform.tfvars`, pin the SSH
+host key, add MinIO credentials, and set `observatory_revision` to the complete
+committed Git revision being deployed. Enable `deploy_observatory` only after
+reviewing the plan:
+
+```sh
+terraform -chdir=terraform/watershop init
+terraform -chdir=terraform/watershop plan
+terraform -chdir=terraform/watershop apply
+```
+
+The source packager rejects a dirty Observatory, watershop deployment, or
+workflow tree and rejects a revision other than the checked-out `HEAD`.
+Terraform generates the staging archive UUID and Ed25519 receipt key unless an
+existing archive UUID is explicitly supplied. The private key remains in local
+Terraform state and the generated mode-`0600` `receipt.env`, which is loaded
+only by the receipt-producing smoke unit. Both identity resources are protected
+from destruction and remain stable when deployment is disabled.
+
+After applying, configure the non-secret public key in the protected GitHub
+`production` environment:
+
+```sh
+terraform -chdir=terraform/watershop \
+  output -raw observatory_receipt_public_key
+```
+
+No Terraform resource in this root manages the watershop host, NFS exports,
+MinIO service, unrelated buckets, Caddy, or any other project.
+
+## Private Workbench
+
+Set `workbench_identity_enabled = true` to create and retain the private proxy
+token, then set `deploy_workbench = true` to install the Workbench application,
+native Python environment, user systemd unit, and mode-`0600` environment. It
+binds only to `127.0.0.1:4180`. The candidate staging root is
+`/home/shared/observatory/staging/research`; the operational SQLite queue stays
+under `/home/jmacd/observatory/run`.
+
+Terraform generates a stable proxy token protected from destruction. Leave
+`workbench_identity_enabled` enabled after its first apply, even when pausing
+the runtime. Retrieve
+it for the host-owned Caddy configuration with:
+
+```sh
+terraform -chdir=terraform/watershop output -raw workbench_proxy_token
+```
+
+Use `deploy/watershop/Caddyfile.workbench.example` to configure a dedicated
+private hostname, Caddy `basic_auth`, and the matching proxy header. Terraform
+does not install or reload that snippet because Caddy is shared host
+infrastructure.
+
+The corpus archive UUID and receipt key use a separate
+`observatory_identity_enabled` lifecycle. Enable it before the first corpus
+runtime deployment and leave it enabled thereafter; `prevent_destroy` blocks
+accidental identity rotation. A Workbench-only plan does not create those
+corpus identities.

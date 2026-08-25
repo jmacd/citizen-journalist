@@ -30,6 +30,53 @@ def test_rejects_html_disguised_as_pdf(fixture_repo: Path, tmp_path: Path) -> No
         )
 
 
+def test_accepts_official_xhtml_snapshot(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    path = tmp_path / "codes_displaySection.xhtml"
+    path.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<!DOCTYPE html><html><head><title>California Code, GOV 56133</title>"
+        "</head><body><main>Current statutory text</main></body></html>",
+        encoding="utf-8",
+    )
+    candidate = AcquisitionCandidate(
+        target_id="gov-56133",
+        url="https://leginfo.legislature.ca.gov/codes_displaySection.xhtml",
+        issuing_body="California Legislative Information",
+        expected_title="Government Code section 56133",
+    )
+
+    record = validate_staged_record(
+        candidate, path, CorpusRepository(fixture_repo, "TEST-CASE")
+    )
+
+    assert record.mime_type == "text/html"
+    assert record.page_count is None
+    assert record.warnings == ("HTML snapshot has no stable page locators",)
+
+
+def test_rejects_access_denied_xhtml(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    path = tmp_path / "blocked.xhtml"
+    path.write_text(
+        "<html><head><title>Access Denied</title></head><body></body></html>",
+        encoding="utf-8",
+    )
+    candidate = AcquisitionCandidate(
+        target_id="blocked",
+        url="https://example.gov/blocked.xhtml",
+        issuing_body="Example Agency",
+        expected_title="Blocked record",
+    )
+
+    with pytest.raises(RecordValidationError, match="Access-denied HTML"):
+        validate_staged_record(
+            candidate, path, CorpusRepository(fixture_repo, "TEST-CASE")
+        )
+
+
 def test_approved_staged_bytes_are_rechecked(
     fixture_repo: Path, tmp_path: Path
 ) -> None:

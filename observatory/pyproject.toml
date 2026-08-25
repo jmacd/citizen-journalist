@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mendo-observatory"
+version = "0.1.0"
+description = "Home-primary preservation and corpus services for Mendo Observatory"
+requires-python = ">=3.11"
+dependencies = [
+  "boto3>=1.40,<2",
+  "cryptography>=46,<47",
+  "hatchling>=1.27,<2",
+  "pyarrow>=25,<26",
+  "pydantic>=2.11,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pip-tools>=7.5,<8",
+  "pytest>=8.3,<9",
+  "PyYAML>=6.0,<7",
+]
+
+[project.scripts]
+mendo-archive = "mendo_observatory.archive_cli:main"
+mendo-corpus = "mendo_observatory.corpus_cli:main"
+mendo-release = "mendo_observatory.release_cli:main"
+mendo-promote = "mendo_observatory.promotion_cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mendo_observatory"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

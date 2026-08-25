@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import mimetypes
+import re
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -17,11 +18,14 @@ class RecordValidationError(ValueError):
 
 
 def _mime_type(path: Path) -> str:
-    prefix = path.read_bytes()[:512]
+    prefix = path.read_bytes()[:4096]
     if prefix.startswith(b"%PDF-"):
         return "application/pdf"
     lowered = prefix.lstrip().lower()
-    if lowered.startswith((b"<!doctype html", b"<html")):
+    if (
+        lowered.startswith((b"<!doctype html", b"<html"))
+        or re.search(br"<html(?:\s|>)", lowered)
+    ):
         return "text/html"
     return mimetypes.guess_type(path.name)[0] or "application/octet-stream"
 
@@ -44,13 +48,29 @@ def validate_staged_record(
     mime_type = _mime_type(resolved)
     if mime_type == "text/html" and resolved.suffix.lower() == ".pdf":
         raise RecordValidationError("Access-denied or HTML response saved as a PDF")
-    if mime_type != "application/pdf":
+    if mime_type == "text/html":
+        try:
+            html = content.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise RecordValidationError("HTML record is not valid UTF-8") from error
+        lowered = html[:8192].lower()
+        if re.search(
+            r"<title>\s*(?:access denied|forbidden|captcha|verify you are human)",
+            lowered,
+        ):
+            raise RecordValidationError("Access-denied HTML response")
+        if ocr_path is not None:
+            raise RecordValidationError("OCR alignment is supported only for PDFs")
+        page_count = None
+        warnings = ("HTML snapshot has no stable page locators",)
+    elif mime_type == "application/pdf":
+        reader = PdfReader(resolved)
+        page_count = len(reader.pages)
+        warnings = ()
+    else:
         raise RecordValidationError(f"Unsupported staged MIME type: {mime_type}")
 
     digest = hashlib.sha256(content).hexdigest()
-    reader = PdfReader(resolved)
-    page_count = len(reader.pages)
-    warnings: list[str] = []
     ocr_pages = None
     if ocr_path is not None:
         if not ocr_path.is_file():
@@ -60,7 +80,7 @@ def validate_staged_record(
             raise RecordValidationError(
                 f"OCR has {ocr_pages} segments for a {page_count}-page PDF"
             )
-        warnings.append("OCR is a locally generated finding aid")
+        warnings += ("OCR is a locally generated finding aid",)
 
     return ValidatedRecord(
         candidate=candidate,
@@ -71,7 +91,7 @@ def validate_staged_record(
         duplicate_of=corpus.document_by_hash(digest),
         page_count=page_count,
         ocr_page_count=ocr_pages,
-        warnings=tuple(warnings),
+        warnings=warnings,
     )
 
 

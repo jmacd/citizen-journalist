@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
@@ -25,6 +26,11 @@ from .monitoring import MonitorRegistry, observation_from_snapshots
 from .policy import load_society_policy
 from .providers import create_reasoner
 from .repository import CorpusRepository
+from .research_dispatch import (
+    FoundryWebSearchScout,
+    ResearchDirectiveStore,
+    ResearchDispatcher,
+)
 from .skills import load_skills
 from .telemetry import configure_telemetry
 from .workflow import build_evidence_workflow
@@ -64,6 +70,28 @@ def _parser() -> argparse.ArgumentParser:
     tick.add_argument("--auto-approve", action="store_true")
 
     subparsers.add_parser("checkpoints")
+
+    research = subparsers.add_parser("research")
+    research_commands = research.add_subparsers(
+        dest="research_command", required=True
+    )
+    research_commands.add_parser("list")
+    research_show = research_commands.add_parser("show")
+    research_show.add_argument("directive_id")
+    research_prepare = research_commands.add_parser("prepare")
+    research_prepare.add_argument("--title", required=True)
+    research_prepare.add_argument("--brief", required=True)
+    research_prepare.add_argument("--lead", action="append", required=True)
+    research_prepare.add_argument(
+        "--allow-host", action="append", required=True
+    )
+    research_approve = research_commands.add_parser("approve")
+    research_approve.add_argument("directive_id")
+    research_approve.add_argument("--actor", default="cio")
+    research_dispatch = research_commands.add_parser("dispatch")
+    research_dispatch.add_argument("directive_id")
+    research_runs = research_commands.add_parser("runs")
+    research_runs.add_argument("directive_id", nargs="?")
     return parser
 
 
@@ -92,12 +120,56 @@ async def _run(args: argparse.Namespace) -> int:
         model_provider=effective_provider,
         checkpoint_root=settings.checkpoint_root,
         run_root=settings.run_root,
+        research_queue_path=settings.research_queue_path,
+        research_staging_root=settings.research_staging_root,
         max_iterations=settings.max_iterations,
         max_research_rounds=settings.max_research_rounds,
         enable_sensitive_telemetry=settings.enable_sensitive_telemetry,
     )
     args.case_id = effective_case_id
     args.provider = effective_provider
+
+    if args.command == "research":
+        store = ResearchDirectiveStore(settings.research_queue_path)
+        if args.research_command == "list":
+            value = [asdict(item) for item in store.list()]
+        elif args.research_command == "show":
+            value = asdict(store.get(args.directive_id))
+        elif args.research_command == "prepare":
+            value = asdict(
+                store.create(
+                    settings.case_id,
+                    args.title,
+                    args.brief,
+                    tuple(args.lead),
+                    tuple(args.allow_host),
+                )
+            )
+        elif args.research_command == "approve":
+            directive = store.get(args.directive_id)
+            print(json.dumps(asdict(directive), indent=2, sort_keys=True))
+            answer = input(
+                "Approve this public web-search directive and host list? [y/N] "
+            ).strip().lower()
+            if answer not in {"y", "yes"}:
+                raise RuntimeError("Research directive approval declined")
+            value = asdict(store.approve(args.directive_id, args.actor))
+        elif args.research_command == "dispatch":
+            if effective_provider != "foundry":
+                raise RuntimeError(
+                    "Web research dispatch currently requires --provider foundry"
+                )
+            value = ResearchDispatcher(
+                store,
+                FoundryWebSearchScout(),
+                CorpusRepository(settings.repo_root, settings.case_id),
+                settings.research_staging_root,
+            ).dispatch(args.directive_id)
+        else:
+            value = store.runs(args.directive_id)
+        print(json.dumps(value, indent=2, sort_keys=True))
+        return 0
+
     checkpoint_path = settings.checkpoint_root / settings.case_id
     checkpoint_path.mkdir(parents=True, exist_ok=True)
     storage = FileCheckpointStorage(storage_path=checkpoint_path)

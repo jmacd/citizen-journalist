@@ -15,6 +15,7 @@ class Settings:
     checkpoint_root: Path | None = None
     run_root: Path | None = None
     research_queue_path: Path | None = None
+    research_staging_root: Path | None = None
     max_iterations: int = 12
     max_research_rounds: int = 2
     enable_sensitive_telemetry: bool = False
@@ -40,6 +41,12 @@ class Settings:
                 "research_queue_path",
                 self.run_root / "research-queue.sqlite",
             )
+        if self.research_staging_root is None:
+            object.__setattr__(
+                self,
+                "research_staging_root",
+                self.run_root / "research-staging",
+            )
 
     @classmethod
     def from_env(cls, repo_root: Path | None = None) -> Settings:
@@ -61,6 +68,11 @@ class Settings:
             research_queue_path=(
                 Path(environ["MENDO_RESEARCH_QUEUE_PATH"])
                 if environ.get("MENDO_RESEARCH_QUEUE_PATH")
+                else None
+            ),
+            research_staging_root=(
+                Path(environ["MENDO_RESEARCH_STAGING_ROOT"])
+                if environ.get("MENDO_RESEARCH_STAGING_ROOT")
                 else None
             ),
             max_iterations=int(environ.get("MENDO_MAX_ITERATIONS", "12")),

@@ -6,7 +6,12 @@ from pathlib import Path
 from mendo_agents.chat import PublicChatError, PublicChatService, _settings_from_args
 from mendo_agents.config import Settings
 from mendo_agents.models import (
+    Analysis,
+    Claim,
+    Confidence,
     DispositionKind,
+    EvidenceGap,
+    EvidenceLocator,
     RunDisposition,
     SkepticFinding,
     SkepticReview,
@@ -69,6 +74,7 @@ async def test_public_chat_returns_skeptic_checked_citations(
         "section": None,
         "timestamp": None,
         "field": None,
+        "invalid": False,
     }
 
 
@@ -93,7 +99,7 @@ async def test_public_chat_rejects_empty_questions(
         raise AssertionError("Empty public question was accepted")
 
 
-def test_blocked_chat_exposes_safe_review_without_rejected_draft(
+def test_blocked_chat_exposes_labeled_draft_context_and_targeted_gap(
     fixture_repo: Path, tmp_path: Path
 ) -> None:
     service = PublicChatService(
@@ -108,6 +114,19 @@ def test_blocked_chat_exposes_safe_review_without_rejected_draft(
     output = RunDisposition(
         kind=DispositionKind.BLOCKED,
         summary="The Skeptic blocked publication.",
+        analysis=Analysis(
+            short_answer="The commission may have approved the service.",
+            claims=(
+                Claim(
+                    text="The commission approved the service.",
+                    confidence=Confidence.SUPPORTED_INTERPRETATION,
+                    locators=(
+                        EvidenceLocator(document_id="minutes", page=4),
+                    ),
+                    does_not_establish="The scope of approval.",
+                ),
+            ),
+        ),
         review=SkepticReview(
             accepted=False,
             findings=(
@@ -115,6 +134,13 @@ def test_blocked_chat_exposes_safe_review_without_rejected_draft(
                     severity="error",
                     code="unsupported_synthesis",
                     message="The conclusion is not established by the cited record.",
+                    claim_index=0,
+                ),
+            ),
+            targeted_gaps=(
+                EvidenceGap(
+                    description="Formal approval is missing.",
+                    deciding_record="Signed approval resolution",
                 ),
             ),
         ),
@@ -124,14 +150,73 @@ def test_blocked_chat_exposes_safe_review_without_rejected_draft(
 
     assert result["answer"] is None
     assert result["claims"] == []
+    assert result["withheld_answer"] == (
+        "The commission may have approved the service."
+    )
+    assert result["withheld_claims"][0]["text"] == (
+        "The commission approved the service."
+    )
+    assert result["withheld_claims"][0]["citations"][0]["title"] == (
+        "Planning Commission Minutes"
+    )
+    assert result["gaps"][0]["deciding_record"] == "Signed approval resolution"
     assert result["review_findings"] == [
         {
             "severity": "error",
             "code": "unsupported_synthesis",
             "message": "The conclusion is not established by the cited record.",
-            "claim_index": None,
+            "claim_index": 0,
+            "claim_number": 1,
         }
     ]
+
+
+def test_blocked_chat_labels_invalid_draft_locator(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    service = PublicChatService(
+        Settings(
+            repo_root=fixture_repo,
+            case_id="TEST-CASE",
+            checkpoint_root=tmp_path / "checkpoints",
+            run_root=tmp_path / "runs",
+        ),
+        policy_path=REPO_ROOT / "agents/organization/society.yaml",
+    )
+    output = RunDisposition(
+        kind=DispositionKind.BLOCKED,
+        summary="The Skeptic blocked publication.",
+        analysis=Analysis(
+            short_answer="Unsupported draft.",
+            claims=(
+                Claim(
+                    text="Unsupported claim.",
+                    confidence=Confidence.UNRESOLVED,
+                    locators=(
+                        EvidenceLocator(document_id="invented-source", page=1),
+                    ),
+                    does_not_establish="Anything.",
+                ),
+            ),
+        ),
+        review=SkepticReview(
+            accepted=False,
+            findings=(
+                SkepticFinding(
+                    severity="error",
+                    code="invalid_locator",
+                    message="The document does not exist.",
+                    claim_index=0,
+                ),
+            ),
+        ),
+    )
+
+    result = service._serialize(output)
+
+    citation = result["withheld_claims"][0]["citations"][0]
+    assert citation["invalid"] is True
+    assert citation["title"] == "Invalid evidence locator: invented-source"
 
 
 async def test_public_chat_uses_bounded_history_for_followup(

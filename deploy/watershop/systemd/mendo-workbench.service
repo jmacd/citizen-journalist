@@ -1,0 +1,19 @@
+[Unit]
+Description=Mendo Observatory private evidence Workbench
+
+[Service]
+Type=simple
+WorkingDirectory=/home/jmacd/observatory/app
+EnvironmentFile=/home/jmacd/observatory/env/workbench.env
+ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-workbench --repo-root /home/jmacd/observatory/app --host 127.0.0.1 --port 4180
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+MemoryAccounting=yes
+MemoryHigh=1536M
+MemoryMax=2048M
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

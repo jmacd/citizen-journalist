@@ -1,0 +1,15 @@
+# Import this site from the host-owned Caddy configuration after replacing the
+# hostname, password hash, and proxy token. Keep the token identical to
+# MENDO_WORKBENCH_PROXY_TOKEN in the mode-0600 Workbench environment.
+workbench.example.internal {
+	encode zstd gzip
+
+	basic_auth {
+		cio REPLACE_WITH_CADDY_HASHED_PASSWORD
+	}
+
+	reverse_proxy 127.0.0.1:4180 {
+		header_up X-Mendo-Workbench-Auth "REPLACE_WITH_RANDOM_SECRET"
+		header_up X-Mendo-Workbench-User "{http.auth.user.id}"
+	}
+}

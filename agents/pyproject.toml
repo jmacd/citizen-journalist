@@ -12,6 +12,7 @@ dependencies = [
   "agent-framework-foundry==1.11.0",
   "agent-framework-ollama==1.0.0b260813",
   "azure-identity>=1.25,<2",
+  "hatchling>=1.27,<2",
   "jsonschema[format]>=4.25,<5",
   "opentelemetry-sdk>=1.39,<2",
   "pydantic>=2.11,<3",
@@ -32,6 +33,7 @@ otel = [
 [project.scripts]
 mendo-agents = "mendo_agents.cli:main"
 mendo-chat = "mendo_agents.chat:main"
+mendo-workbench = "mendo_agents.workbench:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mendo_agents"]

@@ -73,8 +73,8 @@ prior_captures:
       EPSG:4326 source coordinates. Approximate mapped areas are 124,433 square
       meters for CA2300584 and 2,793,573 square meters for MCCSD.
     mapped_relation: >-
-      The eastern CA2300584 component is mapped wholly inside the MCCSD
-      jurisdiction polygon by vertex and segment checks. The western component
+      The western CA2300584 component is mapped wholly inside the MCCSD
+      jurisdiction polygon by vertex and segment checks. The eastern component
       crosses the mapped MCCSD boundary. This geometric relation does not
       establish customers, service commencement, LAFCo jurisdiction, or legal
       authority.

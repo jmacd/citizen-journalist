@@ -1,8 +1,17 @@
-# Mendo Codebook
+# Citizen Journalist
 
-Tools for retrieving and comparing Mendocino County coastal-code publications
-with the California Coastal Commission's certified Local Coastal Program
-records.
+A public-interest evidence system for finding the stories hidden across
+Mendocino County planning records. It preserves and reads source documents at
+scale, tests official claims against the record, and develops cited findings
+about matters planning commissioners, departments, and residents should know.
+It is designed to surface consequential omissions and conflicts—including
+facts an institution may not emphasize—without treating agent output as
+evidence or publishing claims that the sources do not support.
+
+The initial investigation retrieves and compares Mendocino County coastal-code
+publications with the California Coastal Commission's certified Local Coastal
+Program records. Internal component and asset names retain their existing
+identities while the broader system develops beyond that first investigation.
 
 ## Investigation report
 

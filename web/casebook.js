@@ -27,6 +27,7 @@ function renderChatResult(question, result) {
   const gaps = result.gaps || [];
   const queuedResearch = result.queued_research || [];
   const reviewFindings = result.review_findings || [];
+  const withheldClaims = result.withheld_claims || [];
   container.hidden = false;
   container.insertAdjacentHTML("beforeend", `
     <article class="chat-turn chat-turn-user">
@@ -39,6 +40,31 @@ function renderChatResult(question, result) {
         <strong>${result.answer ? "Casebook answer" : "Answer withheld"}</strong>
       </header>
       <p class="chat-answer-text">${escapeHtml(result.answer || result.summary)}</p>
+      ${!result.answer && (result.withheld_answer || withheldClaims.length) ? `
+        <details class="chat-withheld" open>
+          <summary>Withheld draft context — not an answer</summary>
+          <p class="withheld-warning">These are propositions the Analyst attempted. The Skeptic did not approve them for publication. Use the claim numbers below to understand the review findings; do not rely on them as conclusions.</p>
+          ${result.withheld_answer ? `<blockquote>${escapeHtml(result.withheld_answer)}</blockquote>` : ""}
+          ${withheldClaims.length ? `<ol class="chat-claims">${withheldClaims.map((claim) => `
+            <li>
+              <p>${escapeHtml(claim.text)}</p>
+              ${claim.citations.length ? `<div class="chat-citations">${claim.citations.map((citation) => `
+                ${citation.invalid ? `<span class="invalid-citation">
+                  ${escapeHtml(citation.title)} · ${escapeHtml(locatorLabel(citation))}
+                </span>` : `<a href="${citation.url
+                  ? escapeHtml(citation.url)
+                  : `#source-${escapeHtml(citation.document_id)}`}"
+                  ${citation.url ? 'target="_blank" rel="noreferrer"' : ""}>
+                  ${escapeHtml(citation.title)} · ${escapeHtml(locatorLabel(citation))}
+                </a>`}
+              `).join("")}</div>` : `<strong class="uncited-warning">No evidence locator supplied</strong>`}
+              <details>
+                <summary>${escapeHtml(humanize(claim.confidence))} · claimed limit</summary>
+                <p>${escapeHtml(claim.does_not_establish)}</p>
+              </details>
+            </li>
+          `).join("")}</ol>` : ""}
+        </details>` : ""}
       ${claims.length ? `<details class="chat-evidence">
         <summary>${claims.length} evidence-backed ${claims.length === 1 ? "finding" : "findings"} and citations</summary>
         <ol class="chat-claims">${claims.map((claim) => `
@@ -63,7 +89,9 @@ function renderChatResult(question, result) {
         <summary>Why the Skeptic blocked this answer</summary>
         <p>The draft was withheld because these evidence problems remained after two revision attempts:</p>
         <ul>${reviewFindings.map((finding) => `<li class="${escapeHtml(finding.severity)}">
-          <strong>${escapeHtml(humanize(finding.code))}</strong>
+          <strong>${finding.claim_number
+            ? `Claim ${escapeHtml(finding.claim_number)} · `
+            : ""}${escapeHtml(humanize(finding.code))}</strong>
           <span>${escapeHtml(finding.message)}</span>
         </li>`).join("")}</ul>
       </details>` : ""}
@@ -110,7 +138,8 @@ const chatResult = document.getElementById("chat-result");
 const chatHistory = [];
 
 function runtimeLabel(runtime) {
-  return runtime?.label || "Answer runtime unavailable";
+  const label = runtime?.label || "Answer runtime unavailable";
+  return `${label} · ${window.location.origin}`;
 }
 
 fetch("/api/health")

@@ -1,7 +1,7 @@
 schema_version: 1
 case_id: UM_2025-0004
 created_at: 2026-08-22T15:45:36-07:00
-status: research_directive_active
+status: public_sources_exhausted_for_lafco_project_determination
 action: Supply potable emergency water to users outside MCCSD's boundary.
 cio_question: >-
   MCCSD has water authority within its district, while the County Emergency
@@ -60,6 +60,42 @@ current_conclusion:
     participates in drought declarations or application review. That
     interpretation remains unverified until the operating procedure, DDW
     permit, MUSD authority, and LAFCo records are obtained.
+bounded_search_results:
+  - id: foundry-lafco-project-search-2026-08-25
+    directive_id: b482225988fddd93e231
+    run_id: 4
+    searched_hosts:
+    - mendolafco.org
+    - www.mendolafco.org
+    - mendocinousd.org
+    - www.mendocinousd.org
+    - mendocinocounty.gov
+    - www.mendocinocounty.gov
+    result: >-
+    No citable direct official PDF surfaced that documents a project-specific
+    LAFCo application, staff determination, approval, exemption,
+    no-jurisdiction conclusion, section 56133 analysis, latent-power action,
+    annexation, sphere amendment, or grandfathering determination for the
+    MUSD potable-water project.
+    excluded_as_nondeciding:
+    - Generic outside-agency-service application forms.
+    - The pre-project 2020 MCCSD MSR/SOI and resolution.
+    - County planning index pages and permit conditions.
+    - MUSD environmental, construction, and funding records with no LAFCo analysis.
+    limitation: >-
+    Absence from indexed public repositories does not prove that no
+    preapplication consultation, correspondence, exemption advice, or
+    determination exists.
+  - id: existing-official-boundary-layers
+    result: >-
+    The corpus already contains the 2026 County MCCSD jurisdictional-boundary
+    polygon and the State Water Board's verified 2021 CA2300584
+    drinking-water-system-area MultiPolygon.
+    limitation: >-
+    An overlay can describe geometric intersection or separation only. The
+    State Water Board warns that its layer is a general representation and
+    not a binding legal document; neither geometry establishes customers,
+    service commencement, LAFCo jurisdiction, or authority to serve.
 acquisition_tasks:
   - id: operative_ddw_permit_and_plan
     custodian: State Water Resources Control Board, Division of Drinking Water
@@ -83,4 +119,7 @@ acquisition_tasks:
     records:
       - Final implementation protocol for Condition 18.
       - Records identifying the approving agency, supplier, pickup point, hauler, recipient, and delivery destination.
-next_disposition: search_public_sources_before_request
+next_disposition: >-
+  Monitor public dockets and use the existing unsent, CIO-gated LAFCo request
+  draft only if the project-specific determination becomes necessary enough to
+  justify a last-resort records request.

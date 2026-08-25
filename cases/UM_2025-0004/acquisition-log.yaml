@@ -1,6 +1,6 @@
 schema_version: 1
 case_id: UM_2025-0004
-updated_at: 2026-08-22T02:54:11Z
+updated_at: 2026-08-24T05:05:57Z
 principles:
   - Search the issuing agency first, then official recipients and meeting packets, then public archives.
   - Record an agenda reference separately from the underlying instrument and governing-body action.
@@ -10,6 +10,44 @@ principles:
   - Record negative searches and false matches so they are not repeated as if they were new work.
 
 attempts:
+  - id: lafco-2020-june-workshop-packet-registration-2026-08-24
+    target_id: lafco_2020_june_mccsd_workshop_packet
+    attempted_at: 2026-08-24T05:05:57Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: June 1 2020 MCCSD MSR SOI workshop packet
+    url: https://www.mendolafco.org/files/5ba36b845/2020-06-01+LAFCo+Agenda+Packet.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved 268-page official meeting packet. The
+      packet contains the second-workshop draft record and expressly states
+      that no formal action would be taken at the workshop.
+    note: >-
+      SHA-256:
+      761e4e7be4ad86fe721e9f67fe577e4737a084f7b167df5e58c023f7539edd05;
+      47040270 bytes. Workbench approval recorded at
+      2026-08-24T04:17:47.475824+00:00.
+
+  - id: lafco-2020-approved-minutes-registration-2026-08-24
+    target_id: lafco_2020_august_3_approved_minutes
+    attempted_at: 2026-08-24T05:05:57Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: approved minutes August 3 2020 MCCSD MSR SOI action
+    url: https://www.mendolafco.org/files/a761fc424/2020-09-14+Approved+August+3+Regular+Mtg+Minutes.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official minutes, approved by the
+      Commission on September 14, 2020. The minutes record the unanimous
+      August 3 adoption of Resolution 2020-21-01.
+    note: >-
+      SHA-256:
+      a2cf17aeabf9ba08e8b1f6c9a394158a776696feb8d52ee972d99af751ce38b1;
+      407626 bytes. Workbench approval recorded at
+      2026-08-24T04:25:48.647128+00:00.
+
   - id: mccsd-water-shortage-plan-capture-2026-08-22
     target_id: mccsd_2020_water_shortage_plan
     attempted_at: 2026-08-22T15:42:26Z

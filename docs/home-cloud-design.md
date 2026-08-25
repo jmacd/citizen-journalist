@@ -5,6 +5,20 @@ programs. The dedicated home installation is the archival and editorial
 primary. Azure provides public access, elastic document analysis, model
 inference, workflow coordination, and off-site replicas.
 
+The initial home installation is the existing Linux ARM64 `watershop` machine.
+Its concrete NFS, MinIO, systemd, security, and Terraform integration is
+described in the [watershop deployment profile](../deploy/watershop/README.md).
+This repository's Terraform manages only the Observatory application boundary;
+the existing host, NFS, and MinIO services remain external prerequisites.
+
+Observatory has two software deployments: watershop staging and Azure
+production. Watershop runs the committed Python source and locked dependencies
+in a Terraform-managed native virtual environment. Azure runs a digest-pinned
+image built from that same Git revision; promotion verifies the revision label
+rather than claiming the platform packages are byte-identical. The NFS Archive
+remains the preservation primary even though the software running beside it is
+the staging deployment.
+
 ## Major programs
 
 | Program | Responsibility |

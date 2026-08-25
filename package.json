@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build:case-db": "node --no-warnings scripts/build-case-database.mjs",
+    "build:boundary-comparison": "node scripts/build-boundary-comparison.mjs",
     "build:casebook": "node scripts/build-casebook-data.mjs",
     "build:explorer": "node scripts/build-explorer-data.mjs",
     "explorer": "npm run build:explorer && npm run build:casebook && node scripts/serve-explorer.mjs",

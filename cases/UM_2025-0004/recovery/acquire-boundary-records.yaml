@@ -67,7 +67,20 @@ prior_captures:
       lon_max: -123.78213298953226
       lat_min: 39.30749226485687
       lat_max: 39.31238925917359
-    area_as_pct_of_mccsd: 23.59
+    area_as_pct_of_mccsd: 4.45
+    area_comparison_method: >-
+      Deterministic equirectangular area calculation from the registered
+      EPSG:4326 source coordinates. Approximate mapped areas are 124,433 square
+      meters for CA2300584 and 2,793,573 square meters for MCCSD.
+    mapped_relation: >-
+      The eastern CA2300584 component is mapped wholly inside the MCCSD
+      jurisdiction polygon by vertex and segment checks. The western component
+      crosses the mapped MCCSD boundary. This geometric relation does not
+      establish customers, service commencement, LAFCo jurisdiction, or legal
+      authority.
+    supersedes_note: >-
+      Replaces the prior 23.59 percent figure, which was not supported by a
+      reproducible area calculation.
     distinction: >-
       Small campus-scale polygon (approx. 24% of MCCSD area). Verified by
       T. Shatto (State Board staff) 2021-10-22. This is the DDW system-service

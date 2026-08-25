@@ -1,7 +1,7 @@
 schema_version: 1
 task_id: recover-ddw-permit
 case_id: UM_2025-0004
-updated_at: 2026-08-22T06:00:00Z
+updated_at: 2026-08-25T00:34:30Z
 target:
   description: >-
     Operative amended domestic water supply permit for CA2300584
@@ -162,6 +162,30 @@ searches:
       retrievable in this session.
     status: inaccessible_in_this_environment
 
+  - id: foundry-recipient-copy-search-2026-08-25
+    source: >-
+      Foundry Web Search over official MUSD, MCCSD, and Mendocino County
+      repositories
+    run_id: 3
+    directive_id: c8b63cc9c57e7c257d67
+    method: >-
+      CIO-approved citation-constrained search of exact official hosts for
+      direct PDF records, followed by deterministic local candidate handling
+    result: >-
+      No direct PDF copy of the November 26, 2025 CA2300584 permit amendment,
+      transmittal, engineering approval, service-area map, emergency-delivery
+      plan, or operating conditions was returned. The MUSD 2025-26 board
+      archive exposed October 2025 through January 2026 packets and a January
+      2026 technical memorandum, but indexed text showed project or
+      construction updates rather than the permit. MCCSD results were MOUs,
+      grants, studies, and recycled-water records. County results were
+      planning and environmental-review records. No candidate was staged.
+    limitation: >-
+      Search-index absence is not proof that no agency received a copy. It
+      establishes only that the specified official public repositories did
+      not expose a citable direct permit record in this run.
+    status: not_found
+
   - id: mccsd-board-late2025-fresh-2026-08-22
     source: MCCSD board meetings November and December 2025
     urls_checked:
@@ -291,6 +315,10 @@ negative_findings:
   - The CCC de novo hearing for A-1-MEN-25-0002 has not been scheduled;
     no staff report that might attach the permit has been published.
   - DDW routine permit amendments are administrative, not State Board-noticed.
+  - >-
+    A citation-constrained search of official MUSD, MCCSD, and County
+    recipient repositories found board and project updates but no direct
+    permit, transmittal, or incorporated permit attachment.
 
 remaining_action:
   type: public_records_request
@@ -303,4 +331,7 @@ remaining_action:
     This is the only remaining avenue for the operative permit and prior
     permit chain.  The draft request is complete and specific; it covers the
     November 26, 2025 amendment, the preceding permit, application, technical
-    reports, source approvals, and hauled-water plan.
+    reports, source approvals, and hauled-water plan. Because public-record
+    requests are intentionally a last resort, the non-request alternative is
+    passive monitoring for later DDW publication, a MUSD board attachment, or
+    a Coastal Commission de novo hearing packet that reproduces the permit.

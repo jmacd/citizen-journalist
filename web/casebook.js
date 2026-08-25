@@ -49,12 +49,14 @@ function renderChatResult(question, result) {
             <li>
               <p>${escapeHtml(claim.text)}</p>
               ${claim.citations.length ? `<div class="chat-citations">${claim.citations.map((citation) => `
-                <a href="${citation.url
+                ${citation.invalid ? `<span class="invalid-citation">
+                  ${escapeHtml(citation.title)} · ${escapeHtml(locatorLabel(citation))}
+                </span>` : `<a href="${citation.url
                   ? escapeHtml(citation.url)
                   : `#source-${escapeHtml(citation.document_id)}`}"
                   ${citation.url ? 'target="_blank" rel="noreferrer"' : ""}>
                   ${escapeHtml(citation.title)} · ${escapeHtml(locatorLabel(citation))}
-                </a>
+                </a>`}
               `).join("")}</div>` : `<strong class="uncited-warning">No evidence locator supplied</strong>`}
               <details>
                 <summary>${escapeHtml(humanize(claim.confidence))} · claimed limit</summary>
@@ -136,7 +138,8 @@ const chatResult = document.getElementById("chat-result");
 const chatHistory = [];
 
 function runtimeLabel(runtime) {
-  return runtime?.label || "Answer runtime unavailable";
+  const label = runtime?.label || "Answer runtime unavailable";
+  return `${label} · ${window.location.origin}`;
 }
 
 fetch("/api/health")

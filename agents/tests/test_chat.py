@@ -74,6 +74,7 @@ async def test_public_chat_returns_skeptic_checked_citations(
         "section": None,
         "timestamp": None,
         "field": None,
+        "invalid": False,
     }
 
 
@@ -168,6 +169,54 @@ def test_blocked_chat_exposes_labeled_draft_context_and_targeted_gap(
             "claim_number": 1,
         }
     ]
+
+
+def test_blocked_chat_labels_invalid_draft_locator(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    service = PublicChatService(
+        Settings(
+            repo_root=fixture_repo,
+            case_id="TEST-CASE",
+            checkpoint_root=tmp_path / "checkpoints",
+            run_root=tmp_path / "runs",
+        ),
+        policy_path=REPO_ROOT / "agents/organization/society.yaml",
+    )
+    output = RunDisposition(
+        kind=DispositionKind.BLOCKED,
+        summary="The Skeptic blocked publication.",
+        analysis=Analysis(
+            short_answer="Unsupported draft.",
+            claims=(
+                Claim(
+                    text="Unsupported claim.",
+                    confidence=Confidence.UNRESOLVED,
+                    locators=(
+                        EvidenceLocator(document_id="invented-source", page=1),
+                    ),
+                    does_not_establish="Anything.",
+                ),
+            ),
+        ),
+        review=SkepticReview(
+            accepted=False,
+            findings=(
+                SkepticFinding(
+                    severity="error",
+                    code="invalid_locator",
+                    message="The document does not exist.",
+                    claim_index=0,
+                ),
+            ),
+        ),
+    )
+
+    result = service._serialize(output)
+
+    citation = result["withheld_claims"][0]["citations"][0]
+    assert citation["invalid"] is True
+    assert citation["title"] == "Invalid evidence locator: invented-source"
 
 
 async def test_public_chat_uses_bounded_history_for_followup(

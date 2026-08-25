@@ -208,7 +208,10 @@ class PublicChatService:
     def _serialize(self, output: RunDisposition) -> dict[str, object]:
         if output.kind != DispositionKind.ANSWER_READY or output.analysis is None:
             withheld_claims = (
-                self._serialize_claims(output.analysis.claims)
+                self._serialize_claims(
+                    output.analysis.claims,
+                    allow_invalid_locators=True,
+                )
                 if output.analysis is not None
                 else []
             )
@@ -253,13 +256,37 @@ class PublicChatService:
         }
 
     def _serialize_claims(
-        self, source_claims: tuple[Claim, ...]
+        self,
+        source_claims: tuple[Claim, ...],
+        *,
+        allow_invalid_locators: bool = False,
     ) -> list[dict[str, object]]:
         claims: list[dict[str, object]] = []
         for claim in source_claims:
             citations = []
             for locator in claim.locators:
-                source = self.corpus.document_metadata(locator.document_id)
+                try:
+                    source = self.corpus.document_metadata(locator.document_id)
+                except KeyError:
+                    if not allow_invalid_locators:
+                        raise
+                    citations.append(
+                        {
+                            "document_id": locator.document_id,
+                            "title": (
+                                f"Invalid evidence locator: {locator.document_id}"
+                            ),
+                            "publisher": None,
+                            "document_date": None,
+                            "url": None,
+                            "page": locator.page,
+                            "section": locator.section,
+                            "timestamp": locator.timestamp,
+                            "field": locator.field,
+                            "invalid": True,
+                        }
+                    )
+                    continue
                 citations.append(
                     {
                         "document_id": locator.document_id,
@@ -271,6 +298,7 @@ class PublicChatService:
                         "section": locator.section,
                         "timestamp": locator.timestamp,
                         "field": locator.field,
+                        "invalid": False,
                     }
                 )
             claims.append(

@@ -232,6 +232,15 @@ section { scroll-margin-top: 4rem; padding: 2.1rem 0; border-bottom: 1px solid v
   color: var(--warning);
   font-size: .67rem;
 }
+.invalid-citation {
+  padding: .16rem .35rem;
+  border: 1px solid var(--warning);
+  border-radius: 2px;
+  color: var(--warning);
+  background: #fff;
+  font-size: .64rem;
+  font-weight: 750;
+}
 .chat-recovery {
   margin-top: .8rem;
   padding-top: .7rem;

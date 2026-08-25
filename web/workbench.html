@@ -23,6 +23,39 @@
       evidence; canonical registration is a separate, deterministic step.
     </aside>
 
+    <section class="workflow-guide" aria-labelledby="workflow-guide-heading">
+      <h2 id="workflow-guide-heading">Evidence workflow</h2>
+      <ol>
+        <li>Approve and start a bounded search.</li>
+        <li>Wait for a completed search with staged documents.</li>
+        <li>Review each document under Candidates.</li>
+        <li>Wait until approved documents say canonically registered.</li>
+        <li>Only then return to chat and ask the evidence question again.</li>
+      </ol>
+      <p><strong>Do not retry in chat after a failed or empty search.</strong> It will only queue the same missing evidence again.</p>
+    </section>
+
+    <section id="corpus-readiness" class="corpus-readiness" hidden role="status" aria-live="polite">
+      <strong id="corpus-readiness-heading"></strong>
+      <p id="corpus-readiness-detail"></p>
+    </section>
+
+    <section id="pending-search-approvals" class="pending-search-approvals" hidden>
+      <header>
+        <strong><span id="pending-search-count">0</span> bounded searches await approval</strong>
+        <p>Approve these instructions to start Foundry discovery immediately. Canonical registration remains separate.</p>
+      </header>
+      <ol id="pending-search-list"></ol>
+    </section>
+
+    <section id="search-attention" class="search-attention" hidden>
+      <header>
+        <strong>Searches requiring attention</strong>
+        <p>These searches did not produce documents ready for review.</p>
+      </header>
+      <ol id="search-attention-list"></ol>
+    </section>
+
     <details class="research-drawer">
       <summary>
         <span>

@@ -95,6 +95,157 @@ textarea:focus-visible {
 .research-drawer summary span:first-child { flex: 1; }
 .research-drawer summary .eyebrow { display: block; }
 .drawer-title { font-size: 1rem; font-weight: 750; }
+.workflow-guide {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: .8rem 1rem;
+  border-inline: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #fbfcf9;
+}
+.workflow-guide h2 {
+  margin: 0 0 .45rem;
+  font-size: 1rem;
+}
+.workflow-guide ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1.4rem;
+  margin: 0;
+  padding-left: 1.35rem;
+  font-size: .78rem;
+}
+.workflow-guide p {
+  margin: .55rem 0 0;
+  color: var(--muted);
+  font-size: .76rem;
+}
+.corpus-readiness {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: .75rem 1rem;
+  border: 2px solid #b46a2b;
+  border-top: 0;
+  background: #fff8ed;
+}
+.corpus-readiness.ready {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+.corpus-readiness strong {
+  display: block;
+  color: #754318;
+}
+.corpus-readiness.ready strong {
+  color: #205a3c;
+}
+.corpus-readiness p {
+  margin: .2rem 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.pending-search-approvals {
+  max-width: 1800px;
+  margin: 0 auto;
+  border: 2px solid var(--accent);
+  border-top: 0;
+  background: var(--accent-light);
+}
+.pending-search-approvals header {
+  padding: .8rem 1rem .55rem;
+}
+.pending-search-approvals header strong {
+  color: var(--accent-dark);
+  font-size: 1rem;
+}
+.pending-search-approvals header p {
+  margin: .2rem 0 0;
+  color: var(--muted);
+  font-size: .8rem;
+}
+.pending-search-approvals ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pending-search-approvals li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+.pending-search-approvals li div {
+  min-width: 0;
+}
+.pending-search-approvals li strong,
+.pending-search-approvals li span {
+  display: block;
+}
+.pending-search-approvals li span {
+  margin-top: .2rem;
+  color: var(--muted);
+  font-size: .74rem;
+}
+.pending-search-approvals button,
+.directive-approve {
+  flex: 0 0 auto;
+  padding: .55rem .8rem;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: #fff;
+  background: var(--accent);
+  font-weight: 750;
+  cursor: pointer;
+}
+.pending-search-approvals button:disabled,
+.directive-approve:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+.search-attention {
+  max-width: 1800px;
+  margin: 0 auto;
+  border: 2px solid #b46a2b;
+  border-top: 0;
+  background: #fff8ed;
+}
+.search-attention header {
+  padding: .7rem 1rem;
+}
+.search-attention header p {
+  margin: .2rem 0 0;
+  color: var(--muted);
+  font-size: .76rem;
+}
+.search-attention ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.search-attention li {
+  padding: .7rem 1rem;
+  border-top: 1px solid #dfc09f;
+  background: #fff;
+}
+.search-attention li strong,
+.search-attention li span,
+.search-attention li small {
+  display: block;
+}
+.search-attention li p {
+  margin: .35rem 0;
+  font-size: .78rem;
+}
+.search-attention li small {
+  color: var(--muted);
+}
+.status-pill.failed {
+  color: var(--danger);
+  background: var(--danger-light);
+}
 .research-drawer-content { border-top: 1px solid var(--line); }
 .research-drawer .queue-list {
   max-height: min(48vh, 520px);

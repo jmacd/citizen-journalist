@@ -289,7 +289,9 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "Review next pending candidate" in javascript
     assert "OpenStreetMap basemap" in javascript
     assert "Promise.allSettled(tileJobs)" in javascript
-    assert "Approve this bounded search" in javascript
+    assert "Approve and start Foundry search" in javascript
+    assert "Start Foundry search" in javascript
+    assert "/dispatch" in javascript
     assert "not a water-service area" in javascript
     assert "--host 127.0.0.1 --port 4180" in unit
     assert "EnvironmentFile=/home/jmacd/observatory/env/workbench.env" in unit

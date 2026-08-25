@@ -3,6 +3,14 @@ const queueState = document.getElementById("queue-state");
 const queueCount = document.getElementById("queue-count");
 const researchActivityList = document.getElementById("research-activity-list");
 const researchActivityState = document.getElementById("research-activity-state");
+const pendingSearchApprovals = document.getElementById("pending-search-approvals");
+const pendingSearchCount = document.getElementById("pending-search-count");
+const pendingSearchList = document.getElementById("pending-search-list");
+const searchAttention = document.getElementById("search-attention");
+const searchAttentionList = document.getElementById("search-attention-list");
+const corpusReadiness = document.getElementById("corpus-readiness");
+const corpusReadinessHeading = document.getElementById("corpus-readiness-heading");
+const corpusReadinessDetail = document.getElementById("corpus-readiness-detail");
 const candidateList = document.getElementById("candidate-list");
 const candidatesState = document.getElementById("candidates-state");
 const candidateCount = document.getElementById("candidate-count");
@@ -77,11 +85,112 @@ function actionLabel(action) {
   }[action] || valueOrDash(action);
 }
 
+async function approveDirective(directive, button) {
+  button.disabled = true;
+  button.textContent = "Approving…";
+  try {
+    await getJSON(
+      `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
+      { method: "POST" },
+    );
+    await dispatchDirective(directive, button);
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Approve and start Foundry search";
+    setState(
+      researchActivityState,
+      `Could not approve search: ${error.message}`,
+      true,
+    );
+  }
+}
+
+async function dispatchDirective(directive, button) {
+  button.disabled = true;
+  button.textContent = "Searching with Foundry…";
+  try {
+    await getJSON(
+      `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/dispatch`,
+      { method: "POST" },
+    );
+  } catch (error) {
+    setState(
+      researchActivityState,
+      `Foundry search failed: ${error.message}`,
+      true,
+    );
+  } finally {
+    await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);
+  }
+}
+
+function renderPendingSearchApprovals(directives) {
+  const pending = directives.filter(
+    (directive) => directive.status === "pending_approval",
+  );
+  pendingSearchList.replaceChildren();
+  pendingSearchCount.textContent = String(pending.length);
+  pendingSearchApprovals.hidden = pending.length === 0;
+  pending.forEach((directive) => {
+    const item = element("li");
+    const text = element("div");
+    text.append(
+      element("strong", { text: directive.title }),
+      element("span", {
+        text: `Official hosts: ${directive.allowed_hosts.join(", ")}`,
+      }),
+    );
+    const approve = element("button", {
+      className: "primary-button",
+      text: "Approve and start Foundry search",
+    });
+    approve.type = "button";
+    approve.addEventListener("click", () => approveDirective(directive, approve));
+    item.append(text, approve);
+    pendingSearchList.append(item);
+  });
+}
+
+function renderSearchAttention(directives) {
+  const attention = directives.filter((directive) => {
+    if (directive.status === "failed") return true;
+    if (directive.status !== "completed") return false;
+    const candidates = directive.latest_run?.report?.candidates;
+    return Array.isArray(candidates) && candidates.length === 0;
+  }).slice(0, 3);
+  searchAttentionList.replaceChildren();
+  searchAttention.hidden = attention.length === 0;
+  attention.forEach((directive) => {
+    const item = element("li");
+    const failed = directive.status === "failed";
+    item.append(
+      element("strong", { text: directive.title }),
+      element("span", {
+        className: `status-pill${failed ? " failed" : ""}`,
+        text: failed ? "Failed — no documents staged" : "Completed — no documents found",
+      }),
+      element("p", {
+        text: failed
+          ? valueOrDash(directive.latest_run?.error)
+          : valueOrDash(directive.latest_run?.report?.summary),
+      }),
+      element("small", {
+        text: failed
+          ? "A revised directive or deterministic repository adapter is required."
+          : "Do not retry the same question in chat; refine the retrieval method.",
+      }),
+    );
+    searchAttentionList.append(item);
+  });
+}
+
 async function loadResearchActivity() {
   setState(researchActivityState, "Loading search activity…");
   try {
     const payload = await getJSON("/api/workbench/research-activity");
     const items = Array.isArray(payload.items) ? payload.items : [];
+    renderPendingSearchApprovals(items);
+    renderSearchAttention(items);
     researchActivityList.replaceChildren();
     if (!items.length) {
       setState(
@@ -169,34 +278,32 @@ async function loadResearchActivity() {
       if (directive.status === "pending_approval") {
         const approve = element("button", {
           className: "secondary-button directive-approve",
-          text: "Approve this bounded search",
+          text: "Approve and start Foundry search",
         });
         approve.type = "button";
-        approve.addEventListener("click", async () => {
-          approve.disabled = true;
-          approve.textContent = "Approving…";
-          try {
-            await getJSON(
-              `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
-              { method: "POST" },
-            );
-            await Promise.all([loadResearchActivity(), loadQueue()]);
-          } catch (error) {
-            approve.disabled = false;
-            approve.textContent = "Approve this bounded search";
-            setState(
-              researchActivityState,
-              `Could not approve search: ${error.message}`,
-              true,
-            );
-          }
-        });
+        approve.addEventListener(
+          "click",
+          () => approveDirective(directive, approve),
+        );
         card.append(approve);
+      } else if (directive.status === "approved") {
+        const dispatch = element("button", {
+          className: "secondary-button directive-approve",
+          text: "Start Foundry search",
+        });
+        dispatch.type = "button";
+        dispatch.addEventListener(
+          "click",
+          () => dispatchDirective(directive, dispatch),
+        );
+        card.append(dispatch);
       }
       row.append(card);
       researchActivityList.append(row);
     });
   } catch (error) {
+    pendingSearchApprovals.hidden = true;
+    searchAttention.hidden = true;
     setState(
       researchActivityState,
       `Could not load search activity: ${error.message}`,
@@ -286,11 +393,33 @@ function renderCandidateList() {
   });
 }
 
+function renderCorpusReadiness() {
+  const approved = candidates.filter(
+    (candidate) => candidate.latest_decision?.action === "approve_registration",
+  );
+  const waiting = approved.filter(
+    (candidate) => !candidate.canonical_registration,
+  );
+  corpusReadiness.classList.toggle("ready", approved.length > 0 && !waiting.length);
+  corpusReadiness.hidden = approved.length === 0;
+  if (waiting.length) {
+    corpusReadinessHeading.textContent =
+      `${waiting.length} approved document${waiting.length === 1 ? "" : "s"} awaiting canonical registration`;
+    corpusReadinessDetail.textContent =
+      "No additional CIO action is required. Do not return to chat until this status changes to Ready to ask.";
+  } else if (approved.length) {
+    corpusReadinessHeading.textContent = "Ready to ask";
+    corpusReadinessDetail.textContent =
+      "All approved evidence candidates are canonically registered. Reload the chat and retry the evidence question.";
+  }
+}
+
 async function loadCandidates(preferredId = selectedCandidateId) {
   setState(candidatesState, "Loading candidates…");
   try {
     const payload = await getJSON("/api/workbench/candidates");
     candidates = Array.isArray(payload.items) ? payload.items : [];
+    renderCorpusReadiness();
     const validationErrors = Array.isArray(payload.validation_errors)
       ? payload.validation_errors
       : [];
@@ -860,3 +989,6 @@ async function loadCandidateDetail(candidateId) {
 }
 
 await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);
+setInterval(() => {
+  if (!document.hidden) loadResearchActivity();
+}, 5000);

@@ -1,6 +1,6 @@
 schema_version: 1
 case_id: UM_2025-0004
-updated_at: 2026-08-24T05:05:57Z
+updated_at: 2026-08-25T16:52:04Z
 principles:
   - Search the issuing agency first, then official recipients and meeting packets, then public archives.
   - Record an agenda reference separately from the underlying instrument and governing-body action.
@@ -10,6 +10,172 @@ principles:
   - Record negative searches and false matches so they are not repeated as if they were new work.
 
 attempts:
+  - id: california-water-district-general-powers-registration-2026-08-25
+    target_id: ca_water_code_35400_35413_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 13 Part 5 Chapter 2 Article 1
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=13.&title=&part=5.&chapter=2.&article=1.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official article-level capture of
+      California Water District general powers, sections 35400 through 35413.
+    note: >-
+      SHA-256:
+      1f78f3686c3c600b3aa3ae6699abdf5527d7fb9f239542033164229e339f370d;
+      145389 bytes. Workbench approval recorded at
+      2026-08-25T16:50:08.245934+00:00.
+
+  - id: california-water-district-distribution-registration-2026-08-25
+    target_id: ca_water_code_35420_35429_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 13 Part 5 Chapter 2 Article 2
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=13.&title=&part=5.&chapter=2.&article=2.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official article-level capture
+      containing sections 35425, 35427, and 35428.
+    note: >-
+      SHA-256:
+      d5335de9d2c6ffa83c56522a650e9391bf252742ea44c8eab7e12c9543d8d610;
+      136927 bytes. Workbench approval recorded at
+      2026-08-25T16:50:24.281686+00:00.
+
+  - id: california-water-code-380-387-registration-2026-08-25
+    target_id: ca_water_code_380_387_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 1 Chapter 3.6 sections 380 through 387
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=1.&title=&part=&chapter=3.6.&article=
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved complete current chapter addressing
+      qualifying surplus-water transfers by local or regional public agencies.
+    note: >-
+      SHA-256:
+      fd8a37b9be780802bd18feb3d8762db909388deafefd826ea827d9a9f27c4194;
+      137698 bytes. Workbench approval recorded at
+      2026-08-25T16:50:36.438034+00:00.
+
+  - id: california-government-code-56036-registration-2026-08-25
+    target_id: ca_government_code_56036_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 56036 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56036.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official current definition of
+      district or special district governing section 56133.
+    note: >-
+      SHA-256:
+      941cb2f834af447f88830c5d5f2627ca3dc26315b0f5438a62474705a9284b5e;
+      164161 bytes. Workbench approval recorded at
+      2026-08-25T16:50:51.090420+00:00.
+
+  - id: outside-water-authority-registration-2026-08-25
+    target_id: ca_government_code_56133_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: California Legislative Information
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Government Code section 56133 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56133
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official XHTML capture governing new or
+      extended city or district services outside jurisdictional boundaries and
+      its express exceptions.
+    note: >-
+      SHA-256:
+      c7508cd2e234a8abe2011128c9787c93b0b8281e43b6c0552ce7a69377705ed8;
+      166839 bytes. Workbench approval recorded at
+      2026-08-25T05:30:18.696954+00:00. CIO cautioned that California Water
+      Districts and County Water Districts have different authority.
+
+  - id: service-definition-registration-2026-08-25
+    target_id: ca_government_code_56074_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: California Legislative Information
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Government Code section 56074 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56074
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official XHTML capture defining
+      service under the Cortese-Knox-Hertzberg Act.
+    note: >-
+      SHA-256:
+      a1b14756ab58ec6d0a904abbd255f635704c9141d2127936f5d78acff68dbcbf;
+      163662 bytes. Workbench approval recorded at
+      2026-08-25T05:31:25.427874+00:00.
+
+  - id: lafco-policy-manual-registration-2026-08-25
+    target_id: mendocino_lafco_policy_manual_2025
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: current Mendocino LAFCo Policies and Procedures Manual Policy 12.2
+    url: https://www.mendolafco.org/files/d93cace59/FINAL%2BAdopted%2BMendo%2BLAFCo%2BPP%2BManual%2B2018%2Bupd%2B3-6-2025.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official March 2025 manual containing
+      Mendocino LAFCo Policy 12.2 on outside-agency services.
+    note: >-
+      SHA-256:
+      fcff36050dafeb6988a1742636927405c73bea4973fccbd3fac36da1959528be;
+      896844 bytes. Workbench approval recorded at
+      2026-08-25T05:33:57.228978+00:00.
+
+  - id: lafco-policy-12-2-resolution-registration-2026-08-25
+    target_id: mendocino_lafco_resolution_2023_24_08
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Resolution 2023-24-08 outside agency services Policy 12.2 amendment
+    url: https://www.mendolafco.org/files/dbcc45275/2023-24-08%2BOAS%2BPolicy%2B12.2%2BAmendment.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved resolution and its adopted Policy 12.2
+      amendment, passed June 3, 2024.
+    note: >-
+      SHA-256:
+      b657c8eeb714067293860a7cbce533bcaadb42f9ab9bb3020fa2610e0b32ead5;
+      1130372 bytes. Workbench approval recorded at
+      2026-08-25T05:39:50.140605+00:00. CIO noted that it establishes how LAFCo
+      treats outside-service-area agreements.
+
+  - id: statutory-water-rights-registration-2026-08-25
+    target_id: ca_statutory_water_rights_law_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: State Water Resources Control Board
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: January 2026 Statutory Water Rights Law compilation
+    url: https://www.waterboards.ca.gov/laws_regulations/docs/wrlaws.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved January 2026 official compilation of
+      statutory water-rights law and related California Code sections.
+    note: >-
+      SHA-256:
+      dd6b7db42e613c11a01d0d60f795902945d18561c583523ca1d2cfd40a2aa860;
+      2861384 bytes. Workbench approval recorded at
+      2026-08-25T05:40:39.671381+00:00. CIO noted that the large compilation
+      may need to be broken down for analysis.
+
   - id: lafco-2020-june-workshop-packet-registration-2026-08-24
     target_id: lafco_2020_june_mccsd_workshop_packet
     attempted_at: 2026-08-24T05:05:57Z

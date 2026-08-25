@@ -21,8 +21,14 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 from .config import Settings
+from .repository import CorpusRepository
 from .research_queue import ResearchQueue
-from .research_dispatch import ResearchDirectiveStore, ResearchDispatchError
+from .research_dispatch import (
+    FoundryWebSearchScout,
+    ResearchDirectiveStore,
+    ResearchDispatchError,
+    ResearchDispatcher,
+)
 
 MAX_DECISION_BYTES = 16_384
 MAX_NOTE_CHARACTERS = 2_000
@@ -715,6 +721,28 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
             except (ResearchDispatchError, ValueError) as error:
                 self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             return
+        dispatch_match = re.fullmatch(
+            r"/api/workbench/research-directives/([^/]+)/dispatch", path
+        )
+        if dispatch_match:
+            dispatcher = self.workbench_server.research_dispatcher
+            if dispatcher is None:
+                self._json(
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    {
+                        "error": (
+                            "Foundry dispatch is not configured for this "
+                            "Workbench process."
+                        )
+                    },
+                )
+                return
+            try:
+                result = dispatcher.dispatch(unquote(dispatch_match.group(1)))
+                self._json(HTTPStatus.OK, result)
+            except ResearchDispatchError as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
         if path != "/api/workbench/decisions":
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return
@@ -828,11 +856,13 @@ class WorkbenchHTTPServer(ThreadingHTTPServer):
         store: WorkbenchStore,
         web_root: Path,
         proxy_token: str | None,
+        research_dispatcher: ResearchDispatcher | None = None,
         allow_unauthenticated_loopback: bool = False,
     ) -> None:
         self.store = store
         self.web_root = web_root.resolve()
         self.proxy_token = proxy_token or ""
+        self.research_dispatcher = research_dispatcher
         self.allow_unauthenticated_loopback = allow_unauthenticated_loopback
         super().__init__(address, WorkbenchRequestHandler)
 
@@ -863,11 +893,24 @@ def main() -> None:
         settings.research_queue_path,
         CandidateStore(settings.research_staging_root),
     )
+    research_dispatcher = None
+    if os.environ.get("MENDO_FOUNDRY_WEB_SEARCH_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        research_dispatcher = ResearchDispatcher(
+            store.directive_store,
+            FoundryWebSearchScout(),
+            CorpusRepository(settings.repo_root, settings.case_id),
+            settings.research_staging_root,
+        )
     server = WorkbenchHTTPServer(
         (args.host, args.port),
         store,
         settings.repo_root / "web",
         proxy_token=proxy_token,
+        research_dispatcher=research_dispatcher,
         allow_unauthenticated_loopback=args.allow_unauthenticated_loopback,
     )
     print(

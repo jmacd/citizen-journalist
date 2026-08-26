@@ -118,8 +118,8 @@ Only the first manual units currently exist:
   immutable content-addressed staging receipt under
   `/home/jmacd/observatory/run/staging-receipts/`.
 - `mendo-workbench.service` serves the private evidence inbox and candidate
-  review API on `127.0.0.1:4180`. It records audited CIO decisions but does not
-  itself mutate canonical manifests.
+  review API on port 4180. It records audited CIO decisions but does not itself
+  mutate canonical manifests.
 
 The Workbench is intended to sit behind the existing host-owned Caddy service.
 This repository provides `Caddyfile.workbench.example` for a dedicated private
@@ -128,10 +128,11 @@ rejects requests that do not carry that token when it is configured. Importing
 the snippet into the shared Caddy configuration remains an explicit host
 administration action; this repository does not own or replace Caddy.
 
-Terraform can instead enable explicit loopback-only testing. An SSH tunnel
-forwarding workstation ports 4174 and 4180 reaches the Foundry chat and
-Workbench without exposing either listener on the LAN. Disable this testing
-mode before enabling the Caddy route.
+Terraform can instead enable explicit trusted-LAN access. Chat and Workbench
+then bind directly to watershop's interfaces, while Workbench rejects source
+addresses that are not private or loopback. This mode has no per-user
+authentication and must be disabled before enabling the Caddy route or exposing
+watershop beyond the trusted network.
 
 Terraform is the supported installer. The standalone script only refreshes
 units and scripts after a native virtual environment and environment file

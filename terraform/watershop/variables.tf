@@ -28,8 +28,8 @@ variable "foundry_identity_enabled" {
   default     = false
 }
 
-variable "workbench_loopback_testing_enabled" {
-  description = "Allow unauthenticated Workbench access only through its loopback listener for SSH-tunneled testing."
+variable "workbench_trusted_lan_enabled" {
+  description = "Bind chat and Workbench to the LAN and trust unauthenticated clients only when their source address is private or loopback."
   type        = bool
   default     = false
 }

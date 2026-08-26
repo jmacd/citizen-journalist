@@ -59,8 +59,7 @@ state and the host's mode-`0600` environment.
 
 Set `deploy_workbench = true` to install both the Foundry case chat and evidence
 Workbench, their native Python environment, user systemd units, accepted case
-and corpus links, and NFS-backed operational research queue. Chat binds only to
-`127.0.0.1:4174`; Workbench binds only to `127.0.0.1:4180`. Candidate bytes,
+and corpus links, and NFS-backed operational research queue. Candidate bytes,
 queue decisions, and run state remain under
 `/home/citizen/journalist/research`. Pin this application independently with
 `workbench_revision`; changing Terraform or the Workbench does not force an
@@ -80,21 +79,14 @@ private hostname, Caddy `basic_auth`, and the matching proxy header. Terraform
 does not install or reload that snippet because Caddy is shared host
 infrastructure.
 
-For initial private testing, set
-`workbench_loopback_testing_enabled = true`. This omits the proxy token from the
-running service and permits Workbench requests only from its loopback listener.
-Connect from the workstation with:
-
-```sh
-ssh -N \
-  -L 4174:127.0.0.1:4174 \
-  -L 4180:127.0.0.1:4180 \
-  watershop
-```
-
-Then open `http://127.0.0.1:4174/casebook.html` and
-`http://127.0.0.1:4180/workbench`. Disable loopback testing before routing
-Workbench through Caddy.
+For direct access on a trusted private network, set
+`workbench_trusted_lan_enabled = true`. Chat and Workbench bind to all watershop
+interfaces, the proxy token is omitted, and Workbench accepts only clients
+whose source address is classified as private or loopback. Open
+`http://watershop.local:4174/casebook.html` and
+`http://watershop.local:4180/workbench`. This mode deliberately provides no
+user authentication within the trusted LAN; disable it before routing
+Workbench through Caddy or exposing watershop beyond that network.
 
 The corpus archive UUID and receipt key use a separate
 `observatory_identity_enabled` lifecycle. Enable it before the first corpus

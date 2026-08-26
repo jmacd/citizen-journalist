@@ -54,18 +54,20 @@ locals {
     FOUNDRY_MODEL                    = var.foundry_model
     FOUNDRY_PROJECT_ENDPOINT         = var.foundry_project_endpoint
     MENDO_CASE_ID                    = "UM_2025-0004"
+    MENDO_CHAT_HOST                  = var.workbench_trusted_lan_enabled ? "0.0.0.0" : "127.0.0.1"
     MENDO_FOUNDRY_WEB_SEARCH_ENABLED = "true"
     MENDO_MODEL_PROVIDER             = "foundry"
     MENDO_REPO_ROOT                  = "${var.observatory_home}/app"
     MENDO_RESEARCH_QUEUE_PATH        = "/home/citizen/journalist/research/research-queue.sqlite"
     MENDO_RESEARCH_STAGING_ROOT      = "/home/citizen/journalist/research"
     MENDO_RUN_ROOT                   = "/home/citizen/journalist/research/agent-runs"
+    MENDO_WORKBENCH_HOST             = var.workbench_trusted_lan_enabled ? "0.0.0.0" : "127.0.0.1"
     MENDO_WORKBENCH_EXTRA_ARGS = (
-      var.workbench_loopback_testing_enabled ?
-      "--allow-unauthenticated-loopback" :
+      var.workbench_trusted_lan_enabled ?
+      "--allow-unauthenticated-private-network" :
       ""
     )
-    }, var.workbench_loopback_testing_enabled ? {} : {
+    }, var.workbench_trusted_lan_enabled ? {} : {
     MENDO_WORKBENCH_PROXY_TOKEN = random_password.workbench_proxy[0].result
   }) : {}
   workbench_environment = join("\n", concat(
@@ -211,7 +213,7 @@ resource "null_resource" "workbench" {
       "systemctl --user is-active --quiet mendo-chat.service",
       "systemctl --user is-active --quiet mendo-workbench.service",
       "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4174/api/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
-      var.workbench_loopback_testing_enabled ? "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done" : "set -a; . '${var.observatory_home}/env/workbench.env'; set +a; attempt=0; until curl --fail --silent --show-error --max-time 10 -H \"X-Mendo-Workbench-Auth: $MENDO_WORKBENCH_PROXY_TOKEN\" http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
+      var.workbench_trusted_lan_enabled ? "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done" : "set -a; . '${var.observatory_home}/env/workbench.env'; set +a; attempt=0; until curl --fail --silent --show-error --max-time 10 -H \"X-Mendo-Workbench-Auth: $MENDO_WORKBENCH_PROXY_TOKEN\" http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
     ]
   }
 

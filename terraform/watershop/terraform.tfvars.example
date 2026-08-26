@@ -5,7 +5,7 @@ observatory_identity_enabled = false
 workbench_identity_enabled   = false
 accepted_workspace_identity_enabled = false
 foundry_identity_enabled = false
-workbench_loopback_testing_enabled = false
+workbench_trusted_lan_enabled = false
 
 observatory_revision = "0000000000000000000000000000000000000000"
 workbench_revision   = "0000000000000000000000000000000000000000"

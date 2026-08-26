@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import hmac
+import ipaddress
 import json
 import mimetypes
 import os
@@ -34,6 +35,15 @@ from .research_dispatch import (
     ResearchDispatchError,
     ResearchDispatcher,
 )
+
+
+def is_trusted_private_client(address: str) -> bool:
+    try:
+        client = ipaddress.ip_address(address)
+    except ValueError:
+        return False
+    return client.is_private or client.is_loopback
+
 
 MAX_DECISION_BYTES = 16_384
 MAX_NOTE_CHARACTERS = 2_000
@@ -620,6 +630,11 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
         expected = self.workbench_server.proxy_token
         if not expected and self.workbench_server.allow_unauthenticated_loopback:
             return self.client_address[0] in {"127.0.0.1", "::1"}
+        if (
+            not expected
+            and self.workbench_server.allow_unauthenticated_private_network
+        ):
+            return is_trusted_private_client(self.client_address[0])
         actual = self.headers.get("X-Mendo-Workbench-Auth", "")
         return hmac.compare_digest(expected, actual)
 
@@ -871,12 +886,16 @@ class WorkbenchHTTPServer(ThreadingHTTPServer):
         proxy_token: str | None,
         research_dispatcher: ResearchDispatcher | None = None,
         allow_unauthenticated_loopback: bool = False,
+        allow_unauthenticated_private_network: bool = False,
     ) -> None:
         self.store = store
         self.web_root = web_root.resolve()
         self.proxy_token = proxy_token or ""
         self.research_dispatcher = research_dispatcher
         self.allow_unauthenticated_loopback = allow_unauthenticated_loopback
+        self.allow_unauthenticated_private_network = (
+            allow_unauthenticated_private_network
+        )
         super().__init__(address, WorkbenchRequestHandler)
 
 
@@ -890,6 +909,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="allow direct loopback access for local development only",
     )
+    parser.add_argument(
+        "--allow-unauthenticated-private-network",
+        action="store_true",
+        help="trust direct clients with private or loopback source addresses",
+    )
     return parser
 
 
@@ -897,10 +921,13 @@ def main() -> None:
     args = _parser().parse_args()
     settings = Settings.from_env(args.repo_root)
     proxy_token = os.environ.get("MENDO_WORKBENCH_PROXY_TOKEN", "").strip()
-    if not proxy_token and not args.allow_unauthenticated_loopback:
+    if not proxy_token and not (
+        args.allow_unauthenticated_loopback
+        or args.allow_unauthenticated_private_network
+    ):
         raise RuntimeError(
             "MENDO_WORKBENCH_PROXY_TOKEN is required unless explicit "
-            "loopback development access is enabled"
+            "unauthenticated local-network access is enabled"
         )
     store = WorkbenchStore(
         settings.research_queue_path,
@@ -929,6 +956,9 @@ def main() -> None:
         proxy_token=proxy_token,
         research_dispatcher=research_dispatcher,
         allow_unauthenticated_loopback=args.allow_unauthenticated_loopback,
+        allow_unauthenticated_private_network=(
+            args.allow_unauthenticated_private_network
+        ),
     )
     print(
         f"Mendocino evidence Workbench: http://{args.host}:{args.port}/workbench",

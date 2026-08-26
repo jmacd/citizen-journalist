@@ -11,7 +11,19 @@ from pathlib import Path
 from mendo_agents.models import EvidenceGap
 from mendo_agents.research_dispatch import ResearchDirectiveStore
 from mendo_agents.research_queue import ResearchQueue
-from mendo_agents.workbench import CandidateStore, WorkbenchStore
+from mendo_agents.workbench import (
+    CandidateStore,
+    WorkbenchStore,
+    is_trusted_private_client,
+)
+
+
+def test_trusted_private_clients_exclude_public_addresses() -> None:
+    assert is_trusted_private_client("127.0.0.1")
+    assert is_trusted_private_client("192.168.80.25")
+    assert is_trusted_private_client("10.20.30.40")
+    assert not is_trusted_private_client("8.8.8.8")
+    assert not is_trusted_private_client("not-an-address")
 
 
 def write_bundle(root: Path, lead_id: str) -> None:
@@ -301,7 +313,8 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "Start Foundry search" in javascript
     assert "/dispatch" in javascript
     assert "not a water-service area" in javascript
-    assert "--host 127.0.0.1 --port 4180" in unit
+    assert "--host ${MENDO_WORKBENCH_HOST} --port 4180" in unit
+    assert "${MENDO_WORKBENCH_EXTRA_ARGS}" in unit
     assert "EnvironmentFile=/home/jmacd/observatory/env/workbench.env" in unit
     assert "basic_auth" in caddy
     assert "X-Mendo-Workbench-Auth" in caddy

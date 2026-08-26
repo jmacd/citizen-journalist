@@ -150,6 +150,8 @@ def test_workbench_deployment_hydrates_accepted_workspace() -> None:
     assert "/home/citizen/journalist/research/research-queue.sqlite" in deployment
     assert "PRAGMA integrity_check" in deployment
     assert "mendo-chat.service" in deployment
+    assert "casebook-data.js.tmp" in deployment
+    assert "ln -s '${local.workbench_restore_root}/web/casebook-data.js'" not in deployment
     assert '"agents/organization"' in packager
     assert '".github/skills"' in packager
     assert '"government-model"' in packager

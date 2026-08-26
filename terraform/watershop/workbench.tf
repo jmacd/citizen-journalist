@@ -126,6 +126,7 @@ resource "null_resource" "workbench" {
 
   triggers = {
     environment_hash   = sha256(local.workbench_environment)
+    hydration_version  = "copy-casebook-data-v2"
     runtime_id         = local.workbench_runtime_id
     chat_service_hash  = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-chat.service")
     service_hash       = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-workbench.service")
@@ -190,7 +191,7 @@ resource "null_resource" "workbench" {
       "app='${var.observatory_home}/apps/${local.workbench_source_hash}'; app_tmp=\"$app.tmp\"; if [ ! -d \"$app\" ]; then rm -rf \"$app_tmp\"; mkdir -m 0750 \"$app_tmp\"; tar -xf '${var.observatory_home}/work/upload/workbench-source.tar' -C \"$app_tmp\"; mv \"$app_tmp\" \"$app\"; fi",
       "ln -sfn '${local.workbench_restore_root}/cases' \"$app/cases\"",
       "ln -sfn '${local.workbench_restore_root}/captures' \"$app/captures\"",
-      "rm -f \"$app/web/casebook-data.js\"; ln -s '${local.workbench_restore_root}/web/casebook-data.js' \"$app/web/casebook-data.js\"",
+      "cp '${local.workbench_restore_root}/web/casebook-data.js' \"$app/web/casebook-data.js.tmp\"; chmod 0644 \"$app/web/casebook-data.js.tmp\"; mv \"$app/web/casebook-data.js.tmp\" \"$app/web/casebook-data.js\"",
       "venv='${var.observatory_home}/agent-venvs/${local.workbench_runtime_id}'; if [ -e \"$venv\" ] && ! { test -x \"$venv/bin/mendo-workbench\" && test \"$(cat \"$venv/mendo-source.sha256\")\" = '${local.workbench_source_hash}' && test \"$(cat \"$venv/mendo-runtime-lock.sha256\")\" = '${local.workbench_lock_hash}' && test \"$(cat \"$venv/mendo-source-revision\")\" = '${var.workbench_revision}' && test \"$(cat \"$venv/mendo-python-version\")\" = '${local.workbench_python_version}' && \"$venv/bin/mendo-workbench\" --help >/dev/null; }; then rm -rf \"$venv\"; fi; if [ ! -e \"$venv\" ]; then python3.11 -m venv \"$venv\"; \"$venv/bin/python\" -m pip install --require-hashes -r \"$app/agents/requirements.runtime.lock\"; \"$venv/bin/python\" -m pip install \"$app/agents\" --no-deps --no-build-isolation; \"$venv/bin/python\" -c \"import sys; assert sys.version_info[:2] == (3, 11), sys.version\"; printf '%s\n' '${local.workbench_source_hash}' > \"$venv/mendo-source.sha256\"; printf '%s\n' '${local.workbench_lock_hash}' > \"$venv/mendo-runtime-lock.sha256\"; printf '%s\n' '${var.workbench_revision}' > \"$venv/mendo-source-revision\"; printf '%s\n' '${local.workbench_python_version}' > \"$venv/mendo-python-version\"; fi",
       "\"$venv/bin/python\" -c 'import mendo_agents.workbench'",
       "install -m 0644 '${var.observatory_home}/work/upload/mendo-chat.service' \"$HOME/.config/systemd/user/mendo-chat.service.next\"",

@@ -16,6 +16,10 @@ Copy `terraform.tfvars.example` to the ignored `terraform.tfvars`, pin the SSH
 host key, add MinIO credentials, and set `observatory_revision` to the complete
 committed Git revision being deployed. The Terraform SSH provisioner uses the
 local SSH agent so passphrase-protected keys remain outside Terraform state.
+Terraform 1.5 cannot directly enforce a literal server key through its SSH
+provisioner, so a deterministic `ssh-keyscan` preflight must match the pinned
+key before any provisioner can run; the key fingerprint is also part of each
+deployment trigger.
 Enable `deploy_observatory` only after reviewing the plan:
 
 ```sh

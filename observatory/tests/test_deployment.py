@@ -196,6 +196,25 @@ def test_accepted_workspace_packager_uses_sqlite_backup_and_inventory() -> None:
     assert "cases/UM_2025-0004" in packager
 
 
+def test_watershop_host_key_verifier_rejects_mismatch() -> None:
+    verifier = REPO_ROOT / "terraform" / "watershop" / "verify-ssh-host-key.py"
+    result = subprocess.run(
+        [str(verifier)],
+        input=json.dumps(
+            {
+                "host": "invalid.example",
+                "host_key": "ssh-ed25519 "
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            }
+        ),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "ssh-keyscan failed" in result.stderr
+
+
 def test_observatory_image_workflow_builds_arm_and_x86() -> None:
     workflow_path = REPO_ROOT / ".github" / "workflows" / "observatory-image.yml"
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))

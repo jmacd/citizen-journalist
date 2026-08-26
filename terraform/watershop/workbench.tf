@@ -79,18 +79,19 @@ resource "null_resource" "workbench" {
   }
 
   triggers = {
-    environment_hash = sha256(local.workbench_environment)
-    runtime_id       = local.workbench_runtime_id
-    service_hash     = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-workbench.service")
-    source_hash      = local.workbench_source_hash
+    environment_hash   = sha256(local.workbench_environment)
+    runtime_id         = local.workbench_runtime_id
+    service_hash       = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-workbench.service")
+    source_hash        = local.workbench_source_hash
+    watershop_host_key = data.external.watershop_host_key[0].result.fingerprint
   }
 
   connection {
-    type     = "ssh"
-    host     = var.watershop_host
-    user     = var.watershop_user
-    agent    = true
-    host_key = var.watershop_host_key
+    type           = "ssh"
+    host           = var.watershop_host
+    user           = var.watershop_user
+    agent          = true
+    agent_identity = pathexpand(var.watershop_ssh_identity_path)
   }
 
   provisioner "remote-exec" {
@@ -153,6 +154,7 @@ resource "null_resource" "workbench" {
   }
 
   depends_on = [
+    data.external.watershop_host_key,
     local_sensitive_file.workbench_environment,
   ]
 }

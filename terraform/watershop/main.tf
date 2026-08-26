@@ -15,6 +15,16 @@ resource "tls_private_key" "staging_receipt" {
   }
 }
 
+data "external" "watershop_host_key" {
+  count   = var.deploy_observatory || var.deploy_workbench || var.import_accepted_workspace ? 1 : 0
+  program = ["python3", "${path.module}/verify-ssh-host-key.py"]
+
+  query = {
+    host     = var.watershop_host
+    host_key = var.watershop_host_key
+  }
+}
+
 data "external" "observatory_source" {
   count   = var.deploy_observatory ? 1 : 0
   program = ["python3", "${path.module}/package-observatory.py"]
@@ -144,24 +154,25 @@ resource "null_resource" "observatory" {
   }
 
   triggers = {
-    archive_id        = local.archive_id
-    environment_hash  = sha256(local.staging_environment)
-    receipt_env_hash  = sha256(local.receipt_environment)
-    runtime_lock_hash = local.runtime_lock_hash
-    runtime_id        = local.runtime_id
-    run_script_hash   = filesha256("${path.module}/../../deploy/watershop/scripts/run-corpus-staging.sh")
-    smoke_script_hash = filesha256("${path.module}/../../deploy/watershop/scripts/smoke-corpus-staging.sh")
-    source_hash       = local.source_hash
-    staging_unit_hash = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-staging.service")
-    smoke_unit_hash   = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-smoke.service")
+    archive_id         = local.archive_id
+    environment_hash   = sha256(local.staging_environment)
+    receipt_env_hash   = sha256(local.receipt_environment)
+    runtime_lock_hash  = local.runtime_lock_hash
+    runtime_id         = local.runtime_id
+    run_script_hash    = filesha256("${path.module}/../../deploy/watershop/scripts/run-corpus-staging.sh")
+    smoke_script_hash  = filesha256("${path.module}/../../deploy/watershop/scripts/smoke-corpus-staging.sh")
+    source_hash        = local.source_hash
+    staging_unit_hash  = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-staging.service")
+    smoke_unit_hash    = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-smoke.service")
+    watershop_host_key = data.external.watershop_host_key[0].result.fingerprint
   }
 
   connection {
-    type     = "ssh"
-    host     = var.watershop_host
-    user     = var.watershop_user
-    agent    = true
-    host_key = var.watershop_host_key
+    type           = "ssh"
+    host           = var.watershop_host
+    user           = var.watershop_user
+    agent          = true
+    agent_identity = pathexpand(var.watershop_ssh_identity_path)
   }
 
   provisioner "remote-exec" {
@@ -248,6 +259,7 @@ resource "null_resource" "observatory" {
   }
 
   depends_on = [
+    data.external.watershop_host_key,
     local_sensitive_file.receipt_environment,
     local_sensitive_file.staging_environment,
   ]
@@ -271,11 +283,11 @@ resource "null_resource" "accepted_workspace_import" {
   }
 
   connection {
-    type     = "ssh"
-    host     = var.watershop_host
-    user     = var.watershop_user
-    agent    = true
-    host_key = var.watershop_host_key
+    type           = "ssh"
+    host           = var.watershop_host
+    user           = var.watershop_user
+    agent          = true
+    agent_identity = pathexpand(var.watershop_ssh_identity_path)
   }
 
   provisioner "remote-exec" {
@@ -306,5 +318,8 @@ resource "null_resource" "accepted_workspace_import" {
     ]
   }
 
-  depends_on = [null_resource.observatory]
+  depends_on = [
+    data.external.watershop_host_key,
+    null_resource.observatory,
+  ]
 }

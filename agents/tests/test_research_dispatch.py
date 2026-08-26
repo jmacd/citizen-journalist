@@ -157,6 +157,49 @@ def test_directive_requires_explicit_approval(tmp_path: Path) -> None:
         store.start(directive.id)
 
 
+def test_terminal_dispatch_failure_invokes_recovery(
+    tmp_path: Path,
+) -> None:
+    queue, lead_id = make_queue(tmp_path)
+    store = ResearchDirectiveStore(queue.path)
+    directive = store.create(
+        "CASE-1",
+        "Find final policy",
+        "Locate the signed policy.",
+        (lead_id,),
+        ("records.example.gov",),
+    )
+    store.approve(directive.id, "cio")
+
+    class FailingScout:
+        def search(self, _directive):
+            raise ResearchDispatchError("Foundry returned malformed output")
+
+    class Recovery:
+        run_ids: list[int] = []
+
+        def diagnose(self, run_id):
+            self.run_ids.append(run_id)
+
+    recovery = Recovery()
+    with pytest.raises(
+        ResearchDispatchError, match="Foundry returned malformed output"
+    ):
+        ResearchDispatcher(
+            store,
+            FailingScout(),
+            make_corpus(tmp_path),
+            tmp_path / "research-staging",
+            failure_recovery=recovery,
+        ).dispatch(directive.id)
+
+    assert len(recovery.run_ids) == 1
+    run = store.runs(directive.id)[0]
+    assert run["id"] == recovery.run_ids[0]
+    assert run["status"] == "failed"
+    assert run["error_type"] == "ResearchDispatchError"
+
+
 def test_foundry_report_rejects_uncited_candidate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

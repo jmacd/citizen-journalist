@@ -278,6 +278,8 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     ).read_text(encoding="utf-8")
 
     assert "canonical registration is a separate, deterministic step" in html
+    assert "What should I do now?" in html
+    assert "This audit history does not require action" in html
     assert "Agent-produced evidence gaps" in html
     assert "Search directives and outcomes" in html
     assert "not questions awaiting your response" in html
@@ -287,6 +289,12 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "window.confirm" in javascript
     assert "Review decision complete" in javascript
     assert "Review next pending candidate" in javascript
+    assert "function updateActionCenter()" in javascript
+    assert "Acquisition Engineer diagnosis" in javascript
+    assert "No action needed — research is running" in javascript
+    assert "Workbench complete — return to chat" in javascript
+    assert "function sortCandidates(items)" in javascript
+    assert javascript.count("candidates = sortCandidates(") == 2
     assert "OpenStreetMap basemap" in javascript
     assert "Promise.allSettled(tileJobs)" in javascript
     assert "Approve and start Foundry search" in javascript

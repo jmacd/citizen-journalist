@@ -95,80 +95,46 @@ textarea:focus-visible {
 .research-drawer summary span:first-child { flex: 1; }
 .research-drawer summary .eyebrow { display: block; }
 .drawer-title { font-size: 1rem; font-weight: 750; }
-.workflow-guide {
+.action-center {
   max-width: 1800px;
   margin: 0 auto;
-  padding: .8rem 1rem;
-  border-inline: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: #fbfcf9;
-}
-.workflow-guide h2 {
-  margin: 0 0 .45rem;
-  font-size: 1rem;
-}
-.workflow-guide ol {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .35rem 1.4rem;
-  margin: 0;
-  padding-left: 1.35rem;
-  font-size: .78rem;
-}
-.workflow-guide p {
-  margin: .55rem 0 0;
-  color: var(--muted);
-  font-size: .76rem;
-}
-.corpus-readiness {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: .75rem 1rem;
-  border: 2px solid #b46a2b;
+  padding: 1rem;
+  border: 3px solid #6f79a8;
   border-top: 0;
-  background: #fff8ed;
+  background: #f3f4fb;
 }
-.corpus-readiness.ready {
+.action-center.action-required {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.action-center.ready {
   border-color: var(--success);
   background: var(--success-light);
 }
-.corpus-readiness strong {
-  display: block;
-  color: #754318;
+.action-center h2 {
+  margin: 0;
+  font-size: 1.2rem;
 }
-.corpus-readiness.ready strong {
-  color: #205a3c;
+.action-center > p {
+  margin: .3rem 0 0;
 }
-.corpus-readiness p {
-  margin: .2rem 0 0;
+.action-center .primary-button {
+  margin-top: .8rem;
+}
+.action-subheading {
+  margin: .9rem 0 .35rem;
+  font-weight: 800;
+}
+.action-progress {
   color: var(--muted);
-  font-size: .78rem;
+  font-size: .76rem;
 }
-.pending-search-approvals {
-  max-width: 1800px;
-  margin: 0 auto;
-  border: 2px solid var(--accent);
-  border-top: 0;
-  background: var(--accent-light);
-}
-.pending-search-approvals header {
-  padding: .8rem 1rem .55rem;
-}
-.pending-search-approvals header strong {
-  color: var(--accent-dark);
-  font-size: 1rem;
-}
-.pending-search-approvals header p {
-  margin: .2rem 0 0;
-  color: var(--muted);
-  font-size: .8rem;
-}
-.pending-search-approvals ol {
+#pending-search-approvals ol {
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.pending-search-approvals li {
+#pending-search-approvals li {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -177,19 +143,19 @@ textarea:focus-visible {
   border-top: 1px solid var(--line);
   background: #fff;
 }
-.pending-search-approvals li div {
+#pending-search-approvals li div {
   min-width: 0;
 }
-.pending-search-approvals li strong,
-.pending-search-approvals li span {
+#pending-search-approvals li strong,
+#pending-search-approvals li span {
   display: block;
 }
-.pending-search-approvals li span {
+#pending-search-approvals li span {
   margin-top: .2rem;
   color: var(--muted);
   font-size: .74rem;
 }
-.pending-search-approvals button,
+#pending-search-approvals button,
 .directive-approve {
   flex: 0 0 auto;
   padding: .55rem .8rem;
@@ -200,51 +166,10 @@ textarea:focus-visible {
   font-weight: 750;
   cursor: pointer;
 }
-.pending-search-approvals button:disabled,
+#pending-search-approvals button:disabled,
 .directive-approve:disabled {
   opacity: .55;
   cursor: wait;
-}
-.search-attention {
-  max-width: 1800px;
-  margin: 0 auto;
-  border: 2px solid #b46a2b;
-  border-top: 0;
-  background: #fff8ed;
-}
-.search-attention header {
-  padding: .7rem 1rem;
-}
-.search-attention header p {
-  margin: .2rem 0 0;
-  color: var(--muted);
-  font-size: .76rem;
-}
-.search-attention ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.search-attention li {
-  padding: .7rem 1rem;
-  border-top: 1px solid #dfc09f;
-  background: #fff;
-}
-.search-attention li strong,
-.search-attention li span,
-.search-attention li small {
-  display: block;
-}
-.search-attention li p {
-  margin: .35rem 0;
-  font-size: .78rem;
-}
-.search-attention li small {
-  color: var(--muted);
-}
-.status-pill.failed {
-  color: var(--danger);
-  background: var(--danger-light);
 }
 .research-drawer-content { border-top: 1px solid var(--line); }
 .research-drawer .queue-list {
@@ -264,6 +189,17 @@ textarea:focus-visible {
   color: var(--danger);
   font-size: .74rem;
   font-weight: 700;
+}
+.engineering-diagnosis {
+  margin-top: .65rem;
+  padding: .65rem;
+  border: 1px solid #7c83a6;
+  border-radius: .35rem;
+  background: #f5f5fb;
+}
+.engineering-diagnosis p {
+  margin: .3rem 0;
+  font-size: .76rem;
 }
 .directive-approve {
   align-self: flex-start;

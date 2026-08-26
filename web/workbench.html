@@ -23,37 +23,18 @@
       evidence; canonical registration is a separate, deterministic step.
     </aside>
 
-    <section class="workflow-guide" aria-labelledby="workflow-guide-heading">
-      <h2 id="workflow-guide-heading">Evidence workflow</h2>
-      <ol>
-        <li>Approve and start a bounded search.</li>
-        <li>Wait for a completed search with staged documents.</li>
-        <li>Review each document under Candidates.</li>
-        <li>Wait until approved documents say canonically registered.</li>
-        <li>Only then return to chat and ask the evidence question again.</li>
-      </ol>
-      <p><strong>Do not retry in chat after a failed or empty search.</strong> It will only queue the same missing evidence again.</p>
-    </section>
-
-    <section id="corpus-readiness" class="corpus-readiness" hidden role="status" aria-live="polite">
-      <strong id="corpus-readiness-heading"></strong>
-      <p id="corpus-readiness-detail"></p>
-    </section>
-
-    <section id="pending-search-approvals" class="pending-search-approvals" hidden>
-      <header>
-        <strong><span id="pending-search-count">0</span> bounded searches await approval</strong>
-        <p>Approve these instructions to start Foundry discovery immediately. Canonical registration remains separate.</p>
-      </header>
+    <section id="action-center" class="action-center waiting" role="status" aria-live="polite">
+      <p class="eyebrow">What should I do now?</p>
+      <h2 id="action-center-heading">Loading your next action…</h2>
+      <p id="action-center-detail">Checking document reviews, searches, and registration.</p>
+      <button id="review-next-candidate" class="primary-button" type="button" hidden>
+      Review next document
+      </button>
+      <div id="pending-search-approvals" hidden>
+      <p class="action-subheading"><span id="pending-search-count">0</span> searches need your approval</p>
       <ol id="pending-search-list"></ol>
-    </section>
-
-    <section id="search-attention" class="search-attention" hidden>
-      <header>
-        <strong>Searches requiring attention</strong>
-        <p>These searches did not produce documents ready for review.</p>
-      </header>
-      <ol id="search-attention-list"></ol>
+      </div>
+      <p id="action-center-progress" class="action-progress"></p>
     </section>
 
     <details class="research-drawer">
@@ -75,7 +56,7 @@
         <h3 class="gap-heading">Individual evidence gaps</h3>
         <p class="pane-explainer">
           These are records the analysis identified as missing, not questions awaiting your response.
-          Parent prompts are shown only as context and may include operator test runs.
+          This audit history does not require action unless the panel above explicitly asks you.
         </p>
         <div id="queue-state" class="state" role="status" aria-live="polite">Loading queue…</div>
         <ol id="queue-list" class="item-list queue-list" aria-label="Agent-produced evidence gaps"></ol>

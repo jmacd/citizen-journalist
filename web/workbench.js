@@ -6,11 +6,11 @@ const researchActivityState = document.getElementById("research-activity-state")
 const pendingSearchApprovals = document.getElementById("pending-search-approvals");
 const pendingSearchCount = document.getElementById("pending-search-count");
 const pendingSearchList = document.getElementById("pending-search-list");
-const searchAttention = document.getElementById("search-attention");
-const searchAttentionList = document.getElementById("search-attention-list");
-const corpusReadiness = document.getElementById("corpus-readiness");
-const corpusReadinessHeading = document.getElementById("corpus-readiness-heading");
-const corpusReadinessDetail = document.getElementById("corpus-readiness-detail");
+const actionCenter = document.getElementById("action-center");
+const actionCenterHeading = document.getElementById("action-center-heading");
+const actionCenterDetail = document.getElementById("action-center-detail");
+const actionCenterProgress = document.getElementById("action-center-progress");
+const reviewNextCandidate = document.getElementById("review-next-candidate");
 const candidateList = document.getElementById("candidate-list");
 const candidatesState = document.getElementById("candidates-state");
 const candidateCount = document.getElementById("candidate-count");
@@ -18,6 +18,8 @@ const detailState = document.getElementById("detail-state");
 const detail = document.getElementById("candidate-detail");
 
 let candidates = [];
+let researchDirectives = [];
+let queueItems = [];
 let selectedCandidateId = null;
 const decisionMessages = new Map();
 
@@ -151,46 +153,101 @@ function renderPendingSearchApprovals(directives) {
   });
 }
 
-function renderSearchAttention(directives) {
-  const attention = directives.filter((directive) => {
-    if (directive.status === "failed") return true;
-    if (directive.status !== "completed") return false;
-    const candidates = directive.latest_run?.report?.candidates;
-    return Array.isArray(candidates) && candidates.length === 0;
-  }).slice(0, 3);
-  searchAttentionList.replaceChildren();
-  searchAttention.hidden = attention.length === 0;
-  attention.forEach((directive) => {
-    const item = element("li");
-    const failed = directive.status === "failed";
-    item.append(
-      element("strong", { text: directive.title }),
-      element("span", {
-        className: `status-pill${failed ? " failed" : ""}`,
-        text: failed ? "Failed — no documents staged" : "Completed — no documents found",
-      }),
-      element("p", {
-        text: failed
-          ? valueOrDash(directive.latest_run?.error)
-          : valueOrDash(directive.latest_run?.report?.summary),
-      }),
-      element("small", {
-        text: failed
-          ? "A revised directive or deterministic repository adapter is required."
-          : "Do not retry the same question in chat; refine the retrieval method.",
-      }),
-    );
-    searchAttentionList.append(item);
-  });
+function updateActionCenter() {
+  const pendingCandidates = candidates.filter(
+    (candidate) => !candidate.latest_decision,
+  );
+  const waitingRegistration = candidates.filter(
+    (candidate) =>
+      candidate.latest_decision?.action === "approve_registration"
+      && !candidate.canonical_registration,
+  );
+  const pendingSearches = researchDirectives.filter(
+    (directive) => directive.status === "pending_approval",
+  );
+  const runningSearches = researchDirectives.filter(
+    (directive) =>
+      directive.status === "running" || directive.status === "approved",
+  );
+  const activeTriage = queueItems.filter(
+    (item) =>
+      item.status === "triage"
+      && Date.parse(item.created_at) >= Date.now() - 6 * 60 * 60 * 1000,
+  );
+  const parkedTransactions = queueItems.filter(
+    (item) => item.status === "requires_transaction_identification",
+  );
+  const actionCount = pendingCandidates.length + pendingSearches.length;
+
+  actionCenter.className = `action-center ${actionCount ? "action-required" : "waiting"}`;
+  reviewNextCandidate.hidden = pendingCandidates.length === 0;
+  renderPendingSearchApprovals(researchDirectives);
+
+  if (actionCount) {
+    actionCenterHeading.textContent =
+      `${actionCount} decision${actionCount === 1 ? "" : "s"} need your review`;
+    const parts = [];
+    if (pendingCandidates.length) {
+      parts.push(
+        `${pendingCandidates.length} document${pendingCandidates.length === 1 ? "" : "s"}`,
+      );
+    }
+    if (pendingSearches.length) {
+      parts.push(
+        `${pendingSearches.length} bounded search${pendingSearches.length === 1 ? "" : "es"}`,
+      );
+    }
+    actionCenterDetail.textContent =
+      `Review ${parts.join(" and ")}. Each button records one explicit decision; nothing else is waiting on you.`;
+  } else if (waitingRegistration.length) {
+    actionCenterHeading.textContent = "No action needed — registration is pending";
+    actionCenterDetail.textContent =
+      `${waitingRegistration.length} approved document${waitingRegistration.length === 1 ? " is" : "s are"} waiting for deterministic registration. Stay in Workbench until this panel says registration is complete.`;
+  } else if (runningSearches.length) {
+    actionCenterHeading.textContent = "No action needed — research is running";
+    actionCenterDetail.textContent =
+      `${runningSearches.length} bounded search${runningSearches.length === 1 ? " is" : "es are"} running. New documents will appear here for review if found.`;
+  } else if (activeTriage.length) {
+    actionCenterHeading.textContent = "No action needed — agents are triaging gaps";
+    actionCenterDetail.textContent =
+      `${activeTriage.length} new evidence gap${activeTriage.length === 1 ? " is" : "s are"} being classified. A search-approval button will appear only if new retrieval work is justified.`;
+  } else {
+    actionCenter.className = "action-center ready";
+    actionCenterHeading.textContent = "Workbench complete — return to chat";
+    actionCenterDetail.textContent =
+      "There are no document or search decisions waiting for you. You may ask the evidence question again; a new answer can identify additional work.";
+  }
+
+  const progress = [];
+  if (runningSearches.length) {
+    progress.push(`${runningSearches.length} search${runningSearches.length === 1 ? "" : "es"} running`);
+  }
+  if (waitingRegistration.length) {
+    progress.push(`${waitingRegistration.length} registration${waitingRegistration.length === 1 ? "" : "s"} pending`);
+  }
+  if (parkedTransactions.length) {
+    progress.push(`${parkedTransactions.length} transaction-specific gap${parkedTransactions.length === 1 ? "" : "s"} parked`);
+  }
+  actionCenterProgress.textContent = progress.join(" · ");
 }
+
+reviewNextCandidate.addEventListener("click", () => {
+  const candidate = candidates.find((item) => !item.latest_decision);
+  if (!candidate) return;
+  selectCandidate(candidate.id);
+  document.getElementById("candidate-detail").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+});
 
 async function loadResearchActivity() {
   setState(researchActivityState, "Loading search activity…");
   try {
     const payload = await getJSON("/api/workbench/research-activity");
     const items = Array.isArray(payload.items) ? payload.items : [];
-    renderPendingSearchApprovals(items);
-    renderSearchAttention(items);
+    researchDirectives = items;
+    updateActionCenter();
     researchActivityList.replaceChildren();
     if (!items.length) {
       setState(
@@ -252,6 +309,30 @@ async function loadResearchActivity() {
           text: `Dispatch failed: ${directive.latest_run.error}`,
         }));
       }
+      const diagnosis = directive.latest_run?.acquisition_diagnosis;
+      if (diagnosis) {
+        const engineering = element("section", {
+          className: "engineering-diagnosis",
+        });
+        engineering.append(
+          element("strong", { text: "Acquisition Engineer diagnosis" }),
+          element("p", { text: diagnosis.summary }),
+          element("p", {
+            text: `Root cause: ${diagnosis.root_cause}`,
+          }),
+          element("p", {
+            className: "finding-limitation",
+            text: diagnosis.code_change_required
+              ? "A constrained adapter code proposal is required. No code, evidence, deployment, or merge was changed."
+              : "No code change is proposed. A revised directive or controlled retry requires review.",
+          }),
+          element("span", {
+            className: "status-pill",
+            text: diagnosis.status,
+          }),
+        );
+        card.append(engineering);
+      }
       if (negativeCount) {
         const findings = element("details", {
           className: "negative-findings",
@@ -302,8 +383,9 @@ async function loadResearchActivity() {
       researchActivityList.append(row);
     });
   } catch (error) {
+    researchDirectives = [];
     pendingSearchApprovals.hidden = true;
-    searchAttention.hidden = true;
+    updateActionCenter();
     setState(
       researchActivityState,
       `Could not load search activity: ${error.message}`,
@@ -317,6 +399,8 @@ async function loadQueue() {
   try {
     const payload = await getJSON("/api/workbench/queue");
     const items = Array.isArray(payload.items) ? payload.items : [];
+    queueItems = items;
+    updateActionCenter();
     queueCount.textContent = String(items.length);
     queueList.replaceChildren();
     if (!items.length) {
@@ -355,6 +439,8 @@ async function loadQueue() {
       queueList.append(row);
     });
   } catch (error) {
+    queueItems = [];
+    updateActionCenter();
     queueCount.textContent = "!";
     setState(queueState, `Could not load queue: ${error.message}`, true);
   }
@@ -393,33 +479,27 @@ function renderCandidateList() {
   });
 }
 
-function renderCorpusReadiness() {
-  const approved = candidates.filter(
-    (candidate) => candidate.latest_decision?.action === "approve_registration",
+function candidatePriority(candidate) {
+  if (!candidate.latest_decision) return 0;
+  if (
+    candidate.latest_decision.action === "approve_registration"
+    && !candidate.canonical_registration
+  ) return 1;
+  return 2;
+}
+
+function sortCandidates(items) {
+  return items.sort((left, right) =>
+    candidatePriority(left) - candidatePriority(right),
   );
-  const waiting = approved.filter(
-    (candidate) => !candidate.canonical_registration,
-  );
-  corpusReadiness.classList.toggle("ready", approved.length > 0 && !waiting.length);
-  corpusReadiness.hidden = approved.length === 0;
-  if (waiting.length) {
-    corpusReadinessHeading.textContent =
-      `${waiting.length} approved document${waiting.length === 1 ? "" : "s"} awaiting canonical registration`;
-    corpusReadinessDetail.textContent =
-      "No additional CIO action is required. Do not return to chat until this status changes to Ready to ask.";
-  } else if (approved.length) {
-    corpusReadinessHeading.textContent = "Ready to ask";
-    corpusReadinessDetail.textContent =
-      "All approved evidence candidates are canonically registered. Reload the chat and retry the evidence question.";
-  }
 }
 
 async function loadCandidates(preferredId = selectedCandidateId) {
   setState(candidatesState, "Loading candidates…");
   try {
     const payload = await getJSON("/api/workbench/candidates");
-    candidates = Array.isArray(payload.items) ? payload.items : [];
-    renderCorpusReadiness();
+    candidates = sortCandidates(Array.isArray(payload.items) ? payload.items : []);
+    updateActionCenter();
     const validationErrors = Array.isArray(payload.validation_errors)
       ? payload.validation_errors
       : [];
@@ -900,8 +980,12 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
     decisionMessages.set(candidateId, stored);
     status.textContent = stored.message;
     status.classList.add(stored.kind);
-    await Promise.all([refreshCandidateIndex(), loadQueue()]);
-    await loadCandidateDetail(candidateId);
+    const nextId = nextPendingCandidateId(candidateId) || candidateId;
+    await Promise.all([
+      loadCandidates(nextId),
+      loadQueue(),
+      loadResearchActivity(),
+    ]);
   } catch (error) {
     const stored = { message: `Decision was not recorded: ${error.message}`, kind: "error" };
     decisionMessages.set(candidateId, stored);
@@ -915,7 +999,10 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
 async function refreshCandidateIndex() {
   try {
     const payload = await getJSON("/api/workbench/candidates");
-    candidates = Array.isArray(payload.items) ? payload.items : candidates;
+    candidates = sortCandidates(
+      Array.isArray(payload.items) ? payload.items : candidates,
+    );
+    updateActionCenter();
     candidateCount.textContent = String(candidates.length);
     renderCandidateList();
   } catch {

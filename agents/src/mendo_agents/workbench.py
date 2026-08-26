@@ -21,6 +21,11 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 from .config import Settings
+from .acquisition_engineering import (
+    AcquisitionEngineeringStore,
+    FoundryAcquisitionEngineer,
+    ResearchRecoveryOrchestrator,
+)
 from .repository import CorpusRepository
 from .research_queue import ResearchQueue
 from .research_dispatch import (
@@ -301,6 +306,7 @@ class WorkbenchStore:
         self.candidates = candidates
         ResearchQueue(self.queue_path)
         self.directive_store = ResearchDirectiveStore(self.queue_path)
+        self.acquisition_store = AcquisitionEngineeringStore(self.queue_path)
         with self._connect() as connection:
             connection.execute(
                 """
@@ -365,6 +371,13 @@ class WorkbenchStore:
             public = asdict(directive)
             runs = self.directive_store.runs(directive.id)
             latest = runs[0] if runs else None
+            if latest is not None:
+                diagnosis = self.acquisition_store.get_for_run(
+                    int(latest["id"])
+                )
+                latest["acquisition_diagnosis"] = (
+                    asdict(diagnosis) if diagnosis is not None else None
+                )
             if latest is not None and latest.get("report_json"):
                 try:
                     latest["report"] = json.loads(str(latest["report_json"]))
@@ -904,6 +917,10 @@ def main() -> None:
             FoundryWebSearchScout(),
             CorpusRepository(settings.repo_root, settings.case_id),
             settings.research_staging_root,
+            failure_recovery=ResearchRecoveryOrchestrator(
+                AcquisitionEngineeringStore(settings.research_queue_path),
+                FoundryAcquisitionEngineer(),
+            ),
         )
     server = WorkbenchHTTPServer(
         (args.host, args.port),

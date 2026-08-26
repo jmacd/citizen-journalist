@@ -35,6 +35,10 @@ class WebSearchScout(Protocol):
     def search(self, directive: ResearchDirective) -> ScoutSearchReport: ...
 
 
+class FailureRecovery(Protocol):
+    def diagnose(self, run_id: int) -> object: ...
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -93,6 +97,8 @@ class ResearchDirectiveStore:
                   completed_at TEXT,
                   report_json TEXT,
                   review_bundle_path TEXT,
+                  directive_snapshot_json TEXT,
+                  error_type TEXT,
                   error TEXT,
                   FOREIGN KEY (directive_id) REFERENCES research_directives(id)
                 );
@@ -108,6 +114,21 @@ class ResearchDirectiveStore:
                 );
                 """
             )
+            columns = {
+                str(row["name"])
+                for row in connection.execute(
+                    "PRAGMA table_info(research_dispatch_runs)"
+                )
+            }
+            if "error_type" not in columns:
+                connection.execute(
+                    "ALTER TABLE research_dispatch_runs ADD COLUMN error_type TEXT"
+                )
+            if "directive_snapshot_json" not in columns:
+                connection.execute(
+                    "ALTER TABLE research_dispatch_runs "
+                    "ADD COLUMN directive_snapshot_json TEXT"
+                )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
@@ -300,6 +321,28 @@ class ResearchDirectiveStore:
         timestamp = _now()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
+            snapshot_row = connection.execute(
+                "SELECT * FROM research_directives WHERE id = ?",
+                (directive_id,),
+            ).fetchone()
+            if snapshot_row is None:
+                raise ResearchDispatchError(
+                    f"Unknown research directive: {directive_id}"
+                )
+            snapshot = json.dumps(
+                {
+                    "id": str(snapshot_row["id"]),
+                    "case_id": str(snapshot_row["case_id"]),
+                    "title": str(snapshot_row["title"]),
+                    "search_brief": str(snapshot_row["search_brief"]),
+                    "allowed_hosts": json.loads(
+                        str(snapshot_row["allowed_hosts_json"])
+                    ),
+                    "approved_by": snapshot_row["approved_by"],
+                    "approved_at": snapshot_row["approved_at"],
+                },
+                sort_keys=True,
+            )
             cursor = connection.execute(
                 """
                 UPDATE research_directives
@@ -327,10 +370,10 @@ class ResearchDirectiveStore:
             run = connection.execute(
                 """
                 INSERT INTO research_dispatch_runs
-                  (directive_id, status, started_at)
-                VALUES (?, 'running', ?)
+                  (directive_id, status, started_at, directive_snapshot_json)
+                VALUES (?, 'running', ?, ?)
                 """,
-                (directive_id, timestamp),
+                (directive_id, timestamp, snapshot),
             )
             return int(run.lastrowid)
 
@@ -430,10 +473,17 @@ class ResearchDirectiveStore:
             run_cursor = connection.execute(
                 """
                 UPDATE research_dispatch_runs
-                   SET status = 'failed', completed_at = ?, error = ?
+                   SET status = 'failed', completed_at = ?, error_type = ?,
+                       error = ?
                  WHERE id = ? AND directive_id = ? AND status = 'running'
                 """,
-                (timestamp, message, run_id, directive_id),
+                (
+                    timestamp,
+                    type(error).__name__,
+                    message,
+                    run_id,
+                    directive_id,
+                ),
             )
             if directive_cursor.rowcount != 1 or run_cursor.rowcount != 1:
                 raise ResearchDispatchError(
@@ -730,11 +780,13 @@ class ResearchDispatcher:
         scout: WebSearchScout,
         corpus: CorpusRepository,
         staging_root: Path,
+        failure_recovery: FailureRecovery | None = None,
     ) -> None:
         self.store = store
         self.scout = scout
         self.corpus = corpus
         self.staging_root = staging_root
+        self.failure_recovery = failure_recovery
 
     def dispatch(self, directive_id: str) -> dict[str, object]:
         directive = self.store.get(directive_id)
@@ -763,6 +815,14 @@ class ResearchDispatcher:
             }
         except Exception as error:
             self.store.fail(directive_id, run_id, error)
+            if self.failure_recovery is not None:
+                try:
+                    self.failure_recovery.diagnose(run_id)
+                except Exception as diagnosis_error:
+                    raise ResearchDispatchError(
+                        f"{error}; automatic acquisition diagnosis failed: "
+                        f"{diagnosis_error}"
+                    ) from diagnosis_error
             raise
 
     def _stage(

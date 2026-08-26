@@ -58,6 +58,14 @@ class CaptureSnapshotStore:
         self.archive.load_identity()
         source_root = source_root.resolve(strict=True)
         canonical_snapshot_id = self._snapshot_id(snapshot_id)
+        record_id = f"capture-snapshot:{canonical_snapshot_id}"
+        if any(
+            event.record_id == record_id
+            for event in CorpusBuilder(self.root).load_events()
+        ):
+            raise ArchiveWriteError(
+                f"capture snapshot already exists: {canonical_snapshot_id}"
+            )
         files = self._included_files(source_root, includes)
         entries: list[CaptureSnapshotEntry] = []
         created_count = 0
@@ -117,7 +125,7 @@ class CaptureSnapshotStore:
             )
             manifest = self.archive.ingest_file(
                 manifest_path,
-                record_id=f"capture-snapshot:{canonical_snapshot_id}",
+                record_id=record_id,
                 record_title=f"Capture snapshot {canonical_snapshot_id}",
                 collections=[collection, "workspace-snapshots"],
                 custodian=source_label,

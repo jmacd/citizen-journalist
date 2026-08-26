@@ -45,14 +45,14 @@ def test_staging_configuration_requires_native_runtime_and_isolated_prefix() -> 
     assert "MENDO_SOURCE_SHA256=" in environment
     assert "MENDO_RUNTIME_LOCK_SHA256=" in environment
     assert "MENDO_PYTHON_VERSION=3.11" in environment
-    assert "MENDO_ARCHIVE_ROOT=/home/shared/observatory/staging/archive" in environment
+    assert "MENDO_ARCHIVE_ROOT=/home/citizen/journalist/archive" in environment
     assert "MENDO_STAGING_ARCHIVE_ID=REPLACE_ME" in environment
     assert "MENDO_RUN_ROOT=/home/jmacd/observatory/run" in environment
     assert "MENDO_STAGING_RECEIPT_KEY_ID=" not in environment
     assert "MENDO_STAGING_RECEIPT_PRIVATE_KEY=" not in environment
     assert "MENDO_S3_PREFIX=staging" in environment
     assert "${MENDO_OBSERVATORY_BIN}/mendo-release" in runner
-    assert '!= "/home/shared/observatory/staging/archive"' in runner
+    assert '!= "/home/citizen/journalist/archive"' in runner
     assert "MENDO_STAGING_ARCHIVE_ID" in runner
     assert 'MENDO_RUN_ROOT="${MENDO_RUN_ROOT:-${HOME}/observatory/run}"' in runner
     assert "command -v flock" in runner
@@ -179,6 +179,21 @@ def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) ->
     )
     assert rejected.returncode != 0
     assert "uncommitted changes" in rejected.stderr
+
+
+def test_accepted_workspace_packager_uses_sqlite_backup_and_inventory() -> None:
+    packager = (
+        REPO_ROOT
+        / "terraform"
+        / "watershop"
+        / "package-accepted-workspace.py"
+    ).read_text(encoding="utf-8")
+
+    assert "input_database.backup(output_database)" in packager
+    assert "PRAGMA integrity_check" in packager
+    assert "SHA256SUMS" in packager
+    assert "captures" in packager
+    assert "cases/UM_2025-0004" in packager
 
 
 def test_observatory_image_workflow_builds_arm_and_x86() -> None:

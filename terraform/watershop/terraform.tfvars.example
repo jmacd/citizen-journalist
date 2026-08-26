@@ -1,5 +1,6 @@
 deploy_observatory = false
 deploy_workbench   = false
+import_accepted_workspace = false
 observatory_identity_enabled = false
 workbench_identity_enabled   = false
 
@@ -13,6 +14,7 @@ watershop_host_key             = "ssh-ed25519 REPLACE_WITH_PINNED_HOST_PUBLIC_KE
 # Leave empty for a new staging archive. Set the existing archive.json UUID
 # before the first apply when adopting an already initialized staging archive.
 observatory_archive_id = ""
+accepted_workspace_source_root = "../.."
 
 minio_endpoint       = "http://localhost:9000"
 minio_region         = "us-east-1"

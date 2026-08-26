@@ -86,20 +86,32 @@ variable "observatory_home" {
 }
 
 variable "staging_archive_root" {
-  description = "NFS-backed staging archive, separate from the preservation primary."
+  description = "NFS-backed append-only Citizen Journalist archive."
   type        = string
-  default     = "/home/shared/observatory/staging/archive"
+  default     = "/home/citizen/journalist/archive"
 
   validation {
-    condition     = var.staging_archive_root == "/home/shared/observatory/staging/archive"
-    error_message = "The staging safety checks require staging_archive_root to be /home/shared/observatory/staging/archive."
+    condition     = var.staging_archive_root == "/home/citizen/journalist/archive"
+    error_message = "The archive safety checks require staging_archive_root to be /home/citizen/journalist/archive."
   }
 }
 
 variable "staging_archive_birthplace" {
   description = "Stable birthplace recorded in the staging archive identity."
   type        = string
-  default     = "watershop-nfs-staging"
+  default     = "watershop-citizen-journalist-nfs"
+}
+
+variable "import_accepted_workspace" {
+  description = "Perform the one-time import of accepted captures, approvals, case metadata, and generated casebook data."
+  type        = bool
+  default     = false
+}
+
+variable "accepted_workspace_source_root" {
+  description = "Local citizen-journalist checkout containing the accepted workspace to import."
+  type        = string
+  default     = "../.."
 }
 
 variable "observatory_archive_id" {

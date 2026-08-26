@@ -48,7 +48,7 @@ Set `workbench_identity_enabled = true` to create and retain the private proxy
 token, then set `deploy_workbench = true` to install the Workbench application,
 native Python environment, user systemd unit, and mode-`0600` environment. It
 binds only to `127.0.0.1:4180`. The candidate staging root is
-`/home/shared/observatory/staging/research`; the operational SQLite queue stays
+`/home/citizen/journalist/research`; the operational SQLite queue stays
 under `/home/jmacd/observatory/run`.
 
 Terraform generates a stable proxy token protected from destruction. Leave
@@ -70,3 +70,21 @@ The corpus archive UUID and receipt key use a separate
 runtime deployment and leave it enabled thereafter; `prevent_destroy` blocks
 accidental identity rotation. A Workbench-only plan does not create those
 corpus identities.
+
+## One-time accepted-workspace import
+
+The dedicated Citizen Journalist NFS export is mounted at
+`/home/citizen/journalist`. Terraform initializes the pinned append-only
+archive at `/home/citizen/journalist/archive`.
+
+Set `import_accepted_workspace = true` for the first reviewed apply. Terraform
+packages the ignored local `captures/` tree, the curated case directory, and
+generated casebook data. SQLite files are copied with the online backup API and
+must pass `PRAGMA integrity_check`. The package carries a complete SHA-256
+inventory.
+
+On watershop, Terraform verifies the transport package, invokes
+`mendo-archive snapshot`, verifies the complete content-addressed archive,
+restores the snapshot into a new clean directory, and checks both restored
+SQLite databases. The snapshot UUID is retained in Terraform state with
+`prevent_destroy`; routine applies cannot repeat or replace the import.

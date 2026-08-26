@@ -18,6 +18,16 @@ output "observatory_source_sha256" {
   value       = var.deploy_observatory ? local.source_hash : null
 }
 
+output "accepted_workspace_snapshot_id" {
+  description = "Pinned identity of the imported accepted-workspace snapshot."
+  value       = var.import_accepted_workspace ? random_uuid.accepted_workspace_snapshot[0].result : null
+}
+
+output "accepted_workspace_sha256" {
+  description = "SHA-256 of the accepted-workspace transport archive."
+  value       = var.import_accepted_workspace ? data.external.accepted_workspace[0].result.sha256 : null
+}
+
 output "workbench_proxy_token" {
   description = "Sensitive token Caddy must inject when proxying Workbench requests."
   value       = var.workbench_identity_enabled ? random_password.workbench_proxy[0].result : null

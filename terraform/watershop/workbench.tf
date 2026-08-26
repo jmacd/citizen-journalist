@@ -39,7 +39,7 @@ locals {
     ENABLE_SENSITIVE_DATA       = "false"
     MENDO_CASE_ID               = "UM_2025-0004"
     MENDO_RESEARCH_QUEUE_PATH   = "${var.observatory_home}/run/research-queue.sqlite"
-    MENDO_RESEARCH_STAGING_ROOT = "/home/shared/observatory/staging/research"
+    MENDO_RESEARCH_STAGING_ROOT = "/home/citizen/journalist/research"
     MENDO_WORKBENCH_PROXY_TOKEN = random_password.workbench_proxy[0].result
   } : {}
   workbench_environment = join("\n", concat(
@@ -128,8 +128,9 @@ resource "null_resource" "workbench" {
       "command -v findmnt >/dev/null 2>&1 || { echo 'required command is unavailable: findmnt' >&2; exit 2; }",
       "command -v python3.11 >/dev/null 2>&1 || { echo 'required command is unavailable: python3.11' >&2; exit 2; }",
       "command -v curl >/dev/null 2>&1 || { echo 'required command is unavailable: curl' >&2; exit 2; }",
-      "case \"$(findmnt -n -T '/home/shared' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/shared is not on NFS' >&2; exit 2 ;; esac",
-      "install -d -m 0750 '/home/shared/observatory/staging/research'",
+      "case \"$(findmnt -n -T '/home/citizen/journalist' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/citizen/journalist is not on NFS' >&2; exit 2 ;; esac",
+      "test -w '/home/citizen/journalist' || { echo '/home/citizen/journalist is not writable' >&2; exit 2; }",
+      "install -d -m 0750 '/home/citizen/journalist/research'",
       "exec 9>'${var.observatory_home}/run/corpus-staging.lock'",
       "flock -n 9 || { echo 'a staging operation is active' >&2; exit 75; }",
       "test \"$(sha256sum '${var.observatory_home}/work/upload/workbench-source.tar' | cut -d ' ' -f 1)\" = '${local.workbench_source_hash}'",

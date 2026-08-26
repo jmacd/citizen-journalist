@@ -26,6 +26,25 @@ data "external" "observatory_source" {
   }
 }
 
+resource "random_uuid" "accepted_workspace_snapshot" {
+  count = var.import_accepted_workspace ? 1 : 0
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "external" "accepted_workspace" {
+  count   = var.import_accepted_workspace ? 1 : 0
+  program = ["python3", "${path.module}/package-accepted-workspace.py"]
+
+  query = {
+    source_dir  = abspath(var.accepted_workspace_source_root)
+    revision    = var.observatory_revision
+    output_path = abspath("${path.module}/.terraform-generated/accepted-workspace.tar")
+  }
+}
+
 locals {
   archive_id = (
     var.observatory_archive_id != "" ?
@@ -200,7 +219,8 @@ resource "null_resource" "observatory" {
       "command -v flock >/dev/null 2>&1 || { echo 'required command is unavailable: flock' >&2; exit 2; }",
       "command -v findmnt >/dev/null 2>&1 || { echo 'required command is unavailable: findmnt' >&2; exit 2; }",
       "command -v python3.11 >/dev/null 2>&1 || { echo 'required command is unavailable: python3.11' >&2; exit 2; }",
-      "case \"$(findmnt -n -T '/home/shared' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/shared is not on NFS' >&2; exit 2 ;; esac",
+      "case \"$(findmnt -n -T '/home/citizen/journalist' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/citizen/journalist is not on NFS' >&2; exit 2 ;; esac",
+      "test -w '/home/citizen/journalist' || { echo '/home/citizen/journalist is not writable' >&2; exit 2; }",
       "install -d -m 0750 '${var.staging_archive_root}'",
       "exec 9>'${var.observatory_home}/run/corpus-staging.lock'",
       "flock -n 9 || { echo 'a staging operation is active' >&2; exit 75; }",
@@ -235,4 +255,60 @@ resource "null_resource" "observatory" {
     local_sensitive_file.receipt_environment,
     local_sensitive_file.staging_environment,
   ]
+}
+
+resource "null_resource" "accepted_workspace_import" {
+  count = var.import_accepted_workspace ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.deploy_observatory
+      error_message = "deploy_observatory must be true before importing the accepted workspace."
+    }
+  }
+
+  triggers = {
+    archive_id      = local.archive_id
+    snapshot_id     = random_uuid.accepted_workspace_snapshot[0].result
+    snapshot_sha256 = data.external.accepted_workspace[0].result.sha256
+    source_revision = var.observatory_revision
+  }
+
+  connection {
+    type        = "ssh"
+    host        = var.watershop_host
+    user        = var.watershop_user
+    private_key = file(pathexpand(var.watershop_ssh_private_key_path))
+    host_key    = var.watershop_host_key
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "set -eu",
+      "install -d -m 0700 '${var.observatory_home}/work/import'",
+      "test ! -e '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json' || { echo 'accepted workspace snapshot is already imported' >&2; exit 2; }",
+    ]
+  }
+
+  provisioner "file" {
+    source      = data.external.accepted_workspace[0].result.archive_path
+    destination = "${var.observatory_home}/work/import/accepted-workspace.tar"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "set -eu",
+      "test \"$(sha256sum '${var.observatory_home}/work/import/accepted-workspace.tar' | cut -d ' ' -f 1)\" = '${data.external.accepted_workspace[0].result.sha256}'",
+      "workspace='${var.observatory_home}/work/import/${random_uuid.accepted_workspace_snapshot[0].result}'; workspace_tmp=\"$workspace.tmp\"; rm -rf \"$workspace_tmp\"; install -d -m 0700 \"$workspace_tmp\"; tar -xf '${var.observatory_home}/work/import/accepted-workspace.tar' -C \"$workspace_tmp\"; (cd \"$workspace_tmp\" && sha256sum --check SHA256SUMS); mv \"$workspace_tmp\" \"$workspace\"",
+      "\"${var.observatory_home}/venv/bin/mendo-archive\" snapshot --root '${var.staging_archive_root}' --source-root \"$workspace\" --source-revision '${var.observatory_revision}' --source-label 'citizen-journalist-workstation' --collection 'UM_2025-0004' --snapshot-id '${random_uuid.accepted_workspace_snapshot[0].result}' --include captures --include cases/UM_2025-0004 --include web/casebook-data.js > '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json.tmp'",
+      "mv '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json.tmp' '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json'",
+      "\"${var.observatory_home}/venv/bin/mendo-corpus\" verify --root '${var.staging_archive_root}'",
+      "restore='${var.observatory_home}/work/restore-${random_uuid.accepted_workspace_snapshot[0].result}'; \"${var.observatory_home}/venv/bin/mendo-archive\" restore-snapshot --root '${var.staging_archive_root}' --snapshot-id '${random_uuid.accepted_workspace_snapshot[0].result}' --destination \"$restore\"",
+      "\"${var.observatory_home}/venv/bin/python\" -c 'import sqlite3,sys; connection=sqlite3.connect(sys.argv[1]); result=connection.execute(\"PRAGMA integrity_check\").fetchone(); connection.close(); assert result == (\"ok\",), result' \"$restore/captures/agent-runs/research-queue.sqlite\"",
+      "\"${var.observatory_home}/venv/bin/python\" -c 'import sqlite3,sys; connection=sqlite3.connect(sys.argv[1]); result=connection.execute(\"PRAGMA integrity_check\").fetchone(); connection.close(); assert result == (\"ok\",), result' \"$restore/captures/cases/UM_2025-0004/casebook.sqlite\"",
+      "rm -f '${var.observatory_home}/work/import/accepted-workspace.tar'",
+    ]
+  }
+
+  depends_on = [null_resource.observatory]
 }

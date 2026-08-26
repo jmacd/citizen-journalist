@@ -56,8 +56,8 @@ if [[ "${actual_python_version}" != "${MENDO_PYTHON_VERSION}".* ]]; then
   exit 2
 fi
 canonical_archive_root=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "${MENDO_ARCHIVE_ROOT}")
-if [[ "${canonical_archive_root}" != "/home/shared/observatory/staging/archive" ]]; then
-  echo "staging archive root is not the dedicated staging path: ${canonical_archive_root}" >&2
+if [[ "${canonical_archive_root}" != "/home/citizen/journalist/archive" ]]; then
+  echo "archive root is not the dedicated Citizen Journalist NFS path: ${canonical_archive_root}" >&2
   exit 2
 fi
 if [[ ! -f "${MENDO_ARCHIVE_ROOT}/archive.json" ]]; then

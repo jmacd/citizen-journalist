@@ -34,19 +34,15 @@ The exact NFS export is a deployment variable. Use these defaults once the
 directory is provisioned:
 
 ```text
-/home/shared/observatory/archive/
+/home/citizen/journalist/archive/
   objects/
   events/
   envelopes/
   collections/
   exports/
 
-/home/shared/observatory/staging/archive/
-  archive.json
-  objects/
-  events/
-  catalog/
-  releases/
+/home/citizen/journalist/research/
+  <Foundry retrieval staging bundles>
 
 /home/jmacd/observatory/
   config/
@@ -56,14 +52,15 @@ directory is provisioned:
   work/
 ```
 
-The NFS tree is the preservation boundary. Local runtime state, temporary
+The Citizen Journalist NFS tree is the preservation boundary. Local runtime state, temporary
 downloads, virtual environments, sockets, and materialized releases stay under
 `/home/jmacd/observatory` and must be reconstructible.
 
-The preservation primary and staging archive are distinct. New builds run
-against `/home/shared/observatory/staging/archive`, never directly against
-`/home/shared/observatory/archive`. Import or snapshot records into staging
-deliberately; keep synthetic fixtures out of the preservation primary.
+The append-only archive and mutable research staging area are distinct. New
+records enter `/home/citizen/journalist/archive` only through immutable objects
+and finalized events. Foundry candidates remain under
+`/home/citizen/journalist/research` until CIO approval and deterministic
+registration. Keep synthetic fixtures out of the archive.
 
 ## MinIO bootstrap buckets
 
@@ -168,13 +165,13 @@ change.
 
 Then run `terraform -chdir=terraform/watershop plan` and review it before
 applying. Terraform verifies that
-`/home/shared` is NFS-backed, creates only the isolated staging archive,
+`/home/citizen/journalist` is NFS-backed, creates only the dedicated archive,
 creates the `mendo-releases` MinIO bucket, builds a versioned Python virtual
 environment from the locked runtime dependencies, initializes the archive if
 absent, installs the scripts, secret environment, and user units, and leaves
 both publication services manual. Terraform refuses uncommitted deployment
 source or a checkout that does not match `observatory_revision`. A routine
-apply never initializes or modifies `/home/shared/observatory/archive`.
+apply never silently adopts or replaces `/home/citizen/journalist/archive`.
 
 After the first apply, copy the non-secret output into the protected GitHub
 `production` environment variable:

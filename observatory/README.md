@@ -26,7 +26,7 @@ Initialize the intended NFS archive once:
 
 ```sh
 observatory/.venv/bin/mendo-archive init \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --birthplace watershop
 ```
 
@@ -36,7 +36,7 @@ unmounted NFS path from silently becoming a new local archive.
 
 ```sh
 observatory/.venv/bin/mendo-archive ingest ./record.pdf \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --record-id county-pc-2024-0019 \
   --title 'Resolution PC 2024-0019' \
   --collection UM_2025-0004 \
@@ -67,7 +67,7 @@ into the immutable archive:
 
 ```sh
 mendo-archive snapshot \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --source-root /home/jmacd/observatory/app \
   --source-revision "$(git rev-parse HEAD)" \
   --source-label citizen-journalist-workstation \
@@ -86,7 +86,7 @@ Restore into a new directory only:
 
 ```sh
 mendo-archive restore-snapshot \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --snapshot-id <uuid> \
   --destination /home/jmacd/observatory/recovery/<uuid>
 ```
@@ -100,10 +100,10 @@ new approval merely because the service moved hosts.
 
 ```sh
 observatory/.venv/bin/mendo-corpus verify \
-  --root /home/shared/observatory/archive
+  --root /home/citizen/journalist/archive
 
 observatory/.venv/bin/mendo-corpus build \
-  --root /home/shared/observatory/archive
+  --root /home/citizen/journalist/archive
 ```
 
 `verify` re-hashes every distinct object referenced by an event. Missing,
@@ -127,12 +127,12 @@ planning cases, legal repositories, agency archives, or meeting series.
 
 ```sh
 observatory/.venv/bin/mendo-release create \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --reuse-unchanged
 
 observatory/.venv/bin/mendo-release materialize \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --destination /home/jmacd/observatory/releases/private-current
 ```
@@ -158,7 +158,7 @@ export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 
 observatory/.venv/bin/mendo-release push-s3 \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --bucket mendo-releases \
   --endpoint-url http://localhost:9000
@@ -179,7 +179,7 @@ Materialize a remote channel into a new local directory:
 ```sh
 archive_id=$(
   python -c \
-    'import json; print(json.load(open("/home/shared/observatory/archive/archive.json"))["archive_id"])'
+    'import json; print(json.load(open("/home/citizen/journalist/archive/archive.json"))["archive_id"])'
 )
 
 observatory/.venv/bin/mendo-release materialize-s3 \

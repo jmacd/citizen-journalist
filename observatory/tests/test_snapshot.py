@@ -87,3 +87,31 @@ def test_snapshot_restore_refuses_existing_destination(tmp_path: Path) -> None:
 
     with pytest.raises(ArchiveWriteError, match="already exists"):
         snapshots.restore(result.snapshot.snapshot_id, destination)
+
+
+def test_snapshot_refuses_reusing_snapshot_identity(tmp_path: Path) -> None:
+    source = tmp_path / "workspace"
+    source.mkdir()
+    (source / "record.txt").write_text("record", encoding="utf-8")
+    archive_root = tmp_path / "archive"
+    ArchiveStore(archive_root).initialize(birthplace="test")
+    snapshots = CaptureSnapshotStore(archive_root)
+    snapshot_id = "00000000-0000-4000-8000-000000000020"
+    snapshots.create(
+        source,
+        source_revision="3" * 40,
+        includes=["record.txt"],
+        source_label="test",
+        collection="test",
+        snapshot_id=snapshot_id,
+    )
+
+    with pytest.raises(ArchiveWriteError, match="already exists"):
+        snapshots.create(
+            source,
+            source_revision="3" * 40,
+            includes=["record.txt"],
+            source_label="test",
+            collection="test",
+            snapshot_id=snapshot_id,
+        )

@@ -35,6 +35,23 @@
       <ol id="pending-search-list"></ol>
       </div>
       <p id="action-center-progress" class="action-progress"></p>
+      <section class="progress-summary" aria-labelledby="progress-summary-heading">
+        <header>
+          <div>
+            <p class="eyebrow">Audited workflow state</p>
+            <h3 id="progress-summary-heading">Research progress</h3>
+          </div>
+          <button id="view-research-detail" type="button">View detailed activity</button>
+        </header>
+        <div id="progress-summary-state" class="state" role="status" aria-live="polite">
+          Loading progress…
+        </div>
+        <div id="progress-summary-metrics" class="progress-metrics" hidden></div>
+        <p id="progress-summary-latest" class="progress-latest" hidden></p>
+        <p class="progress-caveat">
+          Counts report persisted outcomes and queues, not a percent-complete estimate.
+        </p>
+      </section>
     </section>
 
     <details class="research-drawer">

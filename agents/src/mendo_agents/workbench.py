@@ -400,6 +400,88 @@ class WorkbenchStore:
             result.append(public)
         return result
 
+    def progress_summary(self) -> dict[str, object]:
+        with self._connect() as connection:
+            queue_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_queue
+                     GROUP BY status
+                    """
+                )
+            }
+            directive_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_directives
+                     GROUP BY status
+                    """
+                )
+            }
+            run_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_dispatch_runs
+                     GROUP BY status
+                    """
+                )
+            }
+            recent_triage_count = int(
+                connection.execute(
+                    """
+                    SELECT COUNT(*)
+                      FROM research_queue
+                     WHERE status = 'triage'
+                        AND julianday(created_at) >= julianday('now', '-6 hours')
+                    """
+                ).fetchone()[0]
+            )
+            decision_count = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM workbench_decisions"
+                ).fetchone()[0]
+            )
+            registration_count = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM workbench_registrations"
+                ).fetchone()[0]
+            )
+            latest_activity_at = connection.execute(
+                """
+                SELECT MAX(activity_at)
+                  FROM (
+                    SELECT MAX(last_seen_at) AS activity_at FROM research_queue
+                    UNION ALL
+                    SELECT MAX(updated_at) FROM research_directives
+                    UNION ALL
+                    SELECT MAX(COALESCE(completed_at, started_at))
+                      FROM research_dispatch_runs
+                    UNION ALL
+                    SELECT MAX(created_at) FROM workbench_decisions
+                    UNION ALL
+                    SELECT MAX(registered_at) FROM workbench_registrations
+                  )
+                """
+            ).fetchone()[0]
+        return {
+            "queue_count": sum(queue_statuses.values()),
+            "queue_statuses": queue_statuses,
+            "recent_triage_count": recent_triage_count,
+            "directive_count": sum(directive_statuses.values()),
+            "directive_statuses": directive_statuses,
+            "run_count": sum(run_statuses.values()),
+            "run_statuses": run_statuses,
+            "decision_count": decision_count,
+            "registration_count": registration_count,
+            "latest_activity_at": latest_activity_at,
+        }
+
     def approve_research_directive(
         self, directive_id: str, actor: str
     ) -> dict[str, object]:
@@ -690,6 +772,12 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
             if path == "/api/workbench/research-activity":
                 items = self.workbench_server.store.research_activity()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            if path == "/api/workbench/progress":
+                self._json(
+                    HTTPStatus.OK,
+                    self.workbench_server.store.progress_summary(),
+                )
                 return
             if path == "/api/workbench/candidates":
                 items = self.workbench_server.store.candidates_with_decisions()

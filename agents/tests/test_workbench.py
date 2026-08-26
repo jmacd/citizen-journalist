@@ -130,6 +130,11 @@ def test_workbench_lists_validated_candidate_and_records_approval(
             "SELECT status FROM research_queue WHERE id = ?", (lead.id,)
         ).fetchone()[0]
     assert status == "registered"
+    progress = store.progress_summary()
+    assert progress["queue_statuses"] == {"registered": 1}
+    assert progress["decision_count"] == 1
+    assert progress["registration_count"] == 1
+    assert progress["latest_activity_at"] is not None
 
 
 def test_workbench_rejects_candidate_hash_mismatch(tmp_path: Path) -> None:
@@ -302,6 +307,10 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "Review decision complete" in javascript
     assert "Review next pending candidate" in javascript
     assert "function updateActionCenter()" in javascript
+    assert "function renderProgressSummary()" in javascript
+    assert "/api/workbench/progress" in javascript
+    assert "No triage run is recorded yet" in javascript
+    assert "Counts report persisted outcomes" in html
     assert "Acquisition Engineer diagnosis" in javascript
     assert "No action needed — research is running" in javascript
     assert "Workbench complete — return to chat" in javascript

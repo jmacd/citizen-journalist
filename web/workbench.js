@@ -10,6 +10,10 @@ const actionCenter = document.getElementById("action-center");
 const actionCenterHeading = document.getElementById("action-center-heading");
 const actionCenterDetail = document.getElementById("action-center-detail");
 const actionCenterProgress = document.getElementById("action-center-progress");
+const progressSummaryState = document.getElementById("progress-summary-state");
+const progressSummaryMetrics = document.getElementById("progress-summary-metrics");
+const progressSummaryLatest = document.getElementById("progress-summary-latest");
+const viewResearchDetail = document.getElementById("view-research-detail");
 const reviewNextCandidate = document.getElementById("review-next-candidate");
 const candidateList = document.getElementById("candidate-list");
 const candidatesState = document.getElementById("candidates-state");
@@ -20,6 +24,7 @@ const detail = document.getElementById("candidate-detail");
 let candidates = [];
 let researchDirectives = [];
 let queueItems = [];
+let progressSummary = null;
 let selectedCandidateId = null;
 const decisionMessages = new Map();
 
@@ -64,6 +69,101 @@ function externalLink(url, label) {
 
 function valueOrDash(value) {
   return value === null || value === undefined || value === "" ? "—" : value;
+}
+
+function countStatus(group, status) {
+  return Number(group?.[status] || 0);
+}
+
+function metric(value, label, detail, warning = false) {
+  const card = element("div", {
+    className: `progress-metric${warning ? " warning" : ""}`,
+  });
+  card.append(
+    element("strong", { text: value }),
+    element("span", { text: label }),
+    element("span", { text: detail }),
+  );
+  return card;
+}
+
+function renderProgressSummary() {
+  if (!progressSummary) return;
+  const queueStatuses = progressSummary.queue_statuses || {};
+  const directiveStatuses = progressSummary.directive_statuses || {};
+  const triageCount = countStatus(queueStatuses, "triage");
+  const parkedCount = countStatus(
+    queueStatuses,
+    "requires_transaction_identification",
+  );
+  const completedSearches = countStatus(directiveStatuses, "completed");
+  const failedSearches = countStatus(directiveStatuses, "failed");
+  const activeSearches =
+    countStatus(directiveStatuses, "running")
+    + countStatus(directiveStatuses, "approved");
+  const pendingActions =
+    candidates.filter((candidate) => !candidate.latest_decision).length
+    + researchDirectives.filter(
+      (directive) => directive.status === "pending_approval",
+    ).length;
+
+  progressSummaryMetrics.replaceChildren(
+    metric(
+      progressSummary.queue_count,
+      "evidence gaps logged",
+      `${progressSummary.recent_triage_count} new · ${triageCount} awaiting triage · ${parkedCount} parked`,
+      triageCount > 0,
+    ),
+    metric(
+      progressSummary.directive_count,
+      "bounded searches prepared",
+      `${completedSearches} completed · ${failedSearches} failed · ${activeSearches} active`,
+      failedSearches > 0,
+    ),
+    metric(
+      progressSummary.registration_count,
+      "documents registered",
+      `${progressSummary.decision_count} audited CIO decisions`,
+    ),
+    metric(
+      pendingActions,
+      "decisions waiting for you",
+      pendingActions ? "Action buttons appear above" : "No CIO action required",
+    ),
+  );
+  progressSummaryMetrics.hidden = false;
+  progressSummaryState.hidden = true;
+
+  const latestDirective = [...researchDirectives]
+    .sort(
+      (left, right) =>
+        Date.parse(right.updated_at || right.created_at)
+        - Date.parse(left.updated_at || left.created_at),
+    )[0];
+  const timestamp = progressSummary.latest_activity_at
+    ? new Date(progressSummary.latest_activity_at).toLocaleString()
+    : "not recorded";
+  progressSummaryLatest.textContent = latestDirective
+    ? `Latest search outcome: ${latestDirective.title} — ${latestDirective.status}. Last audited activity: ${timestamp}.`
+    : `Last audited activity: ${timestamp}.`;
+  progressSummaryLatest.hidden = false;
+}
+
+async function loadProgressSummary() {
+  try {
+    progressSummary = await getJSON("/api/workbench/progress");
+    renderProgressSummary();
+    updateActionCenter();
+  } catch (error) {
+    progressSummary = null;
+    progressSummaryMetrics.hidden = true;
+    progressSummaryLatest.hidden = true;
+    setState(
+      progressSummaryState,
+      `Could not load progress: ${error.message}`,
+      true,
+    );
+  }
 }
 
 function formatBytes(value) {
@@ -122,7 +222,12 @@ async function dispatchDirective(directive, button) {
       true,
     );
   } finally {
-    await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);
+    await Promise.all([
+      loadResearchActivity(),
+      loadQueue(),
+      loadCandidates(),
+      loadProgressSummary(),
+    ]);
   }
 }
 
@@ -169,14 +274,20 @@ function updateActionCenter() {
     (directive) =>
       directive.status === "running" || directive.status === "approved",
   );
-  const activeTriage = queueItems.filter(
-    (item) =>
-      item.status === "triage"
-      && Date.parse(item.created_at) >= Date.now() - 6 * 60 * 60 * 1000,
-  );
-  const parkedTransactions = queueItems.filter(
-    (item) => item.status === "requires_transaction_identification",
-  );
+  const activeTriageCount = progressSummary?.recent_triage_count
+    ?? queueItems.filter(
+      (item) =>
+        item.status === "triage"
+        && Date.parse(item.created_at) >= Date.now() - 6 * 60 * 60 * 1000,
+    ).length;
+  const parkedTransactionCount = progressSummary
+    ? countStatus(
+      progressSummary.queue_statuses,
+      "requires_transaction_identification",
+    )
+    : queueItems.filter(
+      (item) => item.status === "requires_transaction_identification",
+    ).length;
   const actionCount = pendingCandidates.length + pendingSearches.length;
 
   actionCenter.className = `action-center ${actionCount ? "action-required" : "waiting"}`;
@@ -207,10 +318,10 @@ function updateActionCenter() {
     actionCenterHeading.textContent = "No action needed — research is running";
     actionCenterDetail.textContent =
       `${runningSearches.length} bounded search${runningSearches.length === 1 ? " is" : "es are"} running. New documents will appear here for review if found.`;
-  } else if (activeTriage.length) {
-    actionCenterHeading.textContent = "No action needed — agents are triaging gaps";
+  } else if (activeTriageCount) {
+    actionCenterHeading.textContent = "No action needed — gaps await agent triage";
     actionCenterDetail.textContent =
-      `${activeTriage.length} new evidence gap${activeTriage.length === 1 ? " is" : "s are"} being classified. A search-approval button will appear only if new retrieval work is justified.`;
+      `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} queued for classification. No triage run is recorded yet; a search-approval button will appear only after bounded retrieval work is prepared.`;
   } else {
     actionCenter.className = "action-center ready";
     actionCenterHeading.textContent = "Workbench complete — return to chat";
@@ -225,11 +336,18 @@ function updateActionCenter() {
   if (waitingRegistration.length) {
     progress.push(`${waitingRegistration.length} registration${waitingRegistration.length === 1 ? "" : "s"} pending`);
   }
-  if (parkedTransactions.length) {
-    progress.push(`${parkedTransactions.length} transaction-specific gap${parkedTransactions.length === 1 ? "" : "s"} parked`);
+  if (parkedTransactionCount) {
+    progress.push(`${parkedTransactionCount} transaction-specific gap${parkedTransactionCount === 1 ? "" : "s"} parked`);
   }
   actionCenterProgress.textContent = progress.join(" · ");
+  renderProgressSummary();
 }
+
+viewResearchDetail.addEventListener("click", () => {
+  const drawer = document.querySelector(".research-drawer");
+  drawer.open = true;
+  drawer.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 reviewNextCandidate.addEventListener("click", () => {
   const candidate = candidates.find((item) => !item.latest_decision);
@@ -985,6 +1103,7 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
       loadCandidates(nextId),
       loadQueue(),
       loadResearchActivity(),
+      loadProgressSummary(),
     ]);
   } catch (error) {
     const stored = { message: `Decision was not recorded: ${error.message}`, kind: "error" };
@@ -1075,7 +1194,14 @@ async function loadCandidateDetail(candidateId) {
   }
 }
 
-await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);
+await Promise.all([
+  loadResearchActivity(),
+  loadQueue(),
+  loadCandidates(),
+  loadProgressSummary(),
+]);
 setInterval(() => {
-  if (!document.hidden) loadResearchActivity();
-}, 5000);
+  if (!document.hidden) {
+    Promise.all([loadResearchActivity(), loadProgressSummary()]);
+  }
+}, 10000);

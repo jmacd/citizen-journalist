@@ -62,7 +62,9 @@ Workbench, their native Python environment, user systemd units, accepted case
 and corpus links, and NFS-backed operational research queue. Chat binds only to
 `127.0.0.1:4174`; Workbench binds only to `127.0.0.1:4180`. Candidate bytes,
 queue decisions, and run state remain under
-`/home/citizen/journalist/research`.
+`/home/citizen/journalist/research`. Pin this application independently with
+`workbench_revision`; changing Terraform or the Workbench does not force an
+unrelated Observatory archive-runtime replacement.
 
 Terraform generates a stable proxy token protected from destruction. Leave
 `workbench_identity_enabled` enabled after its first apply, even when pausing

@@ -89,6 +89,20 @@ variable "observatory_revision" {
   }
 }
 
+variable "workbench_revision" {
+  description = "Complete committed Citizen Journalist application revision to deploy on watershop."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.workbench_revision == "" ||
+      can(regex("^[0-9a-f]{40}$", var.workbench_revision))
+    )
+    error_message = "workbench_revision must be empty or a complete lowercase Git SHA."
+  }
+}
+
 variable "watershop_host" {
   description = "SSH hostname or address of the existing watershop host."
   type        = string

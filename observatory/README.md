@@ -59,6 +59,43 @@ unique `object_stored` event beneath `events/<UTC-date>/`.
 The finalized event is the durable commit point. A workflow database may be
 updated afterward and recovered from the event if that update fails.
 
+## Preserve and restore an accepted workspace
+
+The Workbench decision database and accepted capture tree can be preserved
+without repeating CIO approvals. Snapshot selected repository-relative paths
+into the immutable archive:
+
+```sh
+mendo-archive snapshot \
+  --root /home/shared/observatory/archive \
+  --source-root /home/jmacd/observatory/app \
+  --source-revision "$(git rev-parse HEAD)" \
+  --source-label citizen-journalist-workstation \
+  --collection UM_2025-0004 \
+  --include captures \
+  --include cases/UM_2025-0004 \
+  --include web/casebook-data.js
+```
+
+Every file becomes a content-addressed object and finalized event. The
+snapshot manifest records its original relative path, hash, byte count, mode,
+mtime, and source Git revision. SQLite files are captured with SQLite's online
+backup API and pass `PRAGMA integrity_check` before ingestion.
+
+Restore into a new directory only:
+
+```sh
+mendo-archive restore-snapshot \
+  --root /home/shared/observatory/archive \
+  --snapshot-id <uuid> \
+  --destination /home/jmacd/observatory/recovery/<uuid>
+```
+
+Restore verifies every object before publishing the reconstructed tree. It
+never overlays an existing checkout. Recovered Workbench decisions remain
+bound to their reviewed SHA-256 values, so accepted documents do not require
+new approval merely because the service moved hosts.
+
 ## Verify and rebuild catalogs
 
 ```sh

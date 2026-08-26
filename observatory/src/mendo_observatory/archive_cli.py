@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .archive import ArchiveStore
+from .snapshot import CaptureSnapshotStore
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,6 +32,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="original retrieval time as an ISO-8601 timestamp with timezone",
     )
     ingest.add_argument("--media-type")
+    snapshot = subparsers.add_parser(
+        "snapshot", help="preserve selected workspace paths and restore metadata"
+    )
+    snapshot.add_argument("--root", type=Path, required=True)
+    snapshot.add_argument("--source-root", type=Path, required=True)
+    snapshot.add_argument("--source-revision", required=True)
+    snapshot.add_argument("--source-label", required=True)
+    snapshot.add_argument("--collection", required=True)
+    snapshot.add_argument("--include", action="append", required=True)
+    snapshot.add_argument("--snapshot-id")
+    restore = subparsers.add_parser(
+        "restore-snapshot", help="reconstruct a workspace snapshot"
+    )
+    restore.add_argument("--root", type=Path, required=True)
+    restore.add_argument("--snapshot-id", required=True)
+    restore.add_argument("--destination", type=Path, required=True)
     return parser
 
 
@@ -43,6 +60,46 @@ def main() -> None:
             archive_id=args.archive_id,
         )
         print(json.dumps(identity.model_dump(mode="json", by_alias=True), sort_keys=True))
+        return
+    if args.command == "snapshot":
+        result = CaptureSnapshotStore(args.root).create(
+            args.source_root,
+            source_revision=args.source_revision,
+            includes=args.include,
+            source_label=args.source_label,
+            collection=args.collection,
+            snapshot_id=args.snapshot_id,
+        )
+        print(
+            json.dumps(
+                {
+                    "snapshot_id": result.snapshot.snapshot_id,
+                    "source_revision": result.snapshot.source_revision,
+                    "file_count": result.file_event_count,
+                    "object_created_count": result.object_created_count,
+                    "manifest_sha256": result.manifest_sha256,
+                    "manifest_object_path": str(result.manifest_object_path),
+                },
+                sort_keys=True,
+            )
+        )
+        return
+    if args.command == "restore-snapshot":
+        result = CaptureSnapshotStore(args.root).restore(
+            args.snapshot_id,
+            args.destination,
+        )
+        print(
+            json.dumps(
+                {
+                    "snapshot_id": result.snapshot_id,
+                    "destination": str(result.destination),
+                    "restored_file_count": result.restored_file_count,
+                    "restored_bytes": result.restored_bytes,
+                },
+                sort_keys=True,
+            )
+        )
         return
     result = store.ingest_file(
         args.source,

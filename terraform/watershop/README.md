@@ -6,7 +6,7 @@ modify, or depend on Terraform from another repository.
 
 Existing host services are prerequisites:
 
-- SSH access for the unprivileged service user;
+- SSH access for the unprivileged service user through the local SSH agent;
 - Python 3.11, `venv`, `flock`, `findmnt`, and user systemd;
 - an NFS mount containing the configured staging archive path; and
 - a reachable MinIO service and credentials authorized for the dedicated
@@ -14,8 +14,9 @@ Existing host services are prerequisites:
 
 Copy `terraform.tfvars.example` to the ignored `terraform.tfvars`, pin the SSH
 host key, add MinIO credentials, and set `observatory_revision` to the complete
-committed Git revision being deployed. Enable `deploy_observatory` only after
-reviewing the plan:
+committed Git revision being deployed. The Terraform SSH provisioner uses the
+local SSH agent so passphrase-protected keys remain outside Terraform state.
+Enable `deploy_observatory` only after reviewing the plan:
 
 ```sh
 terraform -chdir=terraform/watershop init

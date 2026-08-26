@@ -134,10 +134,6 @@ resource "null_resource" "observatory" {
       error_message = "observatory_identity_enabled must remain true while deploying Observatory."
     }
     precondition {
-      condition     = fileexists(pathexpand(var.watershop_ssh_private_key_path))
-      error_message = "watershop_ssh_private_key_path must name a readable local key."
-    }
-    precondition {
       condition     = var.watershop_host_key != ""
       error_message = "watershop_host_key must pin the watershop SSH host key."
     }
@@ -161,11 +157,11 @@ resource "null_resource" "observatory" {
   }
 
   connection {
-    type        = "ssh"
-    host        = var.watershop_host
-    user        = var.watershop_user
-    private_key = file(pathexpand(var.watershop_ssh_private_key_path))
-    host_key    = var.watershop_host_key
+    type     = "ssh"
+    host     = var.watershop_host
+    user     = var.watershop_user
+    agent    = true
+    host_key = var.watershop_host_key
   }
 
   provisioner "remote-exec" {
@@ -275,11 +271,11 @@ resource "null_resource" "accepted_workspace_import" {
   }
 
   connection {
-    type        = "ssh"
-    host        = var.watershop_host
-    user        = var.watershop_user
-    private_key = file(pathexpand(var.watershop_ssh_private_key_path))
-    host_key    = var.watershop_host_key
+    type     = "ssh"
+    host     = var.watershop_host
+    user     = var.watershop_user
+    agent    = true
+    host_key = var.watershop_host_key
   }
 
   provisioner "remote-exec" {

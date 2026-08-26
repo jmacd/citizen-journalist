@@ -53,13 +53,6 @@ variable "watershop_user" {
   }
 }
 
-variable "watershop_ssh_private_key_path" {
-  description = "Local path to the SSH private key used for watershop provisioning."
-  type        = string
-  default     = "~/.ssh/id_ed25519"
-
-}
-
 variable "watershop_host_key" {
   description = "Pinned watershop SSH host public key in known_hosts format."
   type        = string

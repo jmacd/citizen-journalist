@@ -183,6 +183,27 @@ def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) ->
     with tarfile.open(archive) as source_archive:
         assert "observatory/pyproject.toml" in source_archive.getnames()
 
+    (repository / "unrelated.txt").write_text("newer commit\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", "unrelated.txt"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "commit", "-qm", "unrelated"],
+        check=True,
+    )
+    ancestor = subprocess.run(
+        [str(packager)],
+        input=json.dumps(
+            {
+                "source_dir": str(repository),
+                "revision": revision,
+                "output_path": str(archive),
+            }
+        ),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert json.loads(ancestor.stdout)["sha256"] == payload["sha256"]
+
     (repository / "observatory" / "pyproject.toml").write_text(
         "[build-system]\nrequires=[]\n", encoding="utf-8"
     )

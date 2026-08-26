@@ -28,13 +28,15 @@ terraform -chdir=terraform/watershop plan
 terraform -chdir=terraform/watershop apply
 ```
 
-The source packager rejects a dirty Observatory, watershop deployment, or
-workflow tree and rejects a revision other than the checked-out `HEAD`.
-Terraform generates the staging archive UUID and Ed25519 receipt key unless an
-existing archive UUID is explicitly supplied. The private key remains in local
-Terraform state and the generated mode-`0600` `receipt.env`, which is loaded
-only by the receipt-producing smoke unit. Both identity resources are protected
-from destruction and remain stable when deployment is disabled.
+The source packager rejects a dirty Observatory, watershop deployment,
+Terraform, or workflow tree and archives exactly the pinned commit. The pinned
+revision may be an ancestor of `HEAD`, allowing Terraform-only maintenance
+without redeploying an unchanged runtime. Terraform generates the staging
+archive UUID and Ed25519 receipt key unless an existing archive UUID is
+explicitly supplied. The private key remains in local Terraform state and the
+generated mode-`0600` `receipt.env`, which is loaded only by the
+receipt-producing smoke unit. Both identity resources are protected from
+destruction and remain stable when deployment is disabled.
 
 After applying, configure the non-secret public key in the protected GitHub
 `production` environment:

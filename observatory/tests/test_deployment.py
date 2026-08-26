@@ -120,6 +120,16 @@ def test_watershop_terraform_does_not_relocate_virtual_environments() -> None:
     assert 'mv \\"$venv_tmp\\" \\"$venv\\"' not in workbench
 
 
+def test_accepted_workspace_identity_outlives_one_time_import() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    main = (terraform_root / "main.tf").read_text(encoding="utf-8")
+    outputs = (terraform_root / "outputs.tf").read_text(encoding="utf-8")
+
+    assert "var.accepted_workspace_identity_enabled ? 1 : 0" in main
+    assert "var.accepted_workspace_identity_enabled" in outputs
+    assert "var.accepted_workspace_transport_sha256" in outputs
+
+
 def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) -> None:
     repository = tmp_path / "source"
     (repository / "observatory" / "src" / "example").mkdir(parents=True)

@@ -37,7 +37,7 @@ data "external" "observatory_source" {
 }
 
 resource "random_uuid" "accepted_workspace_snapshot" {
-  count = var.import_accepted_workspace ? 1 : 0
+  count = var.accepted_workspace_identity_enabled ? 1 : 0
 
   lifecycle {
     prevent_destroy = true
@@ -272,6 +272,10 @@ resource "null_resource" "accepted_workspace_import" {
     precondition {
       condition     = var.deploy_observatory
       error_message = "deploy_observatory must be true before importing the accepted workspace."
+    }
+    precondition {
+      condition     = var.accepted_workspace_identity_enabled
+      error_message = "accepted_workspace_identity_enabled must remain true while importing the accepted workspace."
     }
   }
 

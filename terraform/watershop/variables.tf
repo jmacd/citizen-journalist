@@ -107,6 +107,26 @@ variable "import_accepted_workspace" {
   default     = false
 }
 
+variable "accepted_workspace_identity_enabled" {
+  description = "Retain the accepted-workspace snapshot UUID independently of the one-time import execution."
+  type        = bool
+  default     = false
+}
+
+variable "accepted_workspace_transport_sha256" {
+  description = "Recorded transport SHA-256 after the one-time accepted-workspace import."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.accepted_workspace_transport_sha256 == "" ||
+      can(regex("^[0-9a-f]{64}$", var.accepted_workspace_transport_sha256))
+    )
+    error_message = "accepted_workspace_transport_sha256 must be empty or a lowercase SHA-256 digest."
+  }
+}
+
 variable "accepted_workspace_source_root" {
   description = "Local citizen-journalist checkout containing the accepted workspace to import."
   type        = string

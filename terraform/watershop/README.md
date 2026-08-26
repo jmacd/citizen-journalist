@@ -82,7 +82,8 @@ The dedicated Citizen Journalist NFS export is mounted at
 `/home/citizen/journalist`. Terraform initializes the pinned append-only
 archive at `/home/citizen/journalist/archive`.
 
-Set `import_accepted_workspace = true` for the first reviewed apply. Terraform
+Set `accepted_workspace_identity_enabled = true` and
+`import_accepted_workspace = true` for the first reviewed apply. Terraform
 packages the ignored local `captures/` tree, the curated case directory, and
 generated casebook data. SQLite files are copied with the online backup API and
 must pass `PRAGMA integrity_check`. The package carries a complete SHA-256
@@ -92,4 +93,9 @@ On watershop, Terraform verifies the transport package, invokes
 `mendo-archive snapshot`, verifies the complete content-addressed archive,
 restores the snapshot into a new clean directory, and checks both restored
 SQLite databases. The snapshot UUID is retained in Terraform state with
-`prevent_destroy`; routine applies cannot repeat or replace the import.
+`prevent_destroy`. After the successful import, copy the
+`accepted_workspace_sha256` output to
+`accepted_workspace_transport_sha256`, remove the completed import resource
+from state, and set `import_accepted_workspace = false`. Keep
+`accepted_workspace_identity_enabled = true`. Routine plans then retain the
+snapshot identity without rebuilding or repeating the import.

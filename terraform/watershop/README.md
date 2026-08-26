@@ -52,11 +52,17 @@ MinIO service, unrelated buckets, Caddy, or any other project.
 ## Private Workbench
 
 Set `workbench_identity_enabled = true` to create and retain the private proxy
-token, then set `deploy_workbench = true` to install the Workbench application,
-native Python environment, user systemd unit, and mode-`0600` environment. It
-binds only to `127.0.0.1:4180`. The candidate staging root is
-`/home/citizen/journalist/research`; the operational SQLite queue stays
-under `/home/jmacd/observatory/run`.
+token. Set `foundry_identity_enabled = true` to create a dedicated Entra
+application and service principal with `Foundry User` at the configured project
+scope. Terraform places its generated client secret only in sensitive local
+state and the host's mode-`0600` environment.
+
+Set `deploy_workbench = true` to install both the Foundry case chat and evidence
+Workbench, their native Python environment, user systemd units, accepted case
+and corpus links, and NFS-backed operational research queue. Chat binds only to
+`127.0.0.1:4174`; Workbench binds only to `127.0.0.1:4180`. Candidate bytes,
+queue decisions, and run state remain under
+`/home/citizen/journalist/research`.
 
 Terraform generates a stable proxy token protected from destruction. Leave
 `workbench_identity_enabled` enabled after its first apply, even when pausing
@@ -71,6 +77,22 @@ Use `deploy/watershop/Caddyfile.workbench.example` to configure a dedicated
 private hostname, Caddy `basic_auth`, and the matching proxy header. Terraform
 does not install or reload that snippet because Caddy is shared host
 infrastructure.
+
+For initial private testing, set
+`workbench_loopback_testing_enabled = true`. This omits the proxy token from the
+running service and permits Workbench requests only from its loopback listener.
+Connect from the workstation with:
+
+```sh
+ssh -N \
+  -L 4174:127.0.0.1:4174 \
+  -L 4180:127.0.0.1:4180 \
+  watershop
+```
+
+Then open `http://127.0.0.1:4174/casebook.html` and
+`http://127.0.0.1:4180/workbench`. Disable loopback testing before routing
+Workbench through Caddy.
 
 The corpus archive UUID and receipt key use a separate
 `observatory_identity_enabled` lifecycle. Enable it before the first corpus

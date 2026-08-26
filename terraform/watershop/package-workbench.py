@@ -12,12 +12,14 @@ import sys
 from pathlib import Path
 
 DEPLOYMENT_PATHS = (
+    ".github/skills",
     "agents/pyproject.toml",
     "agents/requirements.runtime.lock",
+    "agents/organization",
     "agents/src",
-    "web/workbench.css",
-    "web/workbench.html",
-    "web/workbench.js",
+    "government-model",
+    "monitors",
+    "web",
 )
 DIRTY_PATHS = (
     "agents",
@@ -50,8 +52,8 @@ def main() -> None:
         raise ValueError("revision must be a complete lowercase Git SHA")
     if run_git(source_dir, "rev-parse", "--show-toplevel") != str(source_dir):
         raise ValueError(f"source_dir is not the repository root: {source_dir}")
-    if run_git(source_dir, "rev-parse", "HEAD") != revision:
-        raise ValueError("the source checkout does not match observatory_revision")
+    if run_git(source_dir, "rev-parse", f"{revision}^{{commit}}") != revision:
+        raise ValueError("observatory_revision does not identify a commit")
     dirty = run_git(source_dir, "status", "--porcelain", "--", *DIRTY_PATHS)
     if dirty:
         raise ValueError(

@@ -4,8 +4,17 @@ import_accepted_workspace = false
 observatory_identity_enabled = false
 workbench_identity_enabled   = false
 accepted_workspace_identity_enabled = false
+foundry_identity_enabled = false
+workbench_loopback_testing_enabled = false
 
 observatory_revision = "0000000000000000000000000000000000000000"
+
+azure_subscription_id       = "00000000-0000-0000-0000-000000000000"
+azure_tenant_id             = "00000000-0000-0000-0000-000000000000"
+foundry_project_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/REPLACE_ME/providers/Microsoft.CognitiveServices/accounts/REPLACE_ME/projects/REPLACE_ME"
+foundry_project_endpoint    = "https://REPLACE_ME.services.ai.azure.com/api/projects/REPLACE_ME"
+foundry_model               = "REPLACE_ME"
+foundry_client_secret_end_date = "2031-08-26T05:00:00Z"
 
 watershop_host                 = "watershop"
 watershop_user                 = "jmacd"

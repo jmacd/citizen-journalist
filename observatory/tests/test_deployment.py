@@ -33,6 +33,16 @@ def test_staging_units_require_staging_archive_identity() -> None:
         assert "ConditionPathExists" not in text
         assert "ExecStart=" in text
 
+    chat = (WATERSHOP / "systemd" / "mendo-chat.service").read_text(
+        encoding="utf-8"
+    )
+    workbench = (WATERSHOP / "systemd" / "mendo-workbench.service").read_text(
+        encoding="utf-8"
+    )
+    assert "--provider foundry" in chat
+    assert "--port 4174" in chat
+    assert "MENDO_WORKBENCH_EXTRA_ARGS" in workbench
+
 
 def test_staging_configuration_requires_native_runtime_and_isolated_prefix() -> None:
     environment = (WATERSHOP / "staging.env.example").read_text(encoding="utf-8")
@@ -128,6 +138,22 @@ def test_accepted_workspace_identity_outlives_one_time_import() -> None:
     assert "var.accepted_workspace_identity_enabled ? 1 : 0" in main
     assert "var.accepted_workspace_identity_enabled" in outputs
     assert "var.accepted_workspace_transport_sha256" in outputs
+
+
+def test_workbench_deployment_hydrates_accepted_workspace() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    deployment = (terraform_root / "workbench.tf").read_text(encoding="utf-8")
+    packager = (terraform_root / "package-workbench.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "/home/citizen/journalist/research/research-queue.sqlite" in deployment
+    assert "PRAGMA integrity_check" in deployment
+    assert "mendo-chat.service" in deployment
+    assert '"agents/organization"' in packager
+    assert '".github/skills"' in packager
+    assert '"government-model"' in packager
+    assert '"web"' in packager
 
 
 def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) -> None:

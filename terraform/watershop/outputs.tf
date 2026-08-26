@@ -44,3 +44,12 @@ output "workbench_source_sha256" {
   description = "SHA-256 of the deterministic committed Workbench source archive."
   value       = var.deploy_workbench ? local.workbench_source_hash : null
 }
+
+output "foundry_runtime_client_id" {
+  description = "Non-secret application client ID used by the watershop Foundry runtime."
+  value = (
+    var.foundry_identity_enabled ?
+    azuread_application_registration.foundry_runtime[0].client_id :
+    null
+  )
+}

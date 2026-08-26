@@ -128,6 +128,11 @@ rejects requests that do not carry that token when it is configured. Importing
 the snippet into the shared Caddy configuration remains an explicit host
 administration action; this repository does not own or replace Caddy.
 
+Terraform can instead enable explicit loopback-only testing. An SSH tunnel
+forwarding workstation ports 4174 and 4180 reaches the Foundry chat and
+Workbench without exposing either listener on the LAN. Disable this testing
+mode before enabling the Caddy route.
+
 Terraform is the supported installer. The standalone script only refreshes
 units and scripts after a native virtual environment and environment file
 already exist:

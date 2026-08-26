@@ -1,11 +1,13 @@
 [Unit]
-Description=Mendo Observatory private evidence Workbench
+Description=Citizen Journalist Foundry case chat
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=/home/jmacd/observatory/app
 EnvironmentFile=/home/jmacd/observatory/env/workbench.env
-ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-workbench --repo-root /home/jmacd/observatory/app --host 127.0.0.1 --port 4180 ${MENDO_WORKBENCH_EXTRA_ARGS}
+ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-chat --repo-root /home/jmacd/observatory/app --provider foundry --host 127.0.0.1 --port 4174
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=30s

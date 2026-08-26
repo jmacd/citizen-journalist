@@ -22,6 +22,59 @@ variable "workbench_identity_enabled" {
   default     = false
 }
 
+variable "foundry_identity_enabled" {
+  description = "Create and retain a least-privilege Azure identity for the watershop Foundry runtime."
+  type        = bool
+  default     = false
+}
+
+variable "workbench_loopback_testing_enabled" {
+  description = "Allow unauthenticated Workbench access only through its loopback listener for SSH-tunneled testing."
+  type        = bool
+  default     = false
+}
+
+variable "azure_subscription_id" {
+  description = "Azure subscription containing the Foundry project."
+  type        = string
+  default     = ""
+}
+
+variable "azure_tenant_id" {
+  description = "Microsoft Entra tenant used by the Foundry runtime identity."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_project_resource_id" {
+  description = "Complete Azure resource ID of the Foundry project."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_project_endpoint" {
+  description = "Microsoft Foundry project endpoint used by chat and acquisition agents."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_model" {
+  description = "Foundry model deployment used by the watershop runtime."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_client_secret_end_date" {
+  description = "Explicit RFC3339 expiry for the watershop Foundry client secret; rotate deliberately before this date."
+  type        = string
+  default     = "2031-08-26T05:00:00Z"
+
+  validation {
+    condition     = can(formatdate("YYYY-MM-DD'T'hh:mm:ssZ", var.foundry_client_secret_end_date))
+    error_message = "foundry_client_secret_end_date must be an RFC3339 timestamp."
+  }
+}
+
 variable "observatory_revision" {
   description = "Complete committed mendo-codebook Git revision to deploy."
   type        = string

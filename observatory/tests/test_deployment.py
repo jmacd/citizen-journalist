@@ -109,6 +109,17 @@ def test_watershop_terraform_is_repository_local() -> None:
     assert "does not import" in documentation
 
 
+def test_watershop_terraform_does_not_relocate_virtual_environments() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    main = (terraform_root / "main.tf").read_text(encoding="utf-8")
+    workbench = (terraform_root / "workbench.tf").read_text(encoding="utf-8")
+
+    assert 'python3.11 -m venv \\"$venv\\"' in main
+    assert 'python3.11 -m venv \\"$venv\\"' in workbench
+    assert 'mv \\"$venv_tmp\\" \\"$venv\\"' not in main
+    assert 'mv \\"$venv_tmp\\" \\"$venv\\"' not in workbench
+
+
 def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) -> None:
     repository = tmp_path / "source"
     (repository / "observatory" / "src" / "example").mkdir(parents=True)

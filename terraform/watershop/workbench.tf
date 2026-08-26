@@ -210,8 +210,8 @@ resource "null_resource" "workbench" {
       "systemctl --user restart mendo-workbench.service",
       "systemctl --user is-active --quiet mendo-chat.service",
       "systemctl --user is-active --quiet mendo-workbench.service",
-      "curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4174/api/health >/dev/null",
-      var.workbench_loopback_testing_enabled ? "curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4180/api/workbench/health >/dev/null" : "set -a; . '${var.observatory_home}/env/workbench.env'; set +a; curl --fail --silent --show-error --max-time 10 -H \"X-Mendo-Workbench-Auth: $MENDO_WORKBENCH_PROXY_TOKEN\" http://127.0.0.1:4180/api/workbench/health >/dev/null",
+      "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4174/api/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
+      var.workbench_loopback_testing_enabled ? "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done" : "set -a; . '${var.observatory_home}/env/workbench.env'; set +a; attempt=0; until curl --fail --silent --show-error --max-time 10 -H \"X-Mendo-Workbench-Auth: $MENDO_WORKBENCH_PROXY_TOKEN\" http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
     ]
   }
 

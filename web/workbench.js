@@ -1414,6 +1414,32 @@ function renderDetail(candidate) {
   }
   detail.append(leadSection);
 
+  if (Array.isArray(candidate.occurrences) && candidate.occurrences.length > 1) {
+    const occurrenceSection = element("section", { className: "manifest-section" });
+    occurrenceSection.append(
+      element("h4", { text: "Discovery workflow occurrences" }),
+      element("p", {
+        className: "empty-copy",
+        text: "Exact evidence identity matched across these staged workflow bundles.",
+      }),
+    );
+    const occurrences = element("ul", { className: "lead-list" });
+    candidate.occurrences.forEach((occurrence) => {
+      const leadIds = Array.isArray(occurrence.related_lead_ids)
+        ? occurrence.related_lead_ids.join(", ")
+        : "";
+      occurrences.append(element("li", {
+        text: [
+          valueOrDash(occurrence.bundle),
+          valueOrDash(occurrence.title),
+          leadIds ? `leads: ${leadIds}` : null,
+        ].filter(Boolean).join(" · "),
+      }));
+    });
+    occurrenceSection.append(occurrences);
+    detail.append(occurrenceSection);
+  }
+
   const manifestSection = element("section", { className: "manifest-section" });
   manifestSection.append(
     element("h4", { text: "Proposed manifest JSON" }),

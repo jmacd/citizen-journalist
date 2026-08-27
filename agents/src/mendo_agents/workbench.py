@@ -80,7 +80,7 @@ class CandidateStore:
             return self._cached_candidates
         candidates: list[dict[str, object]] = []
         validation_errors: list[dict[str, str]] = []
-        seen: set[str] = set()
+        seen: dict[str, dict[str, object]] = {}
         if not self.root.exists():
             return candidates
         for bundle_path in bundle_paths:
@@ -89,17 +89,36 @@ class CandidateStore:
                 raw_candidates = payload.get("candidates")
                 if not isinstance(raw_candidates, list):
                     raise RuntimeError("candidates must be an array")
-                bundle_candidates = []
-                for raw in raw_candidates:
-                    candidate = self._validate_candidate(bundle_path.parent, raw)
+                bundle_candidates = [
+                    self._validate_candidate(bundle_path.parent, raw)
+                    for raw in raw_candidates
+                ]
+                relative_bundle = str(bundle_path.relative_to(self.root))
+                for candidate in bundle_candidates:
+                    candidate["_bundle_path"] = relative_bundle
+                local_seen: dict[str, dict[str, object]] = {}
+                for candidate in bundle_candidates:
                     candidate_id = str(candidate["id"])
-                    if candidate_id in seen:
+                    if candidate_id in local_seen:
                         raise RuntimeError(
-                            f"duplicate candidate ID: {candidate_id}"
+                            f"duplicate candidate ID within bundle: {candidate_id}"
                         )
-                    seen.add(candidate_id)
-                    bundle_candidates.append(candidate)
-                candidates.extend(bundle_candidates)
+                    existing = seen.get(candidate_id)
+                    if existing is not None:
+                        self._assert_same_candidate(existing, candidate)
+                    local_seen[candidate_id] = candidate
+                for candidate in bundle_candidates:
+                    candidate_id = str(candidate["id"])
+                    existing = seen.get(candidate_id)
+                    if existing is None:
+                        candidate["occurrences"] = [
+                            self._candidate_occurrence(candidate)
+                        ]
+                        candidate["duplicate_occurrence_count"] = 1
+                        seen[candidate_id] = candidate
+                        candidates.append(candidate)
+                    else:
+                        self._merge_candidate_occurrence(existing, candidate)
             except (OSError, json.JSONDecodeError, RuntimeError) as error:
                 validation_errors.append(
                     {
@@ -111,6 +130,71 @@ class CandidateStore:
         self._cached_candidates = candidates
         self.validation_errors = validation_errors
         return self._cached_candidates
+
+    @staticmethod
+    def _assert_same_candidate(
+        existing: dict[str, object],
+        candidate: dict[str, object],
+    ) -> None:
+        candidate_id = str(candidate["id"])
+        existing_manifest = existing["proposed_manifest"]
+        candidate_manifest = candidate["proposed_manifest"]
+        assert isinstance(existing_manifest, dict)
+        assert isinstance(candidate_manifest, dict)
+        identity = (
+            "sha256",
+            "bytes",
+            "mime_type",
+            "source_url",
+            "version",
+            "signature_status",
+        )
+        conflicts = [
+            name for name in identity if existing.get(name) != candidate.get(name)
+        ]
+        if existing_manifest.get("id") != candidate_manifest.get("id"):
+            conflicts.append("proposed_manifest.id")
+        if conflicts:
+            existing_bundle = existing.get("_bundle_path", "unknown bundle")
+            candidate_bundle = candidate.get("_bundle_path", "unknown bundle")
+            raise RuntimeError(
+                f"conflicting duplicate candidate ID: {candidate_id} "
+                f"between {existing_bundle} and {candidate_bundle} "
+                f"({', '.join(conflicts)})"
+            )
+
+    @staticmethod
+    def _candidate_occurrence(
+        candidate: dict[str, object],
+    ) -> dict[str, object]:
+        return {
+            "bundle": candidate.get("_bundle_path"),
+            "title": candidate["title"],
+            "publisher": candidate["publisher"],
+            "retrieved_at": candidate["retrieved_at"],
+            "related_lead_ids": list(candidate.get("related_lead_ids", [])),
+            "establishes": list(candidate.get("establishes", [])),
+            "does_not_establish": list(
+                candidate.get("does_not_establish", [])
+            ),
+        }
+
+    @staticmethod
+    def _merge_candidate_occurrence(
+        existing: dict[str, object],
+        candidate: dict[str, object],
+    ) -> None:
+        CandidateStore._assert_same_candidate(existing, candidate)
+        for name in ("related_lead_ids", "establishes", "does_not_establish"):
+            existing_values = list(existing.get(name, []))
+            candidate_values = list(candidate.get(name, []))
+            existing[name] = list(dict.fromkeys(existing_values + candidate_values))
+        occurrences = list(existing.get("occurrences", []))
+        occurrences.append(CandidateStore._candidate_occurrence(candidate))
+        existing["occurrences"] = occurrences
+        existing["duplicate_occurrence_count"] = (
+            int(existing.get("duplicate_occurrence_count", 1)) + 1
+        )
 
     def get_candidate(self, candidate_id: str) -> dict[str, object]:
         for candidate in self.list_candidates():

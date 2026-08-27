@@ -27,8 +27,8 @@ def test_trusted_private_clients_exclude_public_addresses() -> None:
     assert not is_trusted_private_client("not-an-address")
 
 
-def write_bundle(root: Path, lead_id: str) -> None:
-    bundle_root = root / "run-1"
+def write_bundle(root: Path, lead_id: str, run_id: str = "run-1") -> None:
+    bundle_root = root / run_id
     bundle_root.mkdir(parents=True)
     evidence = bundle_root / "record.pdf"
     evidence.write_bytes(b"%PDF-1.7\nreview fixture\n%%EOF\n")
@@ -69,6 +69,90 @@ def write_bundle(root: Path, lead_id: str) -> None:
     (bundle_root / "review-bundle.json").write_text(
         json.dumps(payload), encoding="utf-8"
     )
+
+
+def test_workbench_merges_exact_cross_bundle_candidate_duplicates(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1", "run-1")
+    write_bundle(staging, "lead-2", "run-2")
+    second_bundle = staging / "run-2" / "review-bundle.json"
+    payload = json.loads(second_bundle.read_text(encoding="utf-8"))
+    payload["candidates"][0]["title"] = "Found by a second workflow"
+    second_bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["lead-1", "lead-2"]
+    assert candidates[0]["duplicate_occurrence_count"] == 2
+    assert [item["title"] for item in candidates[0]["occurrences"]] == [
+        "Official Record",
+        "Found by a second workflow",
+    ]
+    assert store.validation_errors == []
+
+
+def test_workbench_rejects_conflicting_cross_bundle_candidate_duplicates(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1", "run-1")
+    write_bundle(staging, "lead-2", "run-2")
+    second_bundle = staging / "run-2" / "review-bundle.json"
+    payload = json.loads(second_bundle.read_text(encoding="utf-8"))
+    payload["candidates"][0]["source_url"] = (
+        "https://example.gov/different-record.pdf"
+    )
+    second_bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["lead-1"]
+    assert "conflicting duplicate candidate ID" in (
+        store.validation_errors[0]["error"]
+    )
+    assert "run-1/review-bundle.json" in store.validation_errors[0]["error"]
+    assert "run-2/review-bundle.json" in store.validation_errors[0]["error"]
+
+
+def test_workbench_rejects_duplicate_ids_within_one_bundle(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1")
+    bundle = staging / "run-1" / "review-bundle.json"
+    payload = json.loads(bundle.read_text(encoding="utf-8"))
+    payload["candidates"].append(dict(payload["candidates"][0]))
+    bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+
+    assert store.list_candidates() == []
+    assert "duplicate candidate ID within bundle" in (
+        store.validation_errors[0]["error"]
+    )
+
+
+def test_invalid_bundle_does_not_reserve_candidate_id(tmp_path: Path) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "invalid-lead", "a-invalid")
+    invalid_bundle = staging / "a-invalid" / "review-bundle.json"
+    payload = json.loads(invalid_bundle.read_text(encoding="utf-8"))
+    payload["candidates"].append(dict(payload["candidates"][0]))
+    invalid_bundle.write_text(json.dumps(payload), encoding="utf-8")
+    write_bundle(staging, "valid-lead", "b-valid")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["valid-lead"]
+    assert len(store.validation_errors) == 1
 
 
 def test_workbench_lists_validated_candidate_and_records_approval(

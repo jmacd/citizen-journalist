@@ -21,6 +21,7 @@ def test_society_policy_has_balanced_gates_and_no_canonical_write_tools() -> Non
         "archivist",
         "analyst",
         "skeptic",
+        "acquisition_engineer",
     }
     assert "external_communication" in policy.approval_required
     assert all(

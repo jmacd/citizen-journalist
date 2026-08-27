@@ -7,6 +7,7 @@ import asyncio
 import json
 from uuid import uuid4
 import mimetypes
+import traceback
 from dataclasses import asdict
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -414,7 +415,12 @@ class ChatRequestHandler(BaseHTTPRequestHandler):
         except (json.JSONDecodeError, PublicChatError) as error:
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except Exception as error:
-            self.log_error("Chat request failed: %s", type(error).__name__)
+            self.log_error(
+                "Chat request failed: %s: %s",
+                type(error).__name__,
+                error,
+            )
+            traceback.print_exception(error)
             self._json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 {"error": "The evidence workflow failed. No answer was published."},

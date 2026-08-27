@@ -1,13 +1,15 @@
 [Unit]
-Description=Mendo Observatory private evidence Workbench
+Description=Citizen Journalist Foundry research triage worker
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=/home/jmacd/observatory/app
 EnvironmentFile=/home/jmacd/observatory/env/workbench.env
-ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-workbench --repo-root /home/jmacd/observatory/app --host ${MENDO_WORKBENCH_HOST} --port 4180 ${MENDO_WORKBENCH_EXTRA_ARGS}
+ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-triage-worker --repo-root /home/jmacd/observatory/app --provider foundry
 Restart=on-failure
-RestartSec=5s
+RestartSec=15s
 TimeoutStopSec=30s
 MemoryAccounting=yes
 MemoryHigh=1536M

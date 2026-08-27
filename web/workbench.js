@@ -3,6 +3,22 @@ const queueState = document.getElementById("queue-state");
 const queueCount = document.getElementById("queue-count");
 const researchActivityList = document.getElementById("research-activity-list");
 const researchActivityState = document.getElementById("research-activity-state");
+const pendingSearchApprovals = document.getElementById("pending-search-approvals");
+const pendingSearchCount = document.getElementById("pending-search-count");
+const pendingSearchList = document.getElementById("pending-search-list");
+const actionCenter = document.getElementById("action-center");
+const actionCenterHeading = document.getElementById("action-center-heading");
+const actionCenterDetail = document.getElementById("action-center-detail");
+const actionCenterProgress = document.getElementById("action-center-progress");
+const systemActivityHeading = document.getElementById("system-activity-heading");
+const systemActivityQuestion = document.getElementById("system-activity-question");
+const systemActivityDetail = document.getElementById("system-activity-detail");
+const systemActivityStages = document.getElementById("system-activity-stages");
+const progressSummaryState = document.getElementById("progress-summary-state");
+const progressSummaryMetrics = document.getElementById("progress-summary-metrics");
+const progressSummaryLatest = document.getElementById("progress-summary-latest");
+const viewResearchDetail = document.getElementById("view-research-detail");
+const reviewNextCandidate = document.getElementById("review-next-candidate");
 const candidateList = document.getElementById("candidate-list");
 const candidatesState = document.getElementById("candidates-state");
 const candidateCount = document.getElementById("candidate-count");
@@ -10,6 +26,11 @@ const detailState = document.getElementById("detail-state");
 const detail = document.getElementById("candidate-detail");
 
 let candidates = [];
+let researchDirectives = [];
+let queueItems = [];
+let progressSummary = null;
+let researchActivityLoadSequence = 0;
+const directiveActionsInFlight = new Set();
 let selectedCandidateId = null;
 const decisionMessages = new Map();
 
@@ -44,6 +65,29 @@ async function getJSON(url, options) {
   return payload;
 }
 
+async function postJSONWithTimeout(url, timeoutMilliseconds) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    timeoutMilliseconds,
+  );
+  try {
+    return await getJSON(url, {
+      method: "POST",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(
+        "The browser stopped waiting, but watershop may still be processing the workflow. Durable status will be refreshed before retry is offered.",
+      );
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function externalLink(url, label) {
   const link = element("a", { text: label });
   link.href = url;
@@ -54,6 +98,247 @@ function externalLink(url, label) {
 
 function valueOrDash(value) {
   return value === null || value === undefined || value === "" ? "—" : value;
+}
+
+function countStatus(group, status) {
+  return Number(group?.[status] || 0);
+}
+
+function metric(value, label, detail, warning = false) {
+  const card = element("div", {
+    className: `progress-metric${warning ? " warning" : ""}`,
+  });
+  card.append(
+    element("strong", { text: value }),
+    element("span", { text: label }),
+    element("span", { text: detail }),
+  );
+  return card;
+}
+
+function activityStage(label, detail, status) {
+  const item = element("li", { className: `activity-stage ${status}` });
+  item.append(
+    element("strong", { text: label }),
+    element("span", { text: detail }),
+  );
+  return item;
+}
+
+function renderSystemActivity() {
+  const automation = progressSummary?.triage_automation || {};
+  const foundryLoopActive = automation.configured && automation.healthy;
+  if (!progressSummary?.latest_question) {
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is monitoring"
+      : "OUT OF THE LOOP — no agent is running";
+    systemActivityDetail.textContent = foundryLoopActive
+      ? "The persistent watershop worker is polling for question runs. Copilot is not part of this runtime path."
+      : "Copilot is not connected between messages, and the evidence workflow has not recorded a question run.";
+    systemActivityQuestion.hidden = true;
+    systemActivityStages.hidden = true;
+    return;
+  }
+  const latest = progressSummary.latest_question;
+  const gapStatuses = latest.gap_statuses || {};
+  const directiveStatuses = latest.directive_statuses || {};
+  const triageCount = countStatus(gapStatuses, "triage");
+  const pendingSearches = countStatus(directiveStatuses, "pending_approval");
+  const activeSearches = countStatus(directiveStatuses, "running");
+  const approvedSearches = countStatus(directiveStatuses, "approved");
+  const completedSearches = countStatus(directiveStatuses, "completed");
+  const failedSearches = countStatus(directiveStatuses, "failed");
+  const stagedGaps = countStatus(gapStatuses, "candidate_staged");
+
+  systemActivityQuestion.textContent = `Latest question: “${latest.question}”`;
+  systemActivityQuestion.hidden = false;
+
+  if (!latest.gap_count) {
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is monitoring"
+      : "OUT OF THE LOOP — the question run is complete";
+    systemActivityDetail.textContent = foundryLoopActive
+      ? "The latest chat run identified no evidence gap. The watershop worker remains active; Copilot is not part of this runtime path."
+      : "Foundry completed the latest chat request without identifying an evidence gap. No agent remains active.";
+  } else if (stagedGaps || pendingSearches) {
+    systemActivityHeading.textContent =
+      foundryLoopActive
+        ? "IN THE LOOP — Foundry automation is waiting for your decision"
+        : "OUT OF THE LOOP — waiting for your decision";
+    systemActivityDetail.textContent =
+      `${stagedGaps} gap${stagedGaps === 1 ? " has" : "s have"} staged evidence; ${pendingSearches} search approval${pendingSearches === 1 ? " is" : "s are"} ready for this question.`;
+  } else if (activeSearches) {
+    systemActivityHeading.textContent =
+      "IN THE LOOP — Foundry research is running";
+    systemActivityDetail.textContent =
+      `${activeSearches} bounded search${activeSearches === 1 ? " is" : "es are"} active for the latest question.`;
+  } else if (approvedSearches) {
+    systemActivityHeading.textContent =
+      foundryLoopActive
+        ? "IN THE LOOP — approved search awaits dispatch"
+        : "OUT OF THE LOOP — approved search awaits dispatch";
+    systemActivityDetail.textContent =
+      `${approvedSearches} bounded search${approvedSearches === 1 ? " is" : "es are"} approved, but no Foundry run has started.`;
+  } else if (
+    triageCount
+    && !Object.keys(directiveStatuses).length
+  ) {
+    if (automation.state === "failed") {
+      systemActivityHeading.textContent =
+        "OUT OF THE LOOP — the Foundry triage worker failed";
+      systemActivityDetail.textContent =
+        `The failure was persisted and requires repair: ${automation.last_error || "no error detail was recorded"}`;
+    } else if (foundryLoopActive) {
+      systemActivityHeading.textContent =
+        automation.state === "running"
+          ? "IN THE LOOP — Foundry is triaging this question"
+          : "IN THE LOOP — the Foundry triage worker is active";
+      systemActivityDetail.textContent =
+        `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}. The persistent watershop worker is processing or polling the queue; Copilot is not part of this runtime path.`;
+    } else {
+      systemActivityHeading.textContent =
+        "OUT OF THE LOOP — no agent is processing these gaps";
+      systemActivityDetail.textContent =
+        `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. They are saved on watershop. No automatic triage worker is configured, and Copilot is not connected between messages.`;
+    }
+  } else {
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is active"
+      : "OUT OF THE LOOP — no agent is currently running";
+    systemActivityDetail.textContent =
+      `${completedSearches} search${completedSearches === 1 ? "" : "es"} completed and ${failedSearches} failed for gaps associated with this question.`;
+  }
+
+  const searchDetail = activeSearches
+    ? `${activeSearches} running`
+    : pendingSearches
+      ? `${pendingSearches} awaiting CIO approval`
+      : approvedSearches
+        ? `${approvedSearches} approved · not dispatched`
+      : completedSearches || failedSearches
+        ? `${completedSearches} completed · ${failedSearches} failed`
+        : "Not prepared";
+  const reviewCount = stagedGaps + pendingSearches;
+  const reviewDetail = reviewCount
+    ? `${reviewCount} decision${reviewCount === 1 ? "" : "s"} ready`
+    : "Nothing waiting";
+  const searchStatus = activeSearches
+    ? "active"
+    : pendingSearches
+        || approvedSearches
+        || (!Object.keys(directiveStatuses).length && triageCount)
+      ? "waiting"
+      : "complete";
+
+  systemActivityStages.replaceChildren(
+    activityStage("1. Chat answer", "Completed", "complete"),
+    activityStage(
+      "2. Evidence gaps",
+      `${latest.new_gap_count} new · ${latest.matched_gap_count} matched`,
+      "complete",
+    ),
+    activityStage(
+      "3. Agent triage",
+      triageCount
+        ? foundryLoopActive
+          ? automation.state === "running"
+            ? "Foundry processing"
+            : `${triageCount} queued · worker polling`
+          : "Waiting · no worker configured"
+        : "No gaps waiting",
+      triageCount ? foundryLoopActive ? "active" : "waiting" : "complete",
+    ),
+    activityStage(
+      "4. Bounded search",
+      searchDetail,
+      searchStatus,
+    ),
+    activityStage(
+      "5. CIO review",
+      reviewDetail,
+      reviewCount ? "waiting" : "complete",
+    ),
+  );
+  systemActivityStages.hidden = false;
+}
+
+function renderProgressSummary() {
+  if (!progressSummary) return;
+  const queueStatuses = progressSummary.queue_statuses || {};
+  const directiveStatuses = progressSummary.directive_statuses || {};
+  const triageCount = countStatus(queueStatuses, "triage");
+  const parkedCount = countStatus(
+    queueStatuses,
+    "requires_transaction_identification",
+  );
+  const completedSearches = countStatus(directiveStatuses, "completed");
+  const failedSearches = countStatus(directiveStatuses, "failed");
+  const activeSearches = countStatus(directiveStatuses, "running");
+  const approvedSearches = countStatus(directiveStatuses, "approved");
+  const pendingActions =
+    candidates.filter((candidate) => !candidate.latest_decision).length
+    + researchDirectives.filter(
+      (directive) => directive.status === "pending_approval",
+    ).length;
+
+  progressSummaryMetrics.replaceChildren(
+    metric(
+      progressSummary.queue_count,
+      "evidence gaps logged",
+      `${progressSummary.recent_triage_count} new · ${triageCount} awaiting triage · ${parkedCount} parked`,
+      triageCount > 0,
+    ),
+    metric(
+      progressSummary.directive_count,
+      "bounded searches prepared",
+      `${completedSearches} completed · ${failedSearches} failed · ${activeSearches} running · ${approvedSearches} awaiting dispatch`,
+      failedSearches > 0,
+    ),
+    metric(
+      progressSummary.registration_count,
+      "documents registered",
+      `${progressSummary.decision_count} audited CIO decisions`,
+    ),
+    metric(
+      pendingActions,
+      "decisions waiting for you",
+      pendingActions ? "Action buttons appear above" : "No CIO action required",
+    ),
+  );
+  progressSummaryMetrics.hidden = false;
+  progressSummaryState.hidden = true;
+
+  const latestDirective = [...researchDirectives]
+    .sort(
+      (left, right) =>
+        Date.parse(right.updated_at || right.created_at)
+        - Date.parse(left.updated_at || left.created_at),
+    )[0];
+  const timestamp = progressSummary.latest_activity_at
+    ? new Date(progressSummary.latest_activity_at).toLocaleString()
+    : "not recorded";
+  progressSummaryLatest.textContent = latestDirective
+    ? `Latest search outcome: ${latestDirective.title} — ${latestDirective.status}. Last audited activity: ${timestamp}.`
+    : `Last audited activity: ${timestamp}.`;
+  progressSummaryLatest.hidden = false;
+  renderSystemActivity();
+}
+
+async function loadProgressSummary() {
+  try {
+    progressSummary = await getJSON("/api/workbench/progress");
+    renderProgressSummary();
+    updateActionCenter();
+  } catch (error) {
+    progressSummary = null;
+    progressSummaryMetrics.hidden = true;
+    progressSummaryLatest.hidden = true;
+    setState(
+      progressSummaryState,
+      `Could not load progress: ${error.message}`,
+      true,
+    );
+  }
 }
 
 function formatBytes(value) {
@@ -77,11 +362,251 @@ function actionLabel(action) {
   }[action] || valueOrDash(action);
 }
 
+async function approveDirective(directive, button) {
+  await runDirectiveAction(directive, button, true);
+}
+
+async function dispatchDirective(directive, button) {
+  await runDirectiveAction(directive, button, false);
+}
+
+async function runDirectiveAction(directive, button, requiresApproval) {
+  if (directiveActionsInFlight.has(directive.id)) return;
+  directiveActionsInFlight.add(directive.id);
+  button.disabled = true;
+  button.textContent = requiresApproval
+    ? "Recording approval…"
+    : "Starting Foundry search…";
+  updateActionCenter();
+  let phase = requiresApproval ? "approval" : "dispatch";
+  try {
+    if (requiresApproval) {
+      await postJSONWithTimeout(
+        `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
+        30000,
+      );
+      phase = "dispatch";
+      button.textContent = "Starting Foundry search…";
+    }
+    await postJSONWithTimeout(
+      `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/dispatch`,
+      360000,
+    );
+  } catch (error) {
+    setState(
+      researchActivityState,
+      phase === "approval"
+        ? `Could not approve workflow ${directive.id}: ${error.message}`
+        : `Foundry workflow ${directive.id} failed to start or complete: ${error.message}`,
+      true,
+    );
+  } finally {
+    try {
+      await Promise.all([
+        loadResearchActivity(),
+        loadQueue(),
+        loadCandidates(),
+        loadProgressSummary(),
+      ]);
+    } finally {
+      directiveActionsInFlight.delete(directive.id);
+    }
+    await loadResearchActivity();
+  }
+}
+
+function renderPendingSearchApprovals(directives) {
+  const pending = directives.filter(
+    (directive) =>
+      (
+        directive.status === "pending_approval"
+        || directive.status === "approved"
+      )
+      && !directiveActionsInFlight.has(directive.id),
+  );
+  pendingSearchList.replaceChildren();
+  pendingSearchCount.textContent = String(pending.length);
+  pendingSearchApprovals.hidden = pending.length === 0;
+  pending.forEach((directive) => {
+    const item = element("li");
+    const text = element("div");
+    text.append(
+      element("strong", { text: directive.title }),
+      element("span", { text: `Workflow ${directive.id}` }),
+      element("span", {
+        text: `Official hosts: ${directive.allowed_hosts.join(", ")}`,
+      }),
+    );
+    const approved = directive.status === "approved";
+    const approve = element("button", {
+      className: "primary-button",
+      text: approved
+        ? "Start approved Foundry search"
+        : "Approve and start Foundry search",
+    });
+    approve.type = "button";
+    approve.addEventListener("click", () => {
+      if (approved) {
+        dispatchDirective(directive, approve);
+      } else {
+        approveDirective(directive, approve);
+      }
+    });
+    item.append(text, approve);
+    pendingSearchList.append(item);
+  });
+}
+
+function updateActionCenter() {
+  const pendingCandidates = candidates.filter(
+    (candidate) => !candidate.latest_decision,
+  );
+  const waitingRegistration = candidates.filter(
+    (candidate) =>
+      candidate.latest_decision?.action === "approve_registration"
+      && !candidate.canonical_registration,
+  );
+  const pendingSearches = researchDirectives.filter(
+    (directive) =>
+      directive.status === "pending_approval"
+      && !directiveActionsInFlight.has(directive.id),
+  );
+  const approvedSearches = researchDirectives.filter(
+    (directive) =>
+      directive.status === "approved"
+      && !directiveActionsInFlight.has(directive.id),
+  );
+  const runningSearches = researchDirectives.filter(
+    (directive) => directive.status === "running",
+  );
+  const activeTriageCount = progressSummary?.recent_triage_count
+    ?? queueItems.filter(
+      (item) =>
+        item.status === "triage"
+        && Date.parse(item.created_at) >= Date.now() - 6 * 60 * 60 * 1000,
+    ).length;
+  const parkedTransactionCount = progressSummary
+    ? countStatus(
+      progressSummary.queue_statuses,
+      "requires_transaction_identification",
+    )
+    : queueItems.filter(
+      (item) => item.status === "requires_transaction_identification",
+    ).length;
+  const actionCount =
+    pendingCandidates.length
+    + pendingSearches.length
+    + approvedSearches.length;
+  const inFlightSearches = directiveActionsInFlight.size;
+
+  actionCenter.className = `action-center ${actionCount ? "action-required" : "waiting"}`;
+  reviewNextCandidate.hidden = pendingCandidates.length === 0;
+  renderPendingSearchApprovals(researchDirectives);
+
+  if (actionCount) {
+    actionCenterHeading.textContent =
+      `${actionCount} action${actionCount === 1 ? "" : "s"} need your attention`;
+    const parts = [];
+    if (pendingCandidates.length) {
+      parts.push(
+        `${pendingCandidates.length} document${pendingCandidates.length === 1 ? "" : "s"}`,
+      );
+    }
+    if (pendingSearches.length || approvedSearches.length) {
+      const searchCount = pendingSearches.length + approvedSearches.length;
+      parts.push(
+        `${searchCount} bounded search${searchCount === 1 ? "" : "es"}`,
+      );
+    }
+    actionCenterDetail.textContent =
+      `Review ${parts.join(" and ")}. Approval buttons record an explicit decision; approved searches may need a dispatch retry.`;
+  } else if (waitingRegistration.length) {
+    actionCenterHeading.textContent = "No action needed — registration is pending";
+    actionCenterDetail.textContent =
+      `${waitingRegistration.length} approved document${waitingRegistration.length === 1 ? " is" : "s are"} waiting for deterministic registration. Stay in Workbench until this panel says registration is complete.`;
+  } else if (inFlightSearches) {
+    actionCenterHeading.textContent = "No action needed — starting Foundry";
+    actionCenterDetail.textContent =
+      `${inFlightSearches} workflow${inFlightSearches === 1 ? " is" : "s are"} being approved or dispatched. Its button will not return unless the server reports that another action is genuinely required.`;
+  } else if (runningSearches.length) {
+    actionCenterHeading.textContent = "No action needed — research is running";
+    actionCenterDetail.textContent =
+      `${runningSearches.length} bounded search${runningSearches.length === 1 ? " is" : "es are"} running. New documents will appear here for review if found.`;
+  } else if (
+    progressSummary?.triage_automation?.configured
+    && ["failed", "stale", "not_started"].includes(
+      progressSummary.triage_automation.state,
+    )
+  ) {
+    actionCenter.className = "action-center action-required";
+    actionCenterHeading.textContent = "Foundry automation needs repair";
+    actionCenterDetail.textContent =
+      progressSummary.triage_automation.last_error
+        || `The triage worker is ${progressSummary.triage_automation.state}; queued gaps will not advance until the service is restored.`;
+  } else if (activeTriageCount) {
+    const automation = progressSummary?.triage_automation;
+    if (automation?.configured && automation?.healthy) {
+      actionCenterHeading.textContent =
+        automation.state === "running"
+          ? "No action needed — Foundry is triaging gaps"
+          : "No action needed — the Foundry worker is polling";
+      actionCenterDetail.textContent =
+        `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} in the persistent queue. Copilot is not involved; a search-approval button will appear after Foundry prepares bounded retrieval work.`;
+    } else {
+      actionCenterHeading.textContent =
+        "No action needed — gaps await agent triage";
+      actionCenterDetail.textContent =
+        `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} queued for classification. No triage run is recorded yet; a search-approval button will appear only after bounded retrieval work is prepared.`;
+    }
+  } else {
+    actionCenter.className = "action-center ready";
+    actionCenterHeading.textContent = "Workbench complete — return to chat";
+    actionCenterDetail.textContent =
+      "There are no document or search decisions waiting for you. You may ask the evidence question again; a new answer can identify additional work.";
+  }
+
+  const progress = [];
+  if (runningSearches.length) {
+    progress.push(`${runningSearches.length} search${runningSearches.length === 1 ? "" : "es"} running`);
+  }
+  if (inFlightSearches) {
+    progress.push(`${inFlightSearches} workflow${inFlightSearches === 1 ? "" : "s"} starting`);
+  }
+  if (waitingRegistration.length) {
+    progress.push(`${waitingRegistration.length} registration${waitingRegistration.length === 1 ? "" : "s"} pending`);
+  }
+  if (parkedTransactionCount) {
+    progress.push(`${parkedTransactionCount} transaction-specific gap${parkedTransactionCount === 1 ? "" : "s"} parked`);
+  }
+  actionCenterProgress.textContent = progress.join(" · ");
+  renderProgressSummary();
+}
+
+viewResearchDetail.addEventListener("click", () => {
+  const drawer = document.querySelector(".research-drawer");
+  drawer.open = true;
+  drawer.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+reviewNextCandidate.addEventListener("click", () => {
+  const candidate = candidates.find((item) => !item.latest_decision);
+  if (!candidate) return;
+  selectCandidate(candidate.id);
+  document.getElementById("candidate-detail").scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+});
+
 async function loadResearchActivity() {
+  const requestSequence = ++researchActivityLoadSequence;
   setState(researchActivityState, "Loading search activity…");
   try {
     const payload = await getJSON("/api/workbench/research-activity");
+    if (requestSequence !== researchActivityLoadSequence) return;
     const items = Array.isArray(payload.items) ? payload.items : [];
+    researchDirectives = items;
+    updateActionCenter();
     researchActivityList.replaceChildren();
     if (!items.length) {
       setState(
@@ -143,6 +668,30 @@ async function loadResearchActivity() {
           text: `Dispatch failed: ${directive.latest_run.error}`,
         }));
       }
+      const diagnosis = directive.latest_run?.acquisition_diagnosis;
+      if (diagnosis) {
+        const engineering = element("section", {
+          className: "engineering-diagnosis",
+        });
+        engineering.append(
+          element("strong", { text: "Acquisition Engineer diagnosis" }),
+          element("p", { text: diagnosis.summary }),
+          element("p", {
+            text: `Root cause: ${diagnosis.root_cause}`,
+          }),
+          element("p", {
+            className: "finding-limitation",
+            text: diagnosis.code_change_required
+              ? "A constrained adapter code proposal is required. No code, evidence, deployment, or merge was changed."
+              : "No code change is proposed. A revised directive or controlled retry requires review.",
+          }),
+          element("span", {
+            className: "status-pill",
+            text: diagnosis.status,
+          }),
+        );
+        card.append(engineering);
+      }
       if (negativeCount) {
         const findings = element("details", {
           className: "negative-findings",
@@ -166,37 +715,42 @@ async function loadResearchActivity() {
         findings.append(list);
         card.append(findings);
       }
-      if (directive.status === "pending_approval") {
+      const actionInFlight = directiveActionsInFlight.has(directive.id);
+      if (
+        directive.status === "pending_approval"
+        || directive.status === "approved"
+      ) {
+        const approved = directive.status === "approved";
         const approve = element("button", {
           className: "secondary-button directive-approve",
-          text: "Approve this bounded search",
+          text: actionInFlight
+            ? "Starting Foundry search…"
+            : approved
+              ? "Start Foundry search"
+              : "Approve and start Foundry search",
         });
         approve.type = "button";
-        approve.addEventListener("click", async () => {
-          approve.disabled = true;
-          approve.textContent = "Approving…";
-          try {
-            await getJSON(
-              `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
-              { method: "POST" },
-            );
-            await Promise.all([loadResearchActivity(), loadQueue()]);
-          } catch (error) {
-            approve.disabled = false;
-            approve.textContent = "Approve this bounded search";
-            setState(
-              researchActivityState,
-              `Could not approve search: ${error.message}`,
-              true,
-            );
-          }
-        });
+        approve.disabled = actionInFlight;
+        approve.addEventListener(
+          "click",
+          () => {
+            if (approved) {
+              dispatchDirective(directive, approve);
+            } else {
+              approveDirective(directive, approve);
+            }
+          },
+        );
         card.append(approve);
       }
       row.append(card);
       researchActivityList.append(row);
     });
   } catch (error) {
+    if (requestSequence !== researchActivityLoadSequence) return;
+    researchDirectives = [];
+    pendingSearchApprovals.hidden = true;
+    updateActionCenter();
     setState(
       researchActivityState,
       `Could not load search activity: ${error.message}`,
@@ -210,6 +764,8 @@ async function loadQueue() {
   try {
     const payload = await getJSON("/api/workbench/queue");
     const items = Array.isArray(payload.items) ? payload.items : [];
+    queueItems = items;
+    updateActionCenter();
     queueCount.textContent = String(items.length);
     queueList.replaceChildren();
     if (!items.length) {
@@ -248,6 +804,8 @@ async function loadQueue() {
       queueList.append(row);
     });
   } catch (error) {
+    queueItems = [];
+    updateActionCenter();
     queueCount.textContent = "!";
     setState(queueState, `Could not load queue: ${error.message}`, true);
   }
@@ -286,11 +844,27 @@ function renderCandidateList() {
   });
 }
 
+function candidatePriority(candidate) {
+  if (!candidate.latest_decision) return 0;
+  if (
+    candidate.latest_decision.action === "approve_registration"
+    && !candidate.canonical_registration
+  ) return 1;
+  return 2;
+}
+
+function sortCandidates(items) {
+  return items.sort((left, right) =>
+    candidatePriority(left) - candidatePriority(right),
+  );
+}
+
 async function loadCandidates(preferredId = selectedCandidateId) {
   setState(candidatesState, "Loading candidates…");
   try {
     const payload = await getJSON("/api/workbench/candidates");
-    candidates = Array.isArray(payload.items) ? payload.items : [];
+    candidates = sortCandidates(Array.isArray(payload.items) ? payload.items : []);
+    updateActionCenter();
     const validationErrors = Array.isArray(payload.validation_errors)
       ? payload.validation_errors
       : [];
@@ -771,8 +1345,13 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
     decisionMessages.set(candidateId, stored);
     status.textContent = stored.message;
     status.classList.add(stored.kind);
-    await Promise.all([refreshCandidateIndex(), loadQueue()]);
-    await loadCandidateDetail(candidateId);
+    const nextId = nextPendingCandidateId(candidateId) || candidateId;
+    await Promise.all([
+      loadCandidates(nextId),
+      loadQueue(),
+      loadResearchActivity(),
+      loadProgressSummary(),
+    ]);
   } catch (error) {
     const stored = { message: `Decision was not recorded: ${error.message}`, kind: "error" };
     decisionMessages.set(candidateId, stored);
@@ -786,7 +1365,10 @@ async function submitDecision(candidateId, candidateSha256, action, note, button
 async function refreshCandidateIndex() {
   try {
     const payload = await getJSON("/api/workbench/candidates");
-    candidates = Array.isArray(payload.items) ? payload.items : candidates;
+    candidates = sortCandidates(
+      Array.isArray(payload.items) ? payload.items : candidates,
+    );
+    updateActionCenter();
     candidateCount.textContent = String(candidates.length);
     renderCandidateList();
   } catch {
@@ -832,6 +1414,32 @@ function renderDetail(candidate) {
   }
   detail.append(leadSection);
 
+  if (Array.isArray(candidate.occurrences) && candidate.occurrences.length > 1) {
+    const occurrenceSection = element("section", { className: "manifest-section" });
+    occurrenceSection.append(
+      element("h4", { text: "Discovery workflow occurrences" }),
+      element("p", {
+        className: "empty-copy",
+        text: "Exact evidence identity matched across these staged workflow bundles.",
+      }),
+    );
+    const occurrences = element("ul", { className: "lead-list" });
+    candidate.occurrences.forEach((occurrence) => {
+      const leadIds = Array.isArray(occurrence.related_lead_ids)
+        ? occurrence.related_lead_ids.join(", ")
+        : "";
+      occurrences.append(element("li", {
+        text: [
+          valueOrDash(occurrence.bundle),
+          valueOrDash(occurrence.title),
+          leadIds ? `leads: ${leadIds}` : null,
+        ].filter(Boolean).join(" · "),
+      }));
+    });
+    occurrenceSection.append(occurrences);
+    detail.append(occurrenceSection);
+  }
+
   const manifestSection = element("section", { className: "manifest-section" });
   manifestSection.append(
     element("h4", { text: "Proposed manifest JSON" }),
@@ -859,4 +1467,14 @@ async function loadCandidateDetail(candidateId) {
   }
 }
 
-await Promise.all([loadResearchActivity(), loadQueue(), loadCandidates()]);
+await Promise.all([
+  loadResearchActivity(),
+  loadQueue(),
+  loadCandidates(),
+  loadProgressSummary(),
+]);
+setInterval(() => {
+  if (!document.hidden) {
+    Promise.all([loadResearchActivity(), loadProgressSummary()]);
+  }
+}, 10000);

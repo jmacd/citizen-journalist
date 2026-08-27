@@ -34,19 +34,15 @@ The exact NFS export is a deployment variable. Use these defaults once the
 directory is provisioned:
 
 ```text
-/home/shared/observatory/archive/
+/home/citizen/journalist/archive/
   objects/
   events/
   envelopes/
   collections/
   exports/
 
-/home/shared/observatory/staging/archive/
-  archive.json
-  objects/
-  events/
-  catalog/
-  releases/
+/home/citizen/journalist/research/
+  <Foundry retrieval staging bundles>
 
 /home/jmacd/observatory/
   config/
@@ -56,14 +52,15 @@ directory is provisioned:
   work/
 ```
 
-The NFS tree is the preservation boundary. Local runtime state, temporary
+The Citizen Journalist NFS tree is the preservation boundary. Local runtime state, temporary
 downloads, virtual environments, sockets, and materialized releases stay under
 `/home/jmacd/observatory` and must be reconstructible.
 
-The preservation primary and staging archive are distinct. New builds run
-against `/home/shared/observatory/staging/archive`, never directly against
-`/home/shared/observatory/archive`. Import or snapshot records into staging
-deliberately; keep synthetic fixtures out of the preservation primary.
+The append-only archive and mutable research staging area are distinct. New
+records enter `/home/citizen/journalist/archive` only through immutable objects
+and finalized events. Foundry candidates remain under
+`/home/citizen/journalist/research` until CIO approval and deterministic
+registration. Keep synthetic fixtures out of the archive.
 
 ## MinIO bootstrap buckets
 
@@ -100,9 +97,14 @@ agent:
 | `mendo-corpus.service` | Event replay, catalog build, integrity verification, and release build | oneshot |
 | `mendo-corpus.timer` | Starts the corpus build after new finalized events | periodic initially |
 | `mendo-workbench.service` | Private CIO API and UI | continuous, loopback or private LAN only |
+| `mendo-chat.service` | Foundry-backed case question workflow | continuous request service |
+| `mendo-triage-worker.service` | Foundry-backed evidence-gap triage | continuous, bounded by pending CIO approvals |
 
 Agent roles run inside Pipeline, Atlas, Workbench, or Casebook workflows and
-call Microsoft Foundry as needed. They are not separate systemd services.
+call Microsoft Foundry as needed. The triage unit is a workflow worker, not a
+service for a model persona: it persists execution state, validates Foundry
+output, and stops producing directives when the CIO approval inbox reaches its
+configured cap.
 
 Every unit must:
 
@@ -121,8 +123,13 @@ Only the first manual units currently exist:
   immutable content-addressed staging receipt under
   `/home/jmacd/observatory/run/staging-receipts/`.
 - `mendo-workbench.service` serves the private evidence inbox and candidate
-  review API on `127.0.0.1:4180`. It records audited CIO decisions but does not
-  itself mutate canonical manifests.
+  review API on port 4180. It records audited CIO decisions but does not itself
+  mutate canonical manifests.
+- `mendo-chat.service` answers case questions with Foundry and records typed
+  evidence gaps in the NFS-backed queue.
+- `mendo-triage-worker.service` consumes those question runs without Copilot,
+  asks Foundry for one bounded disposition, validates official hosts, and
+  prepares at most the configured number of directives awaiting CIO approval.
 
 The Workbench is intended to sit behind the existing host-owned Caddy service.
 This repository provides `Caddyfile.workbench.example` for a dedicated private
@@ -130,6 +137,12 @@ hostname with Caddy `basic_auth` and a proxy-only shared token. The Workbench
 rejects requests that do not carry that token when it is configured. Importing
 the snippet into the shared Caddy configuration remains an explicit host
 administration action; this repository does not own or replace Caddy.
+
+Terraform can instead enable explicit trusted-LAN access. Chat and Workbench
+then bind directly to watershop's interfaces, while Workbench rejects source
+addresses that are not private or loopback. This mode has no per-user
+authentication and must be disabled before enabling the Caddy route or exposing
+watershop beyond the trusted network.
 
 Terraform is the supported installer. The standalone script only refreshes
 units and scripts after a native virtual environment and environment file
@@ -168,13 +181,13 @@ change.
 
 Then run `terraform -chdir=terraform/watershop plan` and review it before
 applying. Terraform verifies that
-`/home/shared` is NFS-backed, creates only the isolated staging archive,
+`/home/citizen/journalist` is NFS-backed, creates only the dedicated archive,
 creates the `mendo-releases` MinIO bucket, builds a versioned Python virtual
 environment from the locked runtime dependencies, initializes the archive if
 absent, installs the scripts, secret environment, and user units, and leaves
 both publication services manual. Terraform refuses uncommitted deployment
 source or a checkout that does not match `observatory_revision`. A routine
-apply never initializes or modifies `/home/shared/observatory/archive`.
+apply never silently adopts or replaces `/home/citizen/journalist/archive`.
 
 After the first apply, copy the non-secret output into the protected GitHub
 `production` environment variable:

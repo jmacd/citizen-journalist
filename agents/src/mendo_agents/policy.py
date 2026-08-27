@@ -53,7 +53,14 @@ def load_society_policy(path: Path) -> SocietyPolicy:
 
 
 def validate_society_policy(policy: SocietyPolicy) -> None:
-    expected_roles = {"case_worker", "scout", "archivist", "analyst", "skeptic"}
+    expected_roles = {
+        "case_worker",
+        "scout",
+        "archivist",
+        "analyst",
+        "skeptic",
+        "acquisition_engineer",
+    }
     missing = expected_roles - set(policy.roles)
     if missing:
         raise ValueError(f"Missing active role policies: {sorted(missing)}")

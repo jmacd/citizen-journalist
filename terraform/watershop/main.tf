@@ -15,6 +15,16 @@ resource "tls_private_key" "staging_receipt" {
   }
 }
 
+data "external" "watershop_host_key" {
+  count   = var.deploy_observatory || var.deploy_workbench || var.import_accepted_workspace ? 1 : 0
+  program = ["python3", "${path.module}/verify-ssh-host-key.py"]
+
+  query = {
+    host     = var.watershop_host
+    host_key = var.watershop_host_key
+  }
+}
+
 data "external" "observatory_source" {
   count   = var.deploy_observatory ? 1 : 0
   program = ["python3", "${path.module}/package-observatory.py"]
@@ -23,6 +33,25 @@ data "external" "observatory_source" {
     source_dir  = abspath("${path.module}/../..")
     revision    = var.observatory_revision
     output_path = abspath("${path.module}/.terraform-generated/observatory-source.tar")
+  }
+}
+
+resource "random_uuid" "accepted_workspace_snapshot" {
+  count = var.accepted_workspace_identity_enabled ? 1 : 0
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "external" "accepted_workspace" {
+  count   = var.import_accepted_workspace ? 1 : 0
+  program = ["python3", "${path.module}/package-accepted-workspace.py"]
+
+  query = {
+    source_dir  = abspath(var.accepted_workspace_source_root)
+    revision    = var.observatory_revision
+    output_path = abspath("${path.module}/.terraform-generated/accepted-workspace.tar")
   }
 }
 
@@ -115,10 +144,6 @@ resource "null_resource" "observatory" {
       error_message = "observatory_identity_enabled must remain true while deploying Observatory."
     }
     precondition {
-      condition     = fileexists(pathexpand(var.watershop_ssh_private_key_path))
-      error_message = "watershop_ssh_private_key_path must name a readable local key."
-    }
-    precondition {
       condition     = var.watershop_host_key != ""
       error_message = "watershop_host_key must pin the watershop SSH host key."
     }
@@ -129,24 +154,25 @@ resource "null_resource" "observatory" {
   }
 
   triggers = {
-    archive_id        = local.archive_id
-    environment_hash  = sha256(local.staging_environment)
-    receipt_env_hash  = sha256(local.receipt_environment)
-    runtime_lock_hash = local.runtime_lock_hash
-    runtime_id        = local.runtime_id
-    run_script_hash   = filesha256("${path.module}/../../deploy/watershop/scripts/run-corpus-staging.sh")
-    smoke_script_hash = filesha256("${path.module}/../../deploy/watershop/scripts/smoke-corpus-staging.sh")
-    source_hash       = local.source_hash
-    staging_unit_hash = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-staging.service")
-    smoke_unit_hash   = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-smoke.service")
+    archive_id         = local.archive_id
+    environment_hash   = sha256(local.staging_environment)
+    receipt_env_hash   = sha256(local.receipt_environment)
+    runtime_lock_hash  = local.runtime_lock_hash
+    runtime_id         = local.runtime_id
+    run_script_hash    = filesha256("${path.module}/../../deploy/watershop/scripts/run-corpus-staging.sh")
+    smoke_script_hash  = filesha256("${path.module}/../../deploy/watershop/scripts/smoke-corpus-staging.sh")
+    source_hash        = local.source_hash
+    staging_unit_hash  = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-staging.service")
+    smoke_unit_hash    = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-corpus-smoke.service")
+    watershop_host_key = data.external.watershop_host_key[0].result.fingerprint
   }
 
   connection {
-    type        = "ssh"
-    host        = var.watershop_host
-    user        = var.watershop_user
-    private_key = file(pathexpand(var.watershop_ssh_private_key_path))
-    host_key    = var.watershop_host_key
+    type           = "ssh"
+    host           = var.watershop_host
+    user           = var.watershop_user
+    agent          = true
+    agent_identity = pathexpand(var.watershop_ssh_identity_path)
   }
 
   provisioner "remote-exec" {
@@ -200,13 +226,14 @@ resource "null_resource" "observatory" {
       "command -v flock >/dev/null 2>&1 || { echo 'required command is unavailable: flock' >&2; exit 2; }",
       "command -v findmnt >/dev/null 2>&1 || { echo 'required command is unavailable: findmnt' >&2; exit 2; }",
       "command -v python3.11 >/dev/null 2>&1 || { echo 'required command is unavailable: python3.11' >&2; exit 2; }",
-      "case \"$(findmnt -n -T '/home/shared' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/shared is not on NFS' >&2; exit 2 ;; esac",
+      "case \"$(findmnt -n -T '/home/citizen/journalist' -o FSTYPE)\" in nfs|nfs4) ;; *) echo '/home/citizen/journalist is not on NFS' >&2; exit 2 ;; esac",
+      "test -w '/home/citizen/journalist' || { echo '/home/citizen/journalist is not writable' >&2; exit 2; }",
       "install -d -m 0750 '${var.staging_archive_root}'",
       "exec 9>'${var.observatory_home}/run/corpus-staging.lock'",
       "flock -n 9 || { echo 'a staging operation is active' >&2; exit 75; }",
       "test \"$(sha256sum '${var.observatory_home}/work/upload/observatory-source.tar' | cut -d ' ' -f 1)\" = '${local.source_hash}'",
       "source_dir='${var.observatory_home}/sources/${local.source_hash}'; source_tmp=\"$source_dir.tmp\"; rm -rf \"$source_tmp\"; mkdir -m 0750 \"$source_tmp\"; tar -xf '${var.observatory_home}/work/upload/observatory-source.tar' -C \"$source_tmp\" --strip-components=1; rm -rf \"$source_dir\"; mv \"$source_tmp\" \"$source_dir\"",
-      "venv='${var.observatory_home}/venvs/${local.runtime_id}'; venv_tmp=\"$venv.tmp\"; if [ -e \"$venv\" ]; then test -x \"$venv/bin/mendo-release\"; test \"$(cat \"$venv/mendo-source.sha256\")\" = '${local.source_hash}'; test \"$(cat \"$venv/mendo-runtime-lock.sha256\")\" = '${local.runtime_lock_hash}'; test \"$(cat \"$venv/mendo-source-revision\")\" = '${var.observatory_revision}'; else rm -rf \"$venv_tmp\"; python3.11 -m venv \"$venv_tmp\"; \"$venv_tmp/bin/python\" -m pip install -r \"$source_dir/requirements.runtime.lock\"; \"$venv_tmp/bin/python\" -m pip install \"$source_dir\" --no-deps --no-build-isolation; printf '%s\n' '${local.source_hash}' > \"$venv_tmp/mendo-source.sha256\"; printf '%s\n' '${local.runtime_lock_hash}' > \"$venv_tmp/mendo-runtime-lock.sha256\"; printf '%s\n' '${var.observatory_revision}' > \"$venv_tmp/mendo-source-revision\"; mv \"$venv_tmp\" \"$venv\"; fi",
+      "venv='${var.observatory_home}/venvs/${local.runtime_id}'; if [ -e \"$venv\" ] && ! { test -x \"$venv/bin/mendo-release\" && test \"$(cat \"$venv/mendo-source.sha256\")\" = '${local.source_hash}' && test \"$(cat \"$venv/mendo-runtime-lock.sha256\")\" = '${local.runtime_lock_hash}' && test \"$(cat \"$venv/mendo-source-revision\")\" = '${var.observatory_revision}' && \"$venv/bin/mendo-archive\" --help >/dev/null; }; then rm -rf \"$venv\"; fi; if [ ! -e \"$venv\" ]; then python3.11 -m venv \"$venv\"; \"$venv/bin/python\" -m pip install -r \"$source_dir/requirements.runtime.lock\"; \"$venv/bin/python\" -m pip install \"$source_dir\" --no-deps --no-build-isolation; printf '%s\n' '${local.source_hash}' > \"$venv/mendo-source.sha256\"; printf '%s\n' '${local.runtime_lock_hash}' > \"$venv/mendo-runtime-lock.sha256\"; printf '%s\n' '${var.observatory_revision}' > \"$venv/mendo-source-revision\"; fi",
       "\"$venv/bin/python\" -c 'import mendo_observatory'",
       "set -a; . '${var.observatory_home}/work/upload/staging.env'; set +a",
       "\"$venv/bin/mendo-archive\" init --root '${var.staging_archive_root}' --birthplace '${var.staging_archive_birthplace}' --archive-id '${local.archive_id}'",
@@ -232,7 +259,71 @@ resource "null_resource" "observatory" {
   }
 
   depends_on = [
+    data.external.watershop_host_key,
     local_sensitive_file.receipt_environment,
     local_sensitive_file.staging_environment,
+  ]
+}
+
+resource "null_resource" "accepted_workspace_import" {
+  count = var.import_accepted_workspace ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.deploy_observatory
+      error_message = "deploy_observatory must be true before importing the accepted workspace."
+    }
+    precondition {
+      condition     = var.accepted_workspace_identity_enabled
+      error_message = "accepted_workspace_identity_enabled must remain true while importing the accepted workspace."
+    }
+  }
+
+  triggers = {
+    archive_id      = local.archive_id
+    snapshot_id     = random_uuid.accepted_workspace_snapshot[0].result
+    snapshot_sha256 = data.external.accepted_workspace[0].result.sha256
+    source_revision = var.observatory_revision
+  }
+
+  connection {
+    type           = "ssh"
+    host           = var.watershop_host
+    user           = var.watershop_user
+    agent          = true
+    agent_identity = pathexpand(var.watershop_ssh_identity_path)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "set -eu",
+      "install -d -m 0700 '${var.observatory_home}/work/import'",
+      "test ! -e '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json' || { echo 'accepted workspace snapshot is already imported' >&2; exit 2; }",
+    ]
+  }
+
+  provisioner "file" {
+    source      = data.external.accepted_workspace[0].result.archive_path
+    destination = "${var.observatory_home}/work/import/accepted-workspace.tar"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "set -eu",
+      "test \"$(sha256sum '${var.observatory_home}/work/import/accepted-workspace.tar' | cut -d ' ' -f 1)\" = '${data.external.accepted_workspace[0].result.sha256}'",
+      "workspace='${var.observatory_home}/work/import/${random_uuid.accepted_workspace_snapshot[0].result}'; workspace_tmp=\"$workspace.tmp\"; rm -rf \"$workspace_tmp\"; install -d -m 0700 \"$workspace_tmp\"; tar -xf '${var.observatory_home}/work/import/accepted-workspace.tar' -C \"$workspace_tmp\"; (cd \"$workspace_tmp\" && sha256sum --check SHA256SUMS); mv \"$workspace_tmp\" \"$workspace\"",
+      "\"${var.observatory_home}/venv/bin/mendo-archive\" snapshot --root '${var.staging_archive_root}' --source-root \"$workspace\" --source-revision '${var.observatory_revision}' --source-label 'citizen-journalist-workstation' --collection 'UM_2025-0004' --snapshot-id '${random_uuid.accepted_workspace_snapshot[0].result}' --include captures --include cases/UM_2025-0004 --include web/casebook-data.js > '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json.tmp'",
+      "mv '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json.tmp' '${var.staging_archive_root}/envelopes/accepted-workspace-${random_uuid.accepted_workspace_snapshot[0].result}.json'",
+      "\"${var.observatory_home}/venv/bin/mendo-corpus\" verify --root '${var.staging_archive_root}'",
+      "restore='${var.observatory_home}/work/restore-${random_uuid.accepted_workspace_snapshot[0].result}'; \"${var.observatory_home}/venv/bin/mendo-archive\" restore-snapshot --root '${var.staging_archive_root}' --snapshot-id '${random_uuid.accepted_workspace_snapshot[0].result}' --destination \"$restore\"",
+      "\"${var.observatory_home}/venv/bin/python\" -c 'import sqlite3,sys; connection=sqlite3.connect(sys.argv[1]); result=connection.execute(\"PRAGMA integrity_check\").fetchone(); connection.close(); assert result == (\"ok\",), result' \"$restore/captures/agent-runs/research-queue.sqlite\"",
+      "\"${var.observatory_home}/venv/bin/python\" -c 'import sqlite3,sys; connection=sqlite3.connect(sys.argv[1]); result=connection.execute(\"PRAGMA integrity_check\").fetchone(); connection.close(); assert result == (\"ok\",), result' \"$restore/captures/cases/UM_2025-0004/casebook.sqlite\"",
+      "rm -f '${var.observatory_home}/work/import/accepted-workspace.tar'",
+    ]
+  }
+
+  depends_on = [
+    data.external.watershop_host_key,
+    null_resource.observatory,
   ]
 }

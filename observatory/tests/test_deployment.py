@@ -33,6 +33,16 @@ def test_staging_units_require_staging_archive_identity() -> None:
         assert "ConditionPathExists" not in text
         assert "ExecStart=" in text
 
+    chat = (WATERSHOP / "systemd" / "mendo-chat.service").read_text(
+        encoding="utf-8"
+    )
+    workbench = (WATERSHOP / "systemd" / "mendo-workbench.service").read_text(
+        encoding="utf-8"
+    )
+    assert "--provider foundry" in chat
+    assert "--port 4174" in chat
+    assert "MENDO_WORKBENCH_EXTRA_ARGS" in workbench
+
 
 def test_staging_configuration_requires_native_runtime_and_isolated_prefix() -> None:
     environment = (WATERSHOP / "staging.env.example").read_text(encoding="utf-8")
@@ -45,14 +55,14 @@ def test_staging_configuration_requires_native_runtime_and_isolated_prefix() -> 
     assert "MENDO_SOURCE_SHA256=" in environment
     assert "MENDO_RUNTIME_LOCK_SHA256=" in environment
     assert "MENDO_PYTHON_VERSION=3.11" in environment
-    assert "MENDO_ARCHIVE_ROOT=/home/shared/observatory/staging/archive" in environment
+    assert "MENDO_ARCHIVE_ROOT=/home/citizen/journalist/archive" in environment
     assert "MENDO_STAGING_ARCHIVE_ID=REPLACE_ME" in environment
     assert "MENDO_RUN_ROOT=/home/jmacd/observatory/run" in environment
     assert "MENDO_STAGING_RECEIPT_KEY_ID=" not in environment
     assert "MENDO_STAGING_RECEIPT_PRIVATE_KEY=" not in environment
     assert "MENDO_S3_PREFIX=staging" in environment
     assert "${MENDO_OBSERVATORY_BIN}/mendo-release" in runner
-    assert '!= "/home/shared/observatory/staging/archive"' in runner
+    assert '!= "/home/citizen/journalist/archive"' in runner
     assert "MENDO_STAGING_ARCHIVE_ID" in runner
     assert 'MENDO_RUN_ROOT="${MENDO_RUN_ROOT:-${HOME}/observatory/run}"' in runner
     assert "command -v flock" in runner
@@ -109,6 +119,45 @@ def test_watershop_terraform_is_repository_local() -> None:
     assert "does not import" in documentation
 
 
+def test_watershop_terraform_does_not_relocate_virtual_environments() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    main = (terraform_root / "main.tf").read_text(encoding="utf-8")
+    workbench = (terraform_root / "workbench.tf").read_text(encoding="utf-8")
+
+    assert 'python3.11 -m venv \\"$venv\\"' in main
+    assert 'python3.11 -m venv \\"$venv\\"' in workbench
+    assert 'mv \\"$venv_tmp\\" \\"$venv\\"' not in main
+    assert 'mv \\"$venv_tmp\\" \\"$venv\\"' not in workbench
+
+
+def test_accepted_workspace_identity_outlives_one_time_import() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    main = (terraform_root / "main.tf").read_text(encoding="utf-8")
+    outputs = (terraform_root / "outputs.tf").read_text(encoding="utf-8")
+
+    assert "var.accepted_workspace_identity_enabled ? 1 : 0" in main
+    assert "var.accepted_workspace_identity_enabled" in outputs
+    assert "var.accepted_workspace_transport_sha256" in outputs
+
+
+def test_workbench_deployment_hydrates_accepted_workspace() -> None:
+    terraform_root = REPO_ROOT / "terraform" / "watershop"
+    deployment = (terraform_root / "workbench.tf").read_text(encoding="utf-8")
+    packager = (terraform_root / "package-workbench.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "/home/citizen/journalist/research/research-queue.sqlite" in deployment
+    assert "PRAGMA integrity_check" in deployment
+    assert "mendo-chat.service" in deployment
+    assert "casebook-data.js.tmp" in deployment
+    assert "ln -s '${local.workbench_restore_root}/web/casebook-data.js'" not in deployment
+    assert '"agents/organization"' in packager
+    assert '".github/skills"' in packager
+    assert '"government-model"' in packager
+    assert '"web"' in packager
+
+
 def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) -> None:
     repository = tmp_path / "source"
     (repository / "observatory" / "src" / "example").mkdir(parents=True)
@@ -162,6 +211,27 @@ def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) ->
     with tarfile.open(archive) as source_archive:
         assert "observatory/pyproject.toml" in source_archive.getnames()
 
+    (repository / "unrelated.txt").write_text("newer commit\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", "unrelated.txt"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "commit", "-qm", "unrelated"],
+        check=True,
+    )
+    ancestor = subprocess.run(
+        [str(packager)],
+        input=json.dumps(
+            {
+                "source_dir": str(repository),
+                "revision": revision,
+                "output_path": str(archive),
+            }
+        ),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert json.loads(ancestor.stdout)["sha256"] == payload["sha256"]
+
     (repository / "observatory" / "pyproject.toml").write_text(
         "[build-system]\nrequires=[]\n", encoding="utf-8"
     )
@@ -179,6 +249,40 @@ def test_source_packager_archives_committed_deployment_inputs(tmp_path: Path) ->
     )
     assert rejected.returncode != 0
     assert "uncommitted changes" in rejected.stderr
+
+
+def test_accepted_workspace_packager_uses_sqlite_backup_and_inventory() -> None:
+    packager = (
+        REPO_ROOT
+        / "terraform"
+        / "watershop"
+        / "package-accepted-workspace.py"
+    ).read_text(encoding="utf-8")
+
+    assert "input_database.backup(output_database)" in packager
+    assert "PRAGMA integrity_check" in packager
+    assert "SHA256SUMS" in packager
+    assert "captures" in packager
+    assert "cases/UM_2025-0004" in packager
+
+
+def test_watershop_host_key_verifier_rejects_mismatch() -> None:
+    verifier = REPO_ROOT / "terraform" / "watershop" / "verify-ssh-host-key.py"
+    result = subprocess.run(
+        [str(verifier)],
+        input=json.dumps(
+            {
+                "host": "invalid.example",
+                "host_key": "ssh-ed25519 "
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            }
+        ),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "ssh-keyscan failed" in result.stderr
 
 
 def test_observatory_image_workflow_builds_arm_and_x86() -> None:

@@ -1,6 +1,6 @@
 schema_version: 1
 case_id: UM_2025-0004
-updated_at: 2026-08-24T05:05:57Z
+updated_at: 2026-08-26T03:13:00Z
 principles:
   - Search the issuing agency first, then official recipients and meeting packets, then public archives.
   - Record an agenda reference separately from the underlying instrument and governing-body action.
@@ -10,6 +10,309 @@ principles:
   - Record negative searches and false matches so they are not repeated as if they were new work.
 
 attempts:
+  - id: municipal-water-district-development-sale-registration-2026-08-25
+    target_id: ca_water_code_71610_71618_2026
+    attempted_at: 2026-08-26T03:13:00Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 20 Part 5 Chapter 2 Article 1
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=20.&title=&part=5.&chapter=2.&article=1.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official Municipal Water District
+      development-and-sale article containing sections 71610 through 71618.
+    note: >-
+      SHA-256:
+      90d9ba22437ec8c1482714be117a9eb6835ef2103afb4b60d2202abcd2e65ee2;
+      144529 bytes. Workbench approval recorded at
+      2026-08-26T02:52:58.310205+00:00.
+
+  - id: community-services-district-definitions-registration-2026-08-25
+    target_id: ca_government_code_61002_2026
+    attempted_at: 2026-08-26T00:26:00Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 61002
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=61002.
+    status: captured
+    http_status: 200
+    result: Registered the exact CIO-approved official Community Services District definitions.
+    note: >-
+      SHA-256:
+      cfdb3e16170fd5c583e9433cb35be644fe6f4a6bc83dc3b4e893f335f5f94b93;
+      166321 bytes. Workbench approval recorded at
+      2026-08-26T00:11:39.092934+00:00.
+
+  - id: community-services-district-general-powers-registration-2026-08-25
+    target_id: ca_government_code_61060_2026
+    attempted_at: 2026-08-26T00:26:00Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 61060
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=61060.
+    status: captured
+    http_status: 200
+    result: Registered the exact CIO-approved official CSD general-powers provision.
+    note: >-
+      SHA-256:
+      6b39f788d8e9fa2b7cf74cbcbb3c1f79866ceac14af308d029a6ddf7552a7962;
+      166203 bytes. Workbench approval recorded at
+      2026-08-26T00:16:09.542568+00:00.
+
+  - id: community-services-district-authorized-services-registration-2026-08-25
+    target_id: ca_government_code_61100_2026
+    attempted_at: 2026-08-26T00:26:00Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 61100
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=61100.
+    status: captured
+    http_status: 200
+    result: Registered the exact CIO-approved official CSD authorized-services provision.
+    note: >-
+      SHA-256:
+      d9e5d774cc51d9a39cb695ad3902d3937bf1d0cdff03c7cdd0d47eb2fc8bb393;
+      173994 bytes. Workbench approval recorded at
+      2026-08-26T00:24:21.195996+00:00.
+
+  - id: community-services-district-latent-powers-registration-2026-08-25
+    target_id: ca_government_code_61106_2026
+    attempted_at: 2026-08-26T00:26:00Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 61106
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=61106.
+    status: captured
+    http_status: 200
+    result: Registered the exact CIO-approved official CSD latent-power procedure.
+    note: >-
+      SHA-256:
+      064adcdd8b7e119fedba9cafa2a698bbb23e08310f4d362f237cd7c3651876c7;
+      163863 bytes. Workbench approval recorded at
+      2026-08-26T00:24:31.324218+00:00.
+
+  - id: county-water-district-general-powers-registration-2026-08-25
+    target_id: ca_water_code_31000_31016_2026
+    attempted_at: 2026-08-25T17:49:06Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 12 Part 5 Chapter 1 Article 1
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=12.&title=&part=5.&chapter=1.&article=1.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official article-level capture of
+      County Water District general powers, sections 31000 through 31016.
+    note: >-
+      SHA-256:
+      ef3440ce35e402eeb7591cbb23c14a4195625549b4af30f226f78bd0958e752e;
+      147386 bytes. Workbench approval recorded at
+      2026-08-25T17:45:52.518718+00:00.
+
+  - id: county-water-district-water-powers-registration-2026-08-25
+    target_id: ca_water_code_31020_31035_1_2026
+    attempted_at: 2026-08-25T17:49:06Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 12 Part 5 Chapter 1 Article 2
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=12.&title=&part=5.&chapter=1.&article=2.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official County Water District
+      water-powers article containing section 31023.
+    note: >-
+      SHA-256:
+      523253188188ffd9ed56d21b0a02f275b6d953eeb5f5f01c41d608636948188e;
+      172302 bytes. Workbench approval recorded at
+      2026-08-25T17:46:13.819807+00:00.
+
+  - id: elk-cwd-msr-soi-registration-2026-08-25
+    target_id: mendocino_lafco_elk_cwd_msr_soi_2025
+    attempted_at: 2026-08-25T17:33:33Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: final adopted Elk County Water District 2025 MSR SOI Update
+    url: https://www.mendolafco.org/files/2a8aa6b60/2025-03-03+FINAL+ECWD+MSR-SOI+Update.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved final adopted MSR/SOI Update containing
+      Elk County Water District's reported hauled-water activity and LAFCo's
+      analysis of possible outside-agency service review.
+    note: >-
+      SHA-256:
+      a06825102e0d8a215a2120792373f251f71b508b4c9146d844fadeab5cc7caf8;
+      5834033 bytes. Workbench approval recorded at
+      2026-08-24T06:53:15.344632+00:00.
+
+  - id: california-water-district-general-powers-registration-2026-08-25
+    target_id: ca_water_code_35400_35413_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 13 Part 5 Chapter 2 Article 1
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=13.&title=&part=5.&chapter=2.&article=1.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official article-level capture of
+      California Water District general powers, sections 35400 through 35413.
+    note: >-
+      SHA-256:
+      1f78f3686c3c600b3aa3ae6699abdf5527d7fb9f239542033164229e339f370d;
+      145389 bytes. Workbench approval recorded at
+      2026-08-25T16:50:08.245934+00:00.
+
+  - id: california-water-district-distribution-registration-2026-08-25
+    target_id: ca_water_code_35420_35429_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 13 Part 5 Chapter 2 Article 2
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=13.&title=&part=5.&chapter=2.&article=2.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official article-level capture
+      containing sections 35425, 35427, and 35428.
+    note: >-
+      SHA-256:
+      d5335de9d2c6ffa83c56522a650e9391bf252742ea44c8eab7e12c9543d8d610;
+      136927 bytes. Workbench approval recorded at
+      2026-08-25T16:50:24.281686+00:00.
+
+  - id: california-water-code-380-387-registration-2026-08-25
+    target_id: ca_water_code_380_387_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Water Code Division 1 Chapter 3.6 sections 380 through 387
+    url: https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=WAT&division=1.&title=&part=&chapter=3.6.&article=
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved complete current chapter addressing
+      qualifying surplus-water transfers by local or regional public agencies.
+    note: >-
+      SHA-256:
+      fd8a37b9be780802bd18feb3d8762db909388deafefd826ea827d9a9f27c4194;
+      137698 bytes. Workbench approval recorded at
+      2026-08-25T16:50:36.438034+00:00.
+
+  - id: california-government-code-56036-registration-2026-08-25
+    target_id: ca_government_code_56036_2026
+    attempted_at: 2026-08-25T16:52:04Z
+    repository: California Legislative Information
+    method: deterministic_leginfo_capture_after_sha_bound_cio_approval
+    query: Government Code section 56036 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56036.
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official current definition of
+      district or special district governing section 56133.
+    note: >-
+      SHA-256:
+      941cb2f834af447f88830c5d5f2627ca3dc26315b0f5438a62474705a9284b5e;
+      164161 bytes. Workbench approval recorded at
+      2026-08-25T16:50:51.090420+00:00.
+
+  - id: outside-water-authority-registration-2026-08-25
+    target_id: ca_government_code_56133_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: California Legislative Information
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Government Code section 56133 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56133
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official XHTML capture governing new or
+      extended city or district services outside jurisdictional boundaries and
+      its express exceptions.
+    note: >-
+      SHA-256:
+      c7508cd2e234a8abe2011128c9787c93b0b8281e43b6c0552ce7a69377705ed8;
+      166839 bytes. Workbench approval recorded at
+      2026-08-25T05:30:18.696954+00:00. CIO cautioned that California Water
+      Districts and County Water Districts have different authority.
+
+  - id: service-definition-registration-2026-08-25
+    target_id: ca_government_code_56074_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: California Legislative Information
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Government Code section 56074 current consolidated text
+    url: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=56074
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official XHTML capture defining
+      service under the Cortese-Knox-Hertzberg Act.
+    note: >-
+      SHA-256:
+      a1b14756ab58ec6d0a904abbd255f635704c9141d2127936f5d78acff68dbcbf;
+      163662 bytes. Workbench approval recorded at
+      2026-08-25T05:31:25.427874+00:00.
+
+  - id: lafco-policy-manual-registration-2026-08-25
+    target_id: mendocino_lafco_policy_manual_2025
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: current Mendocino LAFCo Policies and Procedures Manual Policy 12.2
+    url: https://www.mendolafco.org/files/d93cace59/FINAL%2BAdopted%2BMendo%2BLAFCo%2BPP%2BManual%2B2018%2Bupd%2B3-6-2025.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved official March 2025 manual containing
+      Mendocino LAFCo Policy 12.2 on outside-agency services.
+    note: >-
+      SHA-256:
+      fcff36050dafeb6988a1742636927405c73bea4973fccbd3fac36da1959528be;
+      896844 bytes. Workbench approval recorded at
+      2026-08-25T05:33:57.228978+00:00.
+
+  - id: lafco-policy-12-2-resolution-registration-2026-08-25
+    target_id: mendocino_lafco_resolution_2023_24_08
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: Mendocino LAFCo
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: Resolution 2023-24-08 outside agency services Policy 12.2 amendment
+    url: https://www.mendolafco.org/files/dbcc45275/2023-24-08%2BOAS%2BPolicy%2B12.2%2BAmendment.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved resolution and its adopted Policy 12.2
+      amendment, passed June 3, 2024.
+    note: >-
+      SHA-256:
+      b657c8eeb714067293860a7cbce533bcaadb42f9ab9bb3020fa2610e0b32ead5;
+      1130372 bytes. Workbench approval recorded at
+      2026-08-25T05:39:50.140605+00:00. CIO noted that it establishes how LAFCo
+      treats outside-service-area agreements.
+
+  - id: statutory-water-rights-registration-2026-08-25
+    target_id: ca_statutory_water_rights_law_2026
+    attempted_at: 2026-08-25T05:46:25Z
+    repository: State Water Resources Control Board
+    method: official_document_capture_after_sha_bound_cio_approval
+    query: January 2026 Statutory Water Rights Law compilation
+    url: https://www.waterboards.ca.gov/laws_regulations/docs/wrlaws.pdf
+    status: captured
+    http_status: 200
+    result: >-
+      Registered the exact CIO-approved January 2026 official compilation of
+      statutory water-rights law and related California Code sections.
+    note: >-
+      SHA-256:
+      dd6b7db42e613c11a01d0d60f795902945d18561c583523ca1d2cfd40a2aa860;
+      2861384 bytes. Workbench approval recorded at
+      2026-08-25T05:40:39.671381+00:00. CIO noted that the large compilation
+      may need to be broken down for analysis.
+
   - id: lafco-2020-june-workshop-packet-registration-2026-08-24
     target_id: lafco_2020_june_mccsd_workshop_packet
     attempted_at: 2026-08-24T05:05:57Z

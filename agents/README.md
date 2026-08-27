@@ -139,6 +139,25 @@ written to a Workbench review bundle; malformed output, uncited URLs, blocked
 downloads, and validation errors fail loudly. Foundry cannot write canonical
 evidence.
 
+### Acquisition engineering
+
+Terminal research-dispatch failures can be sent to a separate Foundry
+Acquisition Engineer:
+
+```sh
+agents/.venv/bin/mendo-agents --repo-root . --provider foundry \
+  research diagnose <failed-run-id>
+agents/.venv/bin/mendo-agents --repo-root . research diagnoses
+```
+
+Workbench-triggered Foundry dispatches invoke this diagnosis automatically.
+The result is a typed, persisted repair proposal. Configuration repairs still
+require CIO approval. Code proposals are restricted to new files under
+`agents/src/mendo_agents/repository_adapters/` and corresponding tests; the
+agent cannot modify global validation, acquisition controls, canonical
+evidence, deployment, or merge state. Automated isolated-worktree patching and
+PR creation are a later approval-gated phase.
+
 `mendo-agents ask` analyzes the local corpus; it is not a general web search
 command. `observe --url` stages a known allowlisted official URL through Scout
 and Archivist.

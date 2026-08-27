@@ -56,6 +56,8 @@ from .validation import (
     verify_staged_record_unchanged,
 )
 
+ANALYST_SOURCE_TEXT_CHARACTERS = 6000
+
 
 def register_workflow_types() -> None:
     for value in (
@@ -372,7 +374,9 @@ class AnalystExecutor(Executor):
                                 "timestamp": locator.timestamp,
                                 "confidence": claim.confidence.value,
                                 "does_not_establish": claim.does_not_establish,
-                                "source_text": source_text[:2500],
+                                "source_text": source_text[
+                                    :ANALYST_SOURCE_TEXT_CHARACTERS
+                                ],
                             }
                         )
             prior_findings = (
@@ -404,7 +408,9 @@ class AnalystExecutor(Executor):
                         "page": hit.page,
                         "timestamp": hit.timestamp,
                         "excerpt": hit.excerpt,
-                        "source_text": self._corpus.hit_text(hit)[:2500],
+                        "source_text": self._corpus.hit_text(hit)[
+                            :ANALYST_SOURCE_TEXT_CHARACTERS
+                        ],
                     }
                     for hit in work.envelope.corpus_hits[:6]
                 ],

@@ -157,6 +157,36 @@ def test_directive_requires_explicit_approval(tmp_path: Path) -> None:
         store.start(directive.id)
 
 
+def test_interrupted_dispatch_returns_to_approved_retry(
+    tmp_path: Path,
+) -> None:
+    queue, lead_id = make_queue(tmp_path)
+    store = ResearchDirectiveStore(queue.path)
+    directive = store.create(
+        "CASE-1",
+        "Find final policy",
+        "Locate the signed policy.",
+        (lead_id,),
+        ("records.example.gov",),
+    )
+    store.approve(directive.id, "cio")
+    run_id = store.start(directive.id)
+
+    assert store.recover_interrupted_dispatches() == 1
+
+    assert store.get(directive.id).status == "approved"
+    run = store.runs(directive.id)[0]
+    assert run["id"] == run_id
+    assert run["status"] == "failed"
+    assert run["error_type"] == "WorkbenchRestart"
+    with sqlite3.connect(queue.path) as connection:
+        status = connection.execute(
+            "SELECT status FROM research_queue WHERE id = ?",
+            (lead_id,),
+        ).fetchone()[0]
+    assert status == "directive_approved"
+
+
 def test_terminal_dispatch_failure_invokes_recovery(
     tmp_path: Path,
 ) -> None:

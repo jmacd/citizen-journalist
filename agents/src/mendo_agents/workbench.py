@@ -316,6 +316,7 @@ class WorkbenchStore:
         self.candidates = candidates
         ResearchQueue(self.queue_path)
         self.directive_store = ResearchDirectiveStore(self.queue_path)
+        self.directive_store.recover_interrupted_dispatches()
         self.acquisition_store = AcquisitionEngineeringStore(self.queue_path)
         with self._connect() as connection:
             connection.execute(

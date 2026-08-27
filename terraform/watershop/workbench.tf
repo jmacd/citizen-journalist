@@ -237,6 +237,7 @@ resource "null_resource" "workbench" {
       "systemctl --user enable --now mendo-chat.service",
       "systemctl --user enable --now mendo-workbench.service",
       "systemctl --user enable --now mendo-triage-worker.service",
+      "running_dispatches=$(python3.11 -c 'import sqlite3; connection=sqlite3.connect(\"/home/citizen/journalist/research/research-queue.sqlite\"); print(connection.execute(\"SELECT COUNT(*) FROM research_dispatch_runs WHERE status = \\'running\\'\").fetchone()[0]); connection.close()'); test \"$running_dispatches\" = 0 || { echo \"refusing to restart Workbench while $running_dispatches Foundry dispatch(es) are active\" >&2; exit 75; }",
       "systemctl --user restart mendo-chat.service",
       "systemctl --user restart mendo-workbench.service",
       "systemctl --user restart mendo-triage-worker.service",

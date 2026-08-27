@@ -166,6 +166,69 @@ class ResearchDirectiveStore:
         connection.row_factory = sqlite3.Row
         return connection
 
+    def recover_interrupted_dispatches(self) -> int:
+        timestamp = _now()
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            interrupted = tuple(
+                int(row["id"])
+                for row in connection.execute(
+                    """
+                    SELECT id
+                      FROM research_dispatch_runs
+                     WHERE status = 'running'
+                    """
+                )
+            )
+            if not interrupted:
+                return 0
+            placeholders = ",".join("?" for _ in interrupted)
+            connection.execute(
+                f"""
+                UPDATE research_dispatch_runs
+                   SET status = 'failed', completed_at = ?,
+                       error_type = 'WorkbenchRestart',
+                       error = 'Workbench stopped before dispatch completed; the approved directive is ready to retry'
+                 WHERE id IN ({placeholders}) AND status = 'running'
+                """,
+                (timestamp, *interrupted),
+            )
+            directive_ids = tuple(
+                str(row["directive_id"])
+                for row in connection.execute(
+                    f"""
+                    SELECT DISTINCT directive_id
+                      FROM research_dispatch_runs
+                     WHERE id IN ({placeholders})
+                    """,
+                    interrupted,
+                )
+            )
+            directive_placeholders = ",".join("?" for _ in directive_ids)
+            connection.execute(
+                f"""
+                UPDATE research_directives
+                   SET status = 'approved', updated_at = ?
+                 WHERE id IN ({directive_placeholders})
+                   AND status = 'running'
+                """,
+                (timestamp, *directive_ids),
+            )
+            connection.execute(
+                f"""
+                UPDATE research_queue
+                   SET status = 'directive_approved'
+                 WHERE id IN (
+                       SELECT lead_id
+                         FROM research_directive_leads
+                        WHERE directive_id IN ({directive_placeholders})
+                       )
+                   AND status = 'searching'
+                """,
+                directive_ids,
+            )
+            return len(interrupted)
+
     def create(
         self,
         case_id: str,

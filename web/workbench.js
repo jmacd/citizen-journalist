@@ -102,9 +102,9 @@ function activityStage(label, detail, status) {
 
 function renderSystemActivity() {
   if (!progressSummary?.latest_question) {
-    systemActivityHeading.textContent = "No chat question recorded";
+    systemActivityHeading.textContent = "OUT OF THE LOOP — no agent is running";
     systemActivityDetail.textContent =
-      "The evidence workflow has not recorded a question run yet.";
+      "Copilot is not connected between messages, and the evidence workflow has not recorded a question run.";
     systemActivityQuestion.hidden = true;
     systemActivityStages.hidden = true;
     return;
@@ -124,19 +124,23 @@ function renderSystemActivity() {
   systemActivityQuestion.hidden = false;
 
   if (!latest.gap_count) {
-    systemActivityHeading.textContent = "No further research was queued";
+    systemActivityHeading.textContent =
+      "OUT OF THE LOOP — the question run is complete";
     systemActivityDetail.textContent =
-      "The latest chat run completed without identifying an evidence gap.";
+      "Foundry completed the latest chat request without identifying an evidence gap. No agent remains active.";
   } else if (stagedGaps || pendingSearches) {
-    systemActivityHeading.textContent = "Waiting for your decision";
+    systemActivityHeading.textContent =
+      "OUT OF THE LOOP — waiting for your decision";
     systemActivityDetail.textContent =
       `${stagedGaps} gap${stagedGaps === 1 ? " has" : "s have"} staged evidence; ${pendingSearches} search approval${pendingSearches === 1 ? " is" : "s are"} ready for this question.`;
   } else if (activeSearches) {
-    systemActivityHeading.textContent = "Foundry research is running";
+    systemActivityHeading.textContent =
+      "IN THE LOOP — Foundry research is running";
     systemActivityDetail.textContent =
       `${activeSearches} bounded search${activeSearches === 1 ? " is" : "es are"} active for the latest question.`;
   } else if (approvedSearches) {
-    systemActivityHeading.textContent = "Search approved — waiting for dispatch";
+    systemActivityHeading.textContent =
+      "OUT OF THE LOOP — approved search awaits dispatch";
     systemActivityDetail.textContent =
       `${approvedSearches} bounded search${approvedSearches === 1 ? " is" : "es are"} approved, but no Foundry run has started.`;
   } else if (
@@ -144,11 +148,13 @@ function renderSystemActivity() {
     && !progressSummary.triage_automation?.configured
     && !Object.keys(directiveStatuses).length
   ) {
-    systemActivityHeading.textContent = "Idle — latest gaps are queued";
+    systemActivityHeading.textContent =
+      "OUT OF THE LOOP — no agent is processing these gaps";
     systemActivityDetail.textContent =
-      `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. No automatic triage worker is configured, so no agent is processing them now.`;
+      `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. They are saved on watershop. No automatic triage worker is configured, and Copilot is not connected between messages.`;
   } else {
-    systemActivityHeading.textContent = "Latest question has recorded outcomes";
+    systemActivityHeading.textContent =
+      "OUT OF THE LOOP — no agent is currently running";
     systemActivityDetail.textContent =
       `${completedSearches} search${completedSearches === 1 ? "" : "es"} completed and ${failedSearches} failed for gaps associated with this question.`;
   }

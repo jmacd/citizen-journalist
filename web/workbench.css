@@ -129,6 +129,63 @@ textarea:focus-visible {
   color: var(--muted);
   font-size: .76rem;
 }
+.system-activity {
+  margin-top: .9rem;
+  padding: .8rem;
+  border: 1px solid #7c83a6;
+  border-radius: .35rem;
+  background: #fff;
+}
+.system-activity h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.system-activity > p {
+  margin: .3rem 0 0;
+}
+.system-question {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: .76rem;
+}
+.activity-stages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: .45rem;
+  margin: .7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.activity-stage {
+  min-width: 0;
+  padding: .55rem .6rem;
+  border: 1px solid var(--line);
+  border-radius: .3rem;
+  background: #f7f8f5;
+}
+.activity-stage.complete {
+  border-color: #9dc4ab;
+  background: var(--success-light);
+}
+.activity-stage.active {
+  border-color: #7c83a6;
+  background: #f0f1fa;
+}
+.activity-stage.waiting {
+  border-color: #d4a56e;
+  background: #fffaf2;
+}
+.activity-stage strong,
+.activity-stage span {
+  display: block;
+}
+.activity-stage strong { font-size: .76rem; }
+.activity-stage span {
+  margin-top: .18rem;
+  color: var(--muted);
+  font-size: .68rem;
+  line-height: 1.3;
+}
 .progress-summary {
   margin-top: .9rem;
   padding-top: .8rem;
@@ -294,6 +351,7 @@ textarea:focus-visible {
 .finding-limitation { color: var(--muted); }
 
 @media (max-width: 850px) {
+  .activity-stages { grid-template-columns: 1fr; }
   .progress-metrics { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
 }
 

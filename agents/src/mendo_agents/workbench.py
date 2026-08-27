@@ -469,6 +469,63 @@ class WorkbenchStore:
                   )
                 """
             ).fetchone()[0]
+            latest_question_row = connection.execute(
+                """
+                SELECT r.id, r.question, r.created_at AS last_activity_at,
+                       COUNT(g.gap_id) AS gap_count,
+                       COALESCE(SUM(g.was_new), 0) AS new_gap_count
+                  FROM research_question_runs r
+                  LEFT JOIN research_question_run_gaps g ON g.run_id = r.id
+                 GROUP BY r.id
+                 ORDER BY r.created_at DESC, r.id DESC
+                 LIMIT 1
+                """
+            ).fetchone()
+            latest_question = None
+            if latest_question_row is not None:
+                run_id = str(latest_question_row["id"])
+                question = str(latest_question_row["question"])
+                latest_statuses = {
+                    str(row["status"]): int(row["count"])
+                    for row in connection.execute(
+                        """
+                        SELECT q.status, COUNT(*) AS count
+                          FROM research_question_run_gaps g
+                          JOIN research_queue q ON q.id = g.gap_id
+                         WHERE g.run_id = ?
+                         GROUP BY q.status
+                        """,
+                        (run_id,),
+                    )
+                }
+                latest_directive_statuses = {
+                    str(row["status"]): int(row["count"])
+                    for row in connection.execute(
+                        """
+                        SELECT d.status, COUNT(DISTINCT d.id) AS count
+                          FROM research_directives d
+                          JOIN research_directive_question_runs q
+                            ON q.directive_id = d.id
+                         WHERE q.question_run_id = ?
+                         GROUP BY d.status
+                        """,
+                        (run_id,),
+                    )
+                }
+                gap_count = int(latest_question_row["gap_count"])
+                new_gap_count = int(latest_question_row["new_gap_count"])
+                latest_question = {
+                    "run_id": run_id,
+                    "question": question,
+                    "last_activity_at": str(
+                        latest_question_row["last_activity_at"]
+                    ),
+                    "gap_count": gap_count,
+                    "new_gap_count": new_gap_count,
+                    "matched_gap_count": gap_count - new_gap_count,
+                    "gap_statuses": latest_statuses,
+                    "directive_statuses": latest_directive_statuses,
+                }
         return {
             "queue_count": sum(queue_statuses.values()),
             "queue_statuses": queue_statuses,
@@ -480,6 +537,11 @@ class WorkbenchStore:
             "decision_count": decision_count,
             "registration_count": registration_count,
             "latest_activity_at": latest_activity_at,
+            "latest_question": latest_question,
+            "triage_automation": {
+                "configured": False,
+                "state": "not_configured",
+            },
         }
 
     def approve_research_directive(

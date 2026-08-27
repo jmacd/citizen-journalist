@@ -130,11 +130,89 @@ def test_workbench_lists_validated_candidate_and_records_approval(
             "SELECT status FROM research_queue WHERE id = ?", (lead.id,)
         ).fetchone()[0]
     assert status == "registered"
+    queue.enqueue(
+        "CASE-1",
+        "Is the same approval still operative?",
+        (
+            EvidenceGap(
+                description="The approval should be checked again.",
+                deciding_record="Final agency approval",
+                likely_custodian="Public Agency",
+            ),
+        ),
+        origin_run_id="follow-up-run",
+    )
     progress = store.progress_summary()
     assert progress["queue_statuses"] == {"registered": 1}
     assert progress["decision_count"] == 1
     assert progress["registration_count"] == 1
     assert progress["latest_activity_at"] is not None
+    assert progress["latest_question"]["question"] == (
+        "Is the same approval still operative?"
+    )
+    assert progress["latest_question"]["new_gap_count"] == 0
+    assert progress["latest_question"]["matched_gap_count"] == 1
+    assert progress["latest_question"]["gap_statuses"] == {"registered": 1}
+    assert progress["triage_automation"]["state"] == "not_configured"
+
+
+def test_progress_keeps_prior_directive_out_of_deduplicated_question(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    queue = ResearchQueue(queue_path)
+    gap = EvidenceGap(
+        description="The approval is missing.",
+        deciding_record="Final agency approval",
+        likely_custodian="Public Agency",
+    )
+    lead = queue.enqueue(
+        "CASE-1",
+        "First question",
+        (gap,),
+        origin_run_id="question-1",
+    )[0]
+    ResearchDirectiveStore(queue_path).create(
+        "CASE-1",
+        "Find final approval",
+        "Retrieve the final approval.",
+        (lead.id,),
+        ("agency.example.gov",),
+    )
+    queue.enqueue(
+        "CASE-1",
+        "Follow-up question",
+        (gap,),
+        origin_run_id="question-2",
+    )
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["latest_question"]["run_id"] == "question-2"
+    assert progress["latest_question"]["matched_gap_count"] == 1
+    assert progress["latest_question"]["directive_statuses"] == {}
+
+
+def test_progress_records_question_with_no_gaps(tmp_path: Path) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Question with a complete answer",
+        (),
+        origin_run_id="question-no-gaps",
+    )
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["latest_question"]["run_id"] == "question-no-gaps"
+    assert progress["latest_question"]["gap_count"] == 0
+    assert progress["latest_question"]["gap_statuses"] == {}
 
 
 def test_workbench_rejects_candidate_hash_mismatch(tmp_path: Path) -> None:
@@ -311,7 +389,9 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "/api/workbench/progress" in javascript
     assert "No triage run is recorded yet" in javascript
     assert "Counts report persisted outcomes" in html
+    assert "What is the system doing?" in html
     assert "Acquisition Engineer diagnosis" in javascript
+    assert "No automatic triage worker is configured" in javascript
     assert "No action needed — research is running" in javascript
     assert "Workbench complete — return to chat" in javascript
     assert "function sortCandidates(items)" in javascript

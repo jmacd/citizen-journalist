@@ -31,10 +31,17 @@
       Review next document
       </button>
       <div id="pending-search-approvals" hidden>
-      <p class="action-subheading"><span id="pending-search-count">0</span> searches need your approval</p>
+      <p class="action-subheading"><span id="pending-search-count">0</span> search actions need your attention</p>
       <ol id="pending-search-list"></ol>
       </div>
       <p id="action-center-progress" class="action-progress"></p>
+      <section class="system-activity" aria-labelledby="system-activity-heading">
+        <p class="eyebrow">What is the system doing?</p>
+        <h3 id="system-activity-heading">Loading current activity…</h3>
+        <p id="system-activity-question" class="system-question" hidden></p>
+        <p id="system-activity-detail">Tracing the latest question through the evidence workflow.</p>
+        <ol id="system-activity-stages" class="activity-stages" hidden></ol>
+      </section>
       <section class="progress-summary" aria-labelledby="progress-summary-heading">
         <header>
           <div>

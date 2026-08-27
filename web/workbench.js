@@ -10,6 +10,10 @@ const actionCenter = document.getElementById("action-center");
 const actionCenterHeading = document.getElementById("action-center-heading");
 const actionCenterDetail = document.getElementById("action-center-detail");
 const actionCenterProgress = document.getElementById("action-center-progress");
+const systemActivityHeading = document.getElementById("system-activity-heading");
+const systemActivityQuestion = document.getElementById("system-activity-question");
+const systemActivityDetail = document.getElementById("system-activity-detail");
+const systemActivityStages = document.getElementById("system-activity-stages");
 const progressSummaryState = document.getElementById("progress-summary-state");
 const progressSummaryMetrics = document.getElementById("progress-summary-metrics");
 const progressSummaryLatest = document.getElementById("progress-summary-latest");
@@ -87,6 +91,119 @@ function metric(value, label, detail, warning = false) {
   return card;
 }
 
+function activityStage(label, detail, status) {
+  const item = element("li", { className: `activity-stage ${status}` });
+  item.append(
+    element("strong", { text: label }),
+    element("span", { text: detail }),
+  );
+  return item;
+}
+
+function renderSystemActivity() {
+  if (!progressSummary?.latest_question) {
+    systemActivityHeading.textContent = "No chat question recorded";
+    systemActivityDetail.textContent =
+      "The evidence workflow has not recorded a question run yet.";
+    systemActivityQuestion.hidden = true;
+    systemActivityStages.hidden = true;
+    return;
+  }
+  const latest = progressSummary.latest_question;
+  const gapStatuses = latest.gap_statuses || {};
+  const directiveStatuses = latest.directive_statuses || {};
+  const triageCount = countStatus(gapStatuses, "triage");
+  const pendingSearches = countStatus(directiveStatuses, "pending_approval");
+  const activeSearches = countStatus(directiveStatuses, "running");
+  const approvedSearches = countStatus(directiveStatuses, "approved");
+  const completedSearches = countStatus(directiveStatuses, "completed");
+  const failedSearches = countStatus(directiveStatuses, "failed");
+  const stagedGaps = countStatus(gapStatuses, "candidate_staged");
+
+  systemActivityQuestion.textContent = `Latest question: “${latest.question}”`;
+  systemActivityQuestion.hidden = false;
+
+  if (!latest.gap_count) {
+    systemActivityHeading.textContent = "No further research was queued";
+    systemActivityDetail.textContent =
+      "The latest chat run completed without identifying an evidence gap.";
+  } else if (stagedGaps || pendingSearches) {
+    systemActivityHeading.textContent = "Waiting for your decision";
+    systemActivityDetail.textContent =
+      `${stagedGaps} gap${stagedGaps === 1 ? " has" : "s have"} staged evidence; ${pendingSearches} search approval${pendingSearches === 1 ? " is" : "s are"} ready for this question.`;
+  } else if (activeSearches) {
+    systemActivityHeading.textContent = "Foundry research is running";
+    systemActivityDetail.textContent =
+      `${activeSearches} bounded search${activeSearches === 1 ? " is" : "es are"} active for the latest question.`;
+  } else if (approvedSearches) {
+    systemActivityHeading.textContent = "Search approved — waiting for dispatch";
+    systemActivityDetail.textContent =
+      `${approvedSearches} bounded search${approvedSearches === 1 ? " is" : "es are"} approved, but no Foundry run has started.`;
+  } else if (
+    triageCount
+    && !progressSummary.triage_automation?.configured
+    && !Object.keys(directiveStatuses).length
+  ) {
+    systemActivityHeading.textContent = "Idle — latest gaps are queued";
+    systemActivityDetail.textContent =
+      `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. No automatic triage worker is configured, so no agent is processing them now.`;
+  } else {
+    systemActivityHeading.textContent = "Latest question has recorded outcomes";
+    systemActivityDetail.textContent =
+      `${completedSearches} search${completedSearches === 1 ? "" : "es"} completed and ${failedSearches} failed for gaps associated with this question.`;
+  }
+
+  const searchDetail = activeSearches
+    ? `${activeSearches} running`
+    : pendingSearches
+      ? `${pendingSearches} awaiting CIO approval`
+      : approvedSearches
+        ? `${approvedSearches} approved · not dispatched`
+      : completedSearches || failedSearches
+        ? `${completedSearches} completed · ${failedSearches} failed`
+        : "Not prepared";
+  const reviewCount = stagedGaps + pendingSearches;
+  const reviewDetail = reviewCount
+    ? `${reviewCount} decision${reviewCount === 1 ? "" : "s"} ready`
+    : "Nothing waiting";
+  const searchStatus = activeSearches
+    ? "active"
+    : pendingSearches
+        || approvedSearches
+        || (!Object.keys(directiveStatuses).length && triageCount)
+      ? "waiting"
+      : "complete";
+
+  systemActivityStages.replaceChildren(
+    activityStage("1. Chat answer", "Completed", "complete"),
+    activityStage(
+      "2. Evidence gaps",
+      `${latest.new_gap_count} new · ${latest.matched_gap_count} matched`,
+      "complete",
+    ),
+    activityStage(
+      "3. Agent triage",
+      triageCount
+        ? progressSummary.triage_automation?.configured
+          ? `${triageCount} queued`
+          : "Waiting · no worker configured"
+        : "No gaps waiting",
+      triageCount ? "waiting" : "complete",
+    ),
+    activityStage(
+      "4. Bounded search",
+      searchDetail,
+      searchStatus,
+    ),
+    activityStage(
+      "5. CIO review",
+      reviewDetail,
+      reviewCount ? "waiting" : "complete",
+    ),
+  );
+  systemActivityStages.hidden = false;
+}
+
 function renderProgressSummary() {
   if (!progressSummary) return;
   const queueStatuses = progressSummary.queue_statuses || {};
@@ -98,9 +215,8 @@ function renderProgressSummary() {
   );
   const completedSearches = countStatus(directiveStatuses, "completed");
   const failedSearches = countStatus(directiveStatuses, "failed");
-  const activeSearches =
-    countStatus(directiveStatuses, "running")
-    + countStatus(directiveStatuses, "approved");
+  const activeSearches = countStatus(directiveStatuses, "running");
+  const approvedSearches = countStatus(directiveStatuses, "approved");
   const pendingActions =
     candidates.filter((candidate) => !candidate.latest_decision).length
     + researchDirectives.filter(
@@ -117,7 +233,7 @@ function renderProgressSummary() {
     metric(
       progressSummary.directive_count,
       "bounded searches prepared",
-      `${completedSearches} completed · ${failedSearches} failed · ${activeSearches} active`,
+      `${completedSearches} completed · ${failedSearches} failed · ${activeSearches} running · ${approvedSearches} awaiting dispatch`,
       failedSearches > 0,
     ),
     metric(
@@ -147,6 +263,7 @@ function renderProgressSummary() {
     ? `Latest search outcome: ${latestDirective.title} — ${latestDirective.status}. Last audited activity: ${timestamp}.`
     : `Last audited activity: ${timestamp}.`;
   progressSummaryLatest.hidden = false;
+  renderSystemActivity();
 }
 
 async function loadProgressSummary() {
@@ -233,7 +350,8 @@ async function dispatchDirective(directive, button) {
 
 function renderPendingSearchApprovals(directives) {
   const pending = directives.filter(
-    (directive) => directive.status === "pending_approval",
+    (directive) =>
+      directive.status === "pending_approval" || directive.status === "approved",
   );
   pendingSearchList.replaceChildren();
   pendingSearchCount.textContent = String(pending.length);
@@ -247,12 +365,21 @@ function renderPendingSearchApprovals(directives) {
         text: `Official hosts: ${directive.allowed_hosts.join(", ")}`,
       }),
     );
+    const approved = directive.status === "approved";
     const approve = element("button", {
       className: "primary-button",
-      text: "Approve and start Foundry search",
+      text: approved
+        ? "Start approved Foundry search"
+        : "Approve and start Foundry search",
     });
     approve.type = "button";
-    approve.addEventListener("click", () => approveDirective(directive, approve));
+    approve.addEventListener("click", () => {
+      if (approved) {
+        dispatchDirective(directive, approve);
+      } else {
+        approveDirective(directive, approve);
+      }
+    });
     item.append(text, approve);
     pendingSearchList.append(item);
   });
@@ -270,9 +397,11 @@ function updateActionCenter() {
   const pendingSearches = researchDirectives.filter(
     (directive) => directive.status === "pending_approval",
   );
+  const approvedSearches = researchDirectives.filter(
+    (directive) => directive.status === "approved",
+  );
   const runningSearches = researchDirectives.filter(
-    (directive) =>
-      directive.status === "running" || directive.status === "approved",
+    (directive) => directive.status === "running",
   );
   const activeTriageCount = progressSummary?.recent_triage_count
     ?? queueItems.filter(
@@ -288,7 +417,10 @@ function updateActionCenter() {
     : queueItems.filter(
       (item) => item.status === "requires_transaction_identification",
     ).length;
-  const actionCount = pendingCandidates.length + pendingSearches.length;
+  const actionCount =
+    pendingCandidates.length
+    + pendingSearches.length
+    + approvedSearches.length;
 
   actionCenter.className = `action-center ${actionCount ? "action-required" : "waiting"}`;
   reviewNextCandidate.hidden = pendingCandidates.length === 0;
@@ -296,20 +428,21 @@ function updateActionCenter() {
 
   if (actionCount) {
     actionCenterHeading.textContent =
-      `${actionCount} decision${actionCount === 1 ? "" : "s"} need your review`;
+      `${actionCount} action${actionCount === 1 ? "" : "s"} need your attention`;
     const parts = [];
     if (pendingCandidates.length) {
       parts.push(
         `${pendingCandidates.length} document${pendingCandidates.length === 1 ? "" : "s"}`,
       );
     }
-    if (pendingSearches.length) {
+    if (pendingSearches.length || approvedSearches.length) {
+      const searchCount = pendingSearches.length + approvedSearches.length;
       parts.push(
-        `${pendingSearches.length} bounded search${pendingSearches.length === 1 ? "" : "es"}`,
+        `${searchCount} bounded search${searchCount === 1 ? "" : "es"}`,
       );
     }
     actionCenterDetail.textContent =
-      `Review ${parts.join(" and ")}. Each button records one explicit decision; nothing else is waiting on you.`;
+      `Review ${parts.join(" and ")}. Approval buttons record an explicit decision; approved searches may need a dispatch retry.`;
   } else if (waitingRegistration.length) {
     actionCenterHeading.textContent = "No action needed — registration is pending";
     actionCenterDetail.textContent =

@@ -87,6 +87,14 @@ class ResearchDirectiveStore:
                   FOREIGN KEY (directive_id) REFERENCES research_directives(id),
                   FOREIGN KEY (lead_id) REFERENCES research_queue(id)
                 );
+                CREATE TABLE IF NOT EXISTS research_directive_question_runs (
+                  directive_id TEXT NOT NULL,
+                  question_run_id TEXT NOT NULL,
+                  PRIMARY KEY (directive_id, question_run_id),
+                  FOREIGN KEY (directive_id) REFERENCES research_directives(id),
+                  FOREIGN KEY (question_run_id)
+                    REFERENCES research_question_runs(id)
+                );
                 CREATE TABLE IF NOT EXISTS research_dispatch_runs (
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   directive_id TEXT NOT NULL,
@@ -112,6 +120,27 @@ class ResearchDirectiveStore:
                   PRIMARY KEY (run_id, target_id),
                   FOREIGN KEY (run_id) REFERENCES research_dispatch_runs(id)
                 );
+                INSERT OR IGNORE INTO research_directive_question_runs
+                  (directive_id, question_run_id)
+                SELECT l.directive_id,
+                       (
+                         SELECT g.run_id
+                           FROM research_question_run_gaps g
+                           JOIN research_question_runs q ON q.id = g.run_id
+                          WHERE g.gap_id = l.lead_id
+                            AND q.created_at <= d.created_at
+                          ORDER BY q.created_at DESC, q.id DESC
+                          LIMIT 1
+                       )
+                  FROM research_directive_leads l
+                  JOIN research_directives d ON d.id = l.directive_id
+                 WHERE EXISTS (
+                         SELECT 1
+                           FROM research_question_run_gaps g
+                           JOIN research_question_runs q ON q.id = g.run_id
+                          WHERE g.gap_id = l.lead_id
+                            AND q.created_at <= d.created_at
+                       );
                 """
             )
             columns = {
@@ -222,6 +251,19 @@ class ResearchDirectiveStore:
                     VALUES (?, ?)
                     """,
                     (directive_id, lead_id),
+                )
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO research_directive_question_runs
+                      (directive_id, question_run_id)
+                    SELECT ?, g.run_id
+                      FROM research_question_run_gaps g
+                      JOIN research_question_runs q ON q.id = g.run_id
+                     WHERE g.gap_id = ? AND q.created_at <= ?
+                     ORDER BY q.created_at DESC, q.id DESC
+                     LIMIT 1
+                    """,
+                    (directive_id, lead_id, timestamp),
                 )
                 connection.execute(
                     """

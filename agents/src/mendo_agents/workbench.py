@@ -1012,6 +1012,188 @@ class WorkbenchStore:
             result.append(public)
         return result
 
+    def directive_context(self, directive_id: str) -> dict[str, object]:
+        self.directive_store.get(directive_id)
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT qr.id AS question_run_id, qr.question,
+                       qr.created_at AS question_created_at,
+                       dqr.attribution,
+                       q.id AS gap_id,
+                       COALESCE(qrg.description, q.description)
+                         AS gap_description,
+                       COALESCE(qrg.deciding_record, q.deciding_record)
+                         AS deciding_record,
+                       COALESCE(qrg.likely_custodian, q.likely_custodian)
+                         AS likely_custodian,
+                       qrg.rationale, qrg.related_claim_indices_json,
+                       a.result_json
+                  FROM research_directive_question_runs dqr
+                  JOIN research_question_runs qr
+                    ON qr.id = dqr.question_run_id
+                  JOIN research_directive_leads dl
+                    ON dl.directive_id = dqr.directive_id
+                  JOIN research_question_run_gaps qrg
+                    ON qrg.run_id = qr.id AND qrg.gap_id = dl.lead_id
+                  JOIN research_queue q ON q.id = qrg.gap_id
+                  LEFT JOIN research_question_analyses a
+                    ON a.question_run_id = qr.id
+                 WHERE dqr.directive_id = ?
+                 ORDER BY qr.created_at, q.created_at, q.id
+                """,
+                (directive_id,),
+            ).fetchall()
+            triage_table = connection.execute(
+                """
+                SELECT 1
+                  FROM sqlite_master
+                 WHERE type = 'table' AND name = 'research_triage_runs'
+                """
+            ).fetchone()
+            triage_columns = (
+                {
+                    str(row["name"])
+                    for row in connection.execute(
+                        "PRAGMA table_info(research_triage_runs)"
+                    )
+                }
+                if triage_table is not None
+                else set()
+            )
+            triage_row = (
+                connection.execute(
+                    """
+                    SELECT output_json
+                      FROM research_triage_runs
+                     WHERE directive_id = ? AND status = 'completed'
+                     ORDER BY id DESC
+                     LIMIT 1
+                    """,
+                    (directive_id,),
+                ).fetchone()
+                if "directive_id" in triage_columns
+                else None
+            )
+
+        questions: dict[str, dict[str, object]] = {}
+        has_explicit_claim_link = False
+        for row in rows:
+            question_run_id = str(row["question_run_id"])
+            question = questions.setdefault(
+                question_run_id,
+                {
+                    "id": question_run_id,
+                    "question": row["question"],
+                    "created_at": row["question_created_at"],
+                    "attribution": row["attribution"],
+                    "semantic_analysis_available": row["result_json"] is not None,
+                    "gaps": [],
+                },
+            )
+            try:
+                claim_indices = json.loads(
+                    str(row["related_claim_indices_json"])
+                )
+            except json.JSONDecodeError as error:
+                raise RuntimeError(
+                    f"Gap claim relationships are corrupt for {row['gap_id']}"
+                ) from error
+            if not isinstance(claim_indices, list) or not all(
+                isinstance(index, int) for index in claim_indices
+            ):
+                raise RuntimeError(
+                    f"Gap claim relationships are invalid for {row['gap_id']}"
+                )
+            related_claims = []
+            if row["result_json"] is not None:
+                try:
+                    snapshot = json.loads(str(row["result_json"]))
+                except json.JSONDecodeError as error:
+                    raise RuntimeError(
+                        f"Question analysis is corrupt for {question_run_id}"
+                    ) from error
+                analysis = snapshot.get("analysis")
+                claims = (
+                    analysis.get("claims", [])
+                    if isinstance(analysis, dict)
+                    else []
+                )
+                for claim_index in claim_indices:
+                    if claim_index < 0 or claim_index >= len(claims):
+                        raise RuntimeError(
+                            f"Gap {row['gap_id']} refers to missing claim "
+                            f"{claim_index}"
+                        )
+                    claim = claims[claim_index]
+                    related_claims.append(
+                        {
+                            "index": claim_index,
+                            "text": claim.get("text"),
+                            "does_not_establish": claim.get(
+                                "does_not_establish"
+                            ),
+                        }
+                    )
+                has_explicit_claim_link = (
+                    has_explicit_claim_link or bool(related_claims)
+                )
+            question["gaps"].append(
+                {
+                    "id": row["gap_id"],
+                    "description": row["gap_description"],
+                    "deciding_record": row["deciding_record"],
+                    "likely_custodian": row["likely_custodian"],
+                    "rationale": row["rationale"],
+                    "related_claims": related_claims,
+                    "unresolved_claim_indices": (
+                        claim_indices if row["result_json"] is None else []
+                    ),
+                }
+            )
+
+        triage_rationale = None
+        if triage_row is not None and triage_row["output_json"] is not None:
+            try:
+                triage_output = json.loads(str(triage_row["output_json"]))
+            except json.JSONDecodeError as error:
+                raise RuntimeError(
+                    f"Triage output is corrupt for {directive_id}"
+                ) from error
+            triage_rationale = triage_output.get("rationale")
+
+        attributions = {
+            str(question["attribution"]) for question in questions.values()
+        }
+        if has_explicit_claim_link:
+            relevance_basis = "explicit_claim_limit"
+            caveat = (
+                "The search is linked to specific persisted claim limitations. "
+                "Relevance remains provisional until the retrieved record is "
+                "validated."
+            )
+        elif "inferred_legacy" in attributions:
+            relevance_basis = "legacy_inference"
+            caveat = (
+                "This workflow-to-question association was reconstructed from "
+                "legacy timing and a shared gap. Review it skeptically before "
+                "approval."
+            )
+        else:
+            relevance_basis = "recorded_gap"
+            caveat = (
+                "The question and evidence gaps are recorded, but the earlier "
+                "chat predates persisted claim text. Review whether the deciding "
+                "records are material before approval."
+            )
+        return {
+            "directive_id": directive_id,
+            "relevance_basis": relevance_basis,
+            "triage_rationale": triage_rationale,
+            "caveat": caveat,
+            "questions": list(questions.values()),
+        }
+
     def progress_summary(self) -> dict[str, object]:
         with self._connect() as connection:
             queue_statuses = {
@@ -1524,6 +1706,18 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
             if path == "/api/workbench/research-activity":
                 items = self.workbench_server.store.research_activity()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            directive_context_match = re.fullmatch(
+                r"/api/workbench/research-directives/([^/]+)/context",
+                path,
+            )
+            if directive_context_match:
+                self._json(
+                    HTTPStatus.OK,
+                    self.workbench_server.store.directive_context(
+                        unquote(directive_context_match.group(1))
+                    ),
+                )
                 return
             if path == "/api/workbench/progress":
                 self._json(

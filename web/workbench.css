@@ -384,6 +384,43 @@ textarea:focus-visible {
   color: var(--muted);
   font-size: .74rem;
 }
+.directive-relevance {
+  margin-top: .55rem;
+  border-top: 1px solid var(--line);
+  padding-top: .45rem;
+}
+.directive-relevance summary {
+  color: var(--accent);
+  cursor: pointer;
+  font-size: .76rem;
+  font-weight: 800;
+}
+.directive-relevance-body {
+  max-width: 900px;
+  margin-top: .5rem;
+  padding: .65rem;
+  border: 1px solid #b8c1bd;
+  border-radius: .3rem;
+  background: #f8faf8;
+}
+.directive-relevance-body p { margin: .3rem 0 0; }
+.directive-relevance-body section + section {
+  margin-top: .7rem;
+  padding-top: .7rem;
+  border-top: 1px solid var(--line);
+}
+.directive-relevance-gap {
+  margin-top: .5rem;
+  padding-left: .65rem;
+  border-left: 3px solid var(--warning);
+}
+.directive-relevance-caveat {
+  margin-top: .7rem !important;
+  padding-top: .5rem;
+  border-top: 1px solid var(--line);
+  color: var(--warning);
+  font-size: .72rem;
+}
 #pending-search-approvals button,
 .directive-approve {
   flex: 0 0 auto;

@@ -598,6 +598,93 @@ function renderPendingSearchApprovals(directives) {
         text: `Official hosts: ${directive.allowed_hosts.join(", ")}`,
       }),
     );
+    const relevance = element("details", {
+      className: "directive-relevance",
+    });
+    relevance.append(element("summary", {
+      text: "Why might this be relevant?",
+    }));
+    const relevanceBody = element("div", {
+      className: "directive-relevance-body",
+    });
+    relevanceBody.append(element("p", {
+      className: "empty-copy",
+      text: "Open to load the recorded question and evidence-gap rationale.",
+    }));
+    relevance.append(relevanceBody);
+    let relevanceLoaded = false;
+    relevance.addEventListener("toggle", async () => {
+      if (!relevance.open || relevanceLoaded) return;
+      relevanceLoaded = true;
+      relevanceBody.replaceChildren(
+        element("p", { className: "empty-copy", text: "Loading rationale…" }),
+      );
+      try {
+        const context = await getJSON(
+          `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/context`,
+        );
+        relevanceBody.replaceChildren();
+        if (context.triage_rationale) {
+          relevanceBody.append(
+            element("strong", { text: "Why Foundry prepared this search" }),
+            element("p", { text: context.triage_rationale }),
+          );
+        }
+        context.questions.forEach((question) => {
+          const questionSection = element("section");
+          questionSection.append(
+            element("strong", { text: `Originating question: “${question.question}”` }),
+          );
+          question.gaps.forEach((gap) => {
+            const gapBlock = element("div", {
+              className: "directive-relevance-gap",
+            });
+            gapBlock.append(
+              element("span", {
+                className: "provenance-kind",
+                text: "Record thought necessary",
+              }),
+              element("strong", { text: gap.deciding_record }),
+            );
+            if (gap.rationale) {
+              gapBlock.append(element("p", {
+                text: `Reason recorded: ${gap.rationale}`,
+              }));
+            }
+            gap.related_claims.forEach((claim) => {
+              gapBlock.append(
+                element("p", {
+                  text: `Related claim: ${claim.text}`,
+                }),
+                element("p", {
+                  className: "provenance-limitation",
+                  text: `Claim limit: ${claim.does_not_establish}`,
+                }),
+              );
+            });
+            if (gap.unresolved_claim_indices.length) {
+              gapBlock.append(element("p", {
+                className: "empty-copy",
+                text: "The claim links were recorded, but this question predates persisted claim text.",
+              }));
+            }
+            questionSection.append(gapBlock);
+          });
+          relevanceBody.append(questionSection);
+        });
+        relevanceBody.append(element("p", {
+          className: "directive-relevance-caveat",
+          text: context.caveat,
+        }));
+      } catch (error) {
+        relevanceLoaded = false;
+        relevanceBody.replaceChildren(element("p", {
+          className: "state error",
+          text: `Could not load relevance: ${error.message}`,
+        }));
+      }
+    });
+    text.append(relevance);
     const approved = directive.status === "approved";
     const approve = element("button", {
       className: "primary-button",

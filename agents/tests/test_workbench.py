@@ -384,6 +384,7 @@ def test_question_provenance_graph_preserves_claim_gap_rationale(
 
     questions = store.provenance_questions()
     graph = store.provenance_graph("question-provenance")
+    context = store.directive_context(directive.id)
 
     assert questions[0]["analysis_available"] is True
     assert questions[0]["claim_count"] == 1
@@ -415,6 +416,12 @@ def test_question_provenance_graph_preserves_claim_gap_rationale(
         and edge["attribution"] == "recorded"
         for edge in graph["edges"]
     )
+    assert context["relevance_basis"] == "explicit_claim_limit"
+    assert context["questions"][0]["question"] == "Was this project approved?"
+    assert context["questions"][0]["gaps"][0]["related_claims"][0]["text"] == (
+        "The order authorizes the general program."
+    )
+    assert "provisional" in context["caveat"]
 
 
 def test_legacy_question_graph_does_not_invent_semantic_nodes(
@@ -694,6 +701,9 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "/api/workbench/provenance/questions" in javascript
     assert "function renderProvenanceGraph(graph)" in javascript
     assert javascript.count("loadProvenanceQuestions(),") == 2
+    assert "Why might this be relevant?" in javascript
+    assert "/context" in javascript
+    assert "this question predates persisted claim text" in javascript
     assert "Acquisition Engineer diagnosis" in javascript
     assert "IN THE LOOP — Foundry research is running" in javascript
     assert "OUT OF THE LOOP — no agent is processing these gaps" in javascript

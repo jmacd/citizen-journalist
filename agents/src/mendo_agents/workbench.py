@@ -137,23 +137,18 @@ class CandidateStore:
         candidate: dict[str, object],
     ) -> None:
         candidate_id = str(candidate["id"])
-        existing_manifest = existing["proposed_manifest"]
-        candidate_manifest = candidate["proposed_manifest"]
-        assert isinstance(existing_manifest, dict)
-        assert isinstance(candidate_manifest, dict)
         identity = (
             "sha256",
             "bytes",
             "mime_type",
-            "source_url",
-            "version",
-            "signature_status",
         )
         conflicts = [
             name for name in identity if existing.get(name) != candidate.get(name)
         ]
-        if existing_manifest.get("id") != candidate_manifest.get("id"):
-            conflicts.append("proposed_manifest.id")
+        if CandidateStore._normalized_source_url(
+            str(existing["source_url"])
+        ) != CandidateStore._normalized_source_url(str(candidate["source_url"])):
+            conflicts.append("source_url")
         if conflicts:
             existing_bundle = existing.get("_bundle_path", "unknown bundle")
             candidate_bundle = candidate.get("_bundle_path", "unknown bundle")
@@ -164,6 +159,35 @@ class CandidateStore:
             )
 
     @staticmethod
+    def _normalized_source_url(source_url: str) -> str:
+        parsed = urlsplit(source_url)
+        hostname = parsed.hostname
+        if hostname is None:
+            return source_url
+        try:
+            port = parsed.port
+        except ValueError:
+            return source_url
+        default_port = (
+            parsed.scheme.lower() == "https" and port == 443
+        ) or (parsed.scheme.lower() == "http" and port == 80)
+        netloc = hostname.lower()
+        if ":" in netloc:
+            netloc = f"[{netloc}]"
+        if port is not None and not default_port:
+            netloc = f"{netloc}:{port}"
+        if parsed.username is not None:
+            credentials = parsed.username
+            if parsed.password is not None:
+                credentials = f"{credentials}:{parsed.password}"
+            netloc = f"{credentials}@{netloc}"
+        return parsed._replace(
+            scheme=parsed.scheme.lower(),
+            netloc=netloc,
+            fragment="",
+        ).geturl()
+
+    @staticmethod
     def _candidate_occurrence(
         candidate: dict[str, object],
     ) -> dict[str, object]:
@@ -171,12 +195,17 @@ class CandidateStore:
             "bundle": candidate.get("_bundle_path"),
             "title": candidate["title"],
             "publisher": candidate["publisher"],
+            "document_date": candidate.get("document_date"),
+            "source_url": candidate["source_url"],
             "retrieved_at": candidate["retrieved_at"],
+            "version": candidate.get("version"),
+            "signature_status": candidate.get("signature_status"),
             "related_lead_ids": list(candidate.get("related_lead_ids", [])),
             "establishes": list(candidate.get("establishes", [])),
             "does_not_establish": list(
                 candidate.get("does_not_establish", [])
             ),
+            "proposed_manifest": candidate["proposed_manifest"],
         }
 
     @staticmethod

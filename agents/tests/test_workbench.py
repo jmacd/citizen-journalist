@@ -80,6 +80,14 @@ def test_workbench_merges_exact_cross_bundle_candidate_duplicates(
     second_bundle = staging / "run-2" / "review-bundle.json"
     payload = json.loads(second_bundle.read_text(encoding="utf-8"))
     payload["candidates"][0]["title"] = "Found by a second workflow"
+    payload["candidates"][0]["version"] = "operative signed copy"
+    payload["candidates"][0]["signature_status"] = "executed"
+    payload["candidates"][0]["proposed_manifest"]["id"] = (
+        "resolution_2026_333"
+    )
+    payload["candidates"][0]["source_url"] = (
+        "https://EXAMPLE.GOV:443/record.pdf#download"
+    )
     second_bundle.write_text(json.dumps(payload), encoding="utf-8")
 
     store = CandidateStore(staging)

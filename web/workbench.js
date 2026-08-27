@@ -29,6 +29,8 @@ let candidates = [];
 let researchDirectives = [];
 let queueItems = [];
 let progressSummary = null;
+let researchActivityLoadSequence = 0;
+const directiveActionsInFlight = new Set();
 let selectedCandidateId = null;
 const decisionMessages = new Map();
 
@@ -61,6 +63,29 @@ async function getJSON(url, options) {
     throw new Error(payload?.error || `Request failed (${response.status})`);
   }
   return payload;
+}
+
+async function postJSONWithTimeout(url, timeoutMilliseconds) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    timeoutMilliseconds,
+  );
+  try {
+    return await getJSON(url, {
+      method: "POST",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(
+        "The browser stopped waiting, but watershop may still be processing the workflow. Durable status will be refreshed before retry is offered.",
+      );
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function externalLink(url, label) {
@@ -338,53 +363,66 @@ function actionLabel(action) {
 }
 
 async function approveDirective(directive, button) {
-  button.disabled = true;
-  button.textContent = "Approving…";
-  try {
-    await getJSON(
-      `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
-      { method: "POST" },
-    );
-    await dispatchDirective(directive, button);
-  } catch (error) {
-    button.disabled = false;
-    button.textContent = "Approve and start Foundry search";
-    setState(
-      researchActivityState,
-      `Could not approve search: ${error.message}`,
-      true,
-    );
-  }
+  await runDirectiveAction(directive, button, true);
 }
 
 async function dispatchDirective(directive, button) {
+  await runDirectiveAction(directive, button, false);
+}
+
+async function runDirectiveAction(directive, button, requiresApproval) {
+  if (directiveActionsInFlight.has(directive.id)) return;
+  directiveActionsInFlight.add(directive.id);
   button.disabled = true;
-  button.textContent = "Searching with Foundry…";
+  button.textContent = requiresApproval
+    ? "Recording approval…"
+    : "Starting Foundry search…";
+  updateActionCenter();
+  let phase = requiresApproval ? "approval" : "dispatch";
   try {
-    await getJSON(
+    if (requiresApproval) {
+      await postJSONWithTimeout(
+        `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/approval`,
+        30000,
+      );
+      phase = "dispatch";
+      button.textContent = "Starting Foundry search…";
+    }
+    await postJSONWithTimeout(
       `/api/workbench/research-directives/${encodeURIComponent(directive.id)}/dispatch`,
-      { method: "POST" },
+      360000,
     );
   } catch (error) {
     setState(
       researchActivityState,
-      `Foundry search failed: ${error.message}`,
+      phase === "approval"
+        ? `Could not approve workflow ${directive.id}: ${error.message}`
+        : `Foundry workflow ${directive.id} failed to start or complete: ${error.message}`,
       true,
     );
   } finally {
-    await Promise.all([
-      loadResearchActivity(),
-      loadQueue(),
-      loadCandidates(),
-      loadProgressSummary(),
-    ]);
+    try {
+      await Promise.all([
+        loadResearchActivity(),
+        loadQueue(),
+        loadCandidates(),
+        loadProgressSummary(),
+      ]);
+    } finally {
+      directiveActionsInFlight.delete(directive.id);
+    }
+    await loadResearchActivity();
   }
 }
 
 function renderPendingSearchApprovals(directives) {
   const pending = directives.filter(
     (directive) =>
-      directive.status === "pending_approval" || directive.status === "approved",
+      (
+        directive.status === "pending_approval"
+        || directive.status === "approved"
+      )
+      && !directiveActionsInFlight.has(directive.id),
   );
   pendingSearchList.replaceChildren();
   pendingSearchCount.textContent = String(pending.length);
@@ -394,6 +432,7 @@ function renderPendingSearchApprovals(directives) {
     const text = element("div");
     text.append(
       element("strong", { text: directive.title }),
+      element("span", { text: `Workflow ${directive.id}` }),
       element("span", {
         text: `Official hosts: ${directive.allowed_hosts.join(", ")}`,
       }),
@@ -428,10 +467,14 @@ function updateActionCenter() {
       && !candidate.canonical_registration,
   );
   const pendingSearches = researchDirectives.filter(
-    (directive) => directive.status === "pending_approval",
+    (directive) =>
+      directive.status === "pending_approval"
+      && !directiveActionsInFlight.has(directive.id),
   );
   const approvedSearches = researchDirectives.filter(
-    (directive) => directive.status === "approved",
+    (directive) =>
+      directive.status === "approved"
+      && !directiveActionsInFlight.has(directive.id),
   );
   const runningSearches = researchDirectives.filter(
     (directive) => directive.status === "running",
@@ -454,6 +497,7 @@ function updateActionCenter() {
     pendingCandidates.length
     + pendingSearches.length
     + approvedSearches.length;
+  const inFlightSearches = directiveActionsInFlight.size;
 
   actionCenter.className = `action-center ${actionCount ? "action-required" : "waiting"}`;
   reviewNextCandidate.hidden = pendingCandidates.length === 0;
@@ -480,6 +524,10 @@ function updateActionCenter() {
     actionCenterHeading.textContent = "No action needed — registration is pending";
     actionCenterDetail.textContent =
       `${waitingRegistration.length} approved document${waitingRegistration.length === 1 ? " is" : "s are"} waiting for deterministic registration. Stay in Workbench until this panel says registration is complete.`;
+  } else if (inFlightSearches) {
+    actionCenterHeading.textContent = "No action needed — starting Foundry";
+    actionCenterDetail.textContent =
+      `${inFlightSearches} workflow${inFlightSearches === 1 ? " is" : "s are"} being approved or dispatched. Its button will not return unless the server reports that another action is genuinely required.`;
   } else if (runningSearches.length) {
     actionCenterHeading.textContent = "No action needed — research is running";
     actionCenterDetail.textContent =
@@ -521,6 +569,9 @@ function updateActionCenter() {
   if (runningSearches.length) {
     progress.push(`${runningSearches.length} search${runningSearches.length === 1 ? "" : "es"} running`);
   }
+  if (inFlightSearches) {
+    progress.push(`${inFlightSearches} workflow${inFlightSearches === 1 ? "" : "s"} starting`);
+  }
   if (waitingRegistration.length) {
     progress.push(`${waitingRegistration.length} registration${waitingRegistration.length === 1 ? "" : "s"} pending`);
   }
@@ -548,9 +599,11 @@ reviewNextCandidate.addEventListener("click", () => {
 });
 
 async function loadResearchActivity() {
+  const requestSequence = ++researchActivityLoadSequence;
   setState(researchActivityState, "Loading search activity…");
   try {
     const payload = await getJSON("/api/workbench/research-activity");
+    if (requestSequence !== researchActivityLoadSequence) return;
     const items = Array.isArray(payload.items) ? payload.items : [];
     researchDirectives = items;
     updateActionCenter();
@@ -662,33 +715,39 @@ async function loadResearchActivity() {
         findings.append(list);
         card.append(findings);
       }
-      if (directive.status === "pending_approval") {
+      const actionInFlight = directiveActionsInFlight.has(directive.id);
+      if (
+        directive.status === "pending_approval"
+        || directive.status === "approved"
+      ) {
+        const approved = directive.status === "approved";
         const approve = element("button", {
           className: "secondary-button directive-approve",
-          text: "Approve and start Foundry search",
+          text: actionInFlight
+            ? "Starting Foundry search…"
+            : approved
+              ? "Start Foundry search"
+              : "Approve and start Foundry search",
         });
         approve.type = "button";
+        approve.disabled = actionInFlight;
         approve.addEventListener(
           "click",
-          () => approveDirective(directive, approve),
+          () => {
+            if (approved) {
+              dispatchDirective(directive, approve);
+            } else {
+              approveDirective(directive, approve);
+            }
+          },
         );
         card.append(approve);
-      } else if (directive.status === "approved") {
-        const dispatch = element("button", {
-          className: "secondary-button directive-approve",
-          text: "Start Foundry search",
-        });
-        dispatch.type = "button";
-        dispatch.addEventListener(
-          "click",
-          () => dispatchDirective(directive, dispatch),
-        );
-        card.append(dispatch);
       }
       row.append(card);
       researchActivityList.append(row);
     });
   } catch (error) {
+    if (requestSequence !== researchActivityLoadSequence) return;
     researchDirectives = [];
     pendingSearchApprovals.hidden = true;
     updateActionCenter();

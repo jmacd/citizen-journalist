@@ -426,6 +426,11 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "Acquisition Engineer diagnosis" in javascript
     assert "IN THE LOOP — Foundry research is running" in javascript
     assert "OUT OF THE LOOP — no agent is processing these gaps" in javascript
+    assert "directiveActionsInFlight" in javascript
+    assert "researchActivityLoadSequence" in javascript
+    assert "postJSONWithTimeout" in javascript
+    assert "watershop may still be processing" in javascript
+    assert "compare the workflow ID" in html
     assert "No automatic triage worker is configured" in javascript
     assert "No action needed — research is running" in javascript
     assert "Workbench complete — return to chat" in javascript

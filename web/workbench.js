@@ -101,10 +101,15 @@ function activityStage(label, detail, status) {
 }
 
 function renderSystemActivity() {
+  const automation = progressSummary?.triage_automation || {};
+  const foundryLoopActive = automation.configured && automation.healthy;
   if (!progressSummary?.latest_question) {
-    systemActivityHeading.textContent = "OUT OF THE LOOP — no agent is running";
-    systemActivityDetail.textContent =
-      "Copilot is not connected between messages, and the evidence workflow has not recorded a question run.";
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is monitoring"
+      : "OUT OF THE LOOP — no agent is running";
+    systemActivityDetail.textContent = foundryLoopActive
+      ? "The persistent watershop worker is polling for question runs. Copilot is not part of this runtime path."
+      : "Copilot is not connected between messages, and the evidence workflow has not recorded a question run.";
     systemActivityQuestion.hidden = true;
     systemActivityStages.hidden = true;
     return;
@@ -124,13 +129,17 @@ function renderSystemActivity() {
   systemActivityQuestion.hidden = false;
 
   if (!latest.gap_count) {
-    systemActivityHeading.textContent =
-      "OUT OF THE LOOP — the question run is complete";
-    systemActivityDetail.textContent =
-      "Foundry completed the latest chat request without identifying an evidence gap. No agent remains active.";
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is monitoring"
+      : "OUT OF THE LOOP — the question run is complete";
+    systemActivityDetail.textContent = foundryLoopActive
+      ? "The latest chat run identified no evidence gap. The watershop worker remains active; Copilot is not part of this runtime path."
+      : "Foundry completed the latest chat request without identifying an evidence gap. No agent remains active.";
   } else if (stagedGaps || pendingSearches) {
     systemActivityHeading.textContent =
-      "OUT OF THE LOOP — waiting for your decision";
+      foundryLoopActive
+        ? "IN THE LOOP — Foundry automation is waiting for your decision"
+        : "OUT OF THE LOOP — waiting for your decision";
     systemActivityDetail.textContent =
       `${stagedGaps} gap${stagedGaps === 1 ? " has" : "s have"} staged evidence; ${pendingSearches} search approval${pendingSearches === 1 ? " is" : "s are"} ready for this question.`;
   } else if (activeSearches) {
@@ -140,21 +149,37 @@ function renderSystemActivity() {
       `${activeSearches} bounded search${activeSearches === 1 ? " is" : "es are"} active for the latest question.`;
   } else if (approvedSearches) {
     systemActivityHeading.textContent =
-      "OUT OF THE LOOP — approved search awaits dispatch";
+      foundryLoopActive
+        ? "IN THE LOOP — approved search awaits dispatch"
+        : "OUT OF THE LOOP — approved search awaits dispatch";
     systemActivityDetail.textContent =
       `${approvedSearches} bounded search${approvedSearches === 1 ? " is" : "es are"} approved, but no Foundry run has started.`;
   } else if (
     triageCount
-    && !progressSummary.triage_automation?.configured
     && !Object.keys(directiveStatuses).length
   ) {
-    systemActivityHeading.textContent =
-      "OUT OF THE LOOP — no agent is processing these gaps";
-    systemActivityDetail.textContent =
-      `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. They are saved on watershop. No automatic triage worker is configured, and Copilot is not connected between messages.`;
+    if (automation.state === "failed") {
+      systemActivityHeading.textContent =
+        "OUT OF THE LOOP — the Foundry triage worker failed";
+      systemActivityDetail.textContent =
+        `The failure was persisted and requires repair: ${automation.last_error || "no error detail was recorded"}`;
+    } else if (foundryLoopActive) {
+      systemActivityHeading.textContent =
+        automation.state === "running"
+          ? "IN THE LOOP — Foundry is triaging this question"
+          : "IN THE LOOP — the Foundry triage worker is active";
+      systemActivityDetail.textContent =
+        `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}. The persistent watershop worker is processing or polling the queue; Copilot is not part of this runtime path.`;
+    } else {
+      systemActivityHeading.textContent =
+        "OUT OF THE LOOP — no agent is processing these gaps";
+      systemActivityDetail.textContent =
+        `The latest chat run identified ${latest.gap_count} gap${latest.gap_count === 1 ? "" : "s"}: ${latest.new_gap_count} new and ${latest.matched_gap_count} matched to existing gaps. They are saved on watershop. No automatic triage worker is configured, and Copilot is not connected between messages.`;
+    }
   } else {
-    systemActivityHeading.textContent =
-      "OUT OF THE LOOP — no agent is currently running";
+    systemActivityHeading.textContent = foundryLoopActive
+      ? "IN THE LOOP — Foundry automation is active"
+      : "OUT OF THE LOOP — no agent is currently running";
     systemActivityDetail.textContent =
       `${completedSearches} search${completedSearches === 1 ? "" : "es"} completed and ${failedSearches} failed for gaps associated with this question.`;
   }
@@ -190,11 +215,13 @@ function renderSystemActivity() {
     activityStage(
       "3. Agent triage",
       triageCount
-        ? progressSummary.triage_automation?.configured
-          ? `${triageCount} queued`
+        ? foundryLoopActive
+          ? automation.state === "running"
+            ? "Foundry processing"
+            : `${triageCount} queued · worker polling`
           : "Waiting · no worker configured"
         : "No gaps waiting",
-      triageCount ? "waiting" : "complete",
+      triageCount ? foundryLoopActive ? "active" : "waiting" : "complete",
     ),
     activityStage(
       "4. Bounded search",
@@ -457,10 +484,32 @@ function updateActionCenter() {
     actionCenterHeading.textContent = "No action needed — research is running";
     actionCenterDetail.textContent =
       `${runningSearches.length} bounded search${runningSearches.length === 1 ? " is" : "es are"} running. New documents will appear here for review if found.`;
-  } else if (activeTriageCount) {
-    actionCenterHeading.textContent = "No action needed — gaps await agent triage";
+  } else if (
+    progressSummary?.triage_automation?.configured
+    && ["failed", "stale", "not_started"].includes(
+      progressSummary.triage_automation.state,
+    )
+  ) {
+    actionCenter.className = "action-center action-required";
+    actionCenterHeading.textContent = "Foundry automation needs repair";
     actionCenterDetail.textContent =
-      `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} queued for classification. No triage run is recorded yet; a search-approval button will appear only after bounded retrieval work is prepared.`;
+      progressSummary.triage_automation.last_error
+        || `The triage worker is ${progressSummary.triage_automation.state}; queued gaps will not advance until the service is restored.`;
+  } else if (activeTriageCount) {
+    const automation = progressSummary?.triage_automation;
+    if (automation?.configured && automation?.healthy) {
+      actionCenterHeading.textContent =
+        automation.state === "running"
+          ? "No action needed — Foundry is triaging gaps"
+          : "No action needed — the Foundry worker is polling";
+      actionCenterDetail.textContent =
+        `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} in the persistent queue. Copilot is not involved; a search-approval button will appear after Foundry prepares bounded retrieval work.`;
+    } else {
+      actionCenterHeading.textContent =
+        "No action needed — gaps await agent triage";
+      actionCenterDetail.textContent =
+        `${activeTriageCount} new evidence gap${activeTriageCount === 1 ? " is" : "s are"} queued for classification. No triage run is recorded yet; a search-approval button will appear only after bounded retrieval work is prepared.`;
+    }
   } else {
     actionCenter.className = "action-center ready";
     actionCenterHeading.textContent = "Workbench complete — return to chat";

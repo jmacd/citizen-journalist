@@ -61,7 +61,26 @@ locals {
     MENDO_RESEARCH_QUEUE_PATH        = "/home/citizen/journalist/research/research-queue.sqlite"
     MENDO_RESEARCH_STAGING_ROOT      = "/home/citizen/journalist/research"
     MENDO_RUN_ROOT                   = "/home/citizen/journalist/research/agent-runs"
-    MENDO_WORKBENCH_HOST             = var.workbench_trusted_lan_enabled ? "0.0.0.0" : "127.0.0.1"
+    MENDO_TRIAGE_ALLOWED_HOSTS = join(",", [
+      "documents.coastal.ca.gov",
+      "leginfo.legislature.ca.gov",
+      "mccsd.com",
+      "mendocinocounty.gov",
+      "mendocinousd.org",
+      "mendolafco.org",
+      "waterboards.ca.gov",
+      "www.coastal.ca.gov",
+      "www.mccsd.com",
+      "www.mendocinocounty.gov",
+      "www.mendocinousd.org",
+      "www.mendolafco.org",
+      "www.waterboards.ca.gov",
+    ])
+    MENDO_TRIAGE_AUTOMATION_ENABLED      = "true"
+    MENDO_TRIAGE_MAX_PENDING             = "3"
+    MENDO_TRIAGE_POLL_SECONDS            = "30"
+    MENDO_TRIAGE_REQUEST_TIMEOUT_SECONDS = "300"
+    MENDO_WORKBENCH_HOST                 = var.workbench_trusted_lan_enabled ? "0.0.0.0" : "127.0.0.1"
     MENDO_WORKBENCH_EXTRA_ARGS = (
       var.workbench_trusted_lan_enabled ?
       "--allow-unauthenticated-private-network" :
@@ -125,13 +144,14 @@ resource "null_resource" "workbench" {
   }
 
   triggers = {
-    environment_hash   = sha256(local.workbench_environment)
-    hydration_version  = "copy-casebook-data-v2"
-    runtime_id         = local.workbench_runtime_id
-    chat_service_hash  = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-chat.service")
-    service_hash       = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-workbench.service")
-    source_hash        = local.workbench_source_hash
-    watershop_host_key = data.external.watershop_host_key[0].result.fingerprint
+    environment_hash    = sha256(local.workbench_environment)
+    hydration_version   = "copy-casebook-data-v2"
+    runtime_id          = local.workbench_runtime_id
+    chat_service_hash   = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-chat.service")
+    service_hash        = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-workbench.service")
+    triage_service_hash = filesha256("${path.module}/../../deploy/watershop/systemd/mendo-triage-worker.service")
+    source_hash         = local.workbench_source_hash
+    watershop_host_key  = data.external.watershop_host_key[0].result.fingerprint
   }
 
   connection {
@@ -170,6 +190,11 @@ resource "null_resource" "workbench" {
     destination = "${var.observatory_home}/work/upload/mendo-workbench.service"
   }
 
+  provisioner "file" {
+    source      = "${path.module}/../../deploy/watershop/systemd/mendo-triage-worker.service"
+    destination = "${var.observatory_home}/work/upload/mendo-triage-worker.service"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "set -eu",
@@ -196,8 +221,10 @@ resource "null_resource" "workbench" {
       "\"$venv/bin/python\" -c 'import mendo_agents.workbench'",
       "install -m 0644 '${var.observatory_home}/work/upload/mendo-chat.service' \"$HOME/.config/systemd/user/mendo-chat.service.next\"",
       "install -m 0644 '${var.observatory_home}/work/upload/mendo-workbench.service' \"$HOME/.config/systemd/user/mendo-workbench.service.next\"",
+      "install -m 0644 '${var.observatory_home}/work/upload/mendo-triage-worker.service' \"$HOME/.config/systemd/user/mendo-triage-worker.service.next\"",
       "mv \"$HOME/.config/systemd/user/mendo-chat.service.next\" \"$HOME/.config/systemd/user/mendo-chat.service\"",
       "mv \"$HOME/.config/systemd/user/mendo-workbench.service.next\" \"$HOME/.config/systemd/user/mendo-workbench.service\"",
+      "mv \"$HOME/.config/systemd/user/mendo-triage-worker.service.next\" \"$HOME/.config/systemd/user/mendo-triage-worker.service\"",
       "ln -sfn \"$app\" '${var.observatory_home}/app.next'",
       "mv -Tf '${var.observatory_home}/app.next' '${var.observatory_home}/app'",
       "ln -sfn \"$venv\" '${var.observatory_home}/agents-venv.next'",
@@ -209,10 +236,13 @@ resource "null_resource" "workbench" {
       "systemctl --user daemon-reload",
       "systemctl --user enable --now mendo-chat.service",
       "systemctl --user enable --now mendo-workbench.service",
+      "systemctl --user enable --now mendo-triage-worker.service",
       "systemctl --user restart mendo-chat.service",
       "systemctl --user restart mendo-workbench.service",
+      "systemctl --user restart mendo-triage-worker.service",
       "systemctl --user is-active --quiet mendo-chat.service",
       "systemctl --user is-active --quiet mendo-workbench.service",
+      "systemctl --user is-active --quiet mendo-triage-worker.service",
       "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4174/api/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
       var.workbench_trusted_lan_enabled ? "attempt=0; until curl --fail --silent --show-error --max-time 10 http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done" : "set -a; . '${var.observatory_home}/env/workbench.env'; set +a; attempt=0; until curl --fail --silent --show-error --max-time 10 -H \"X-Mendo-Workbench-Auth: $MENDO_WORKBENCH_PROXY_TOKEN\" http://127.0.0.1:4180/api/workbench/health >/dev/null; do attempt=$((attempt + 1)); test \"$attempt\" -lt 30 || exit 1; sleep 1; done",
     ]

@@ -173,7 +173,32 @@ class ResearchDirectiveStore:
         search_brief: str,
         lead_ids: tuple[str, ...],
         allowed_hosts: tuple[str, ...],
+        *,
+        question_run_id: str | None = None,
     ) -> ResearchDirective:
+        with self._connect() as connection:
+            directive_id = self.create_in_transaction(
+                connection,
+                case_id,
+                title,
+                search_brief,
+                lead_ids,
+                allowed_hosts,
+                question_run_id=question_run_id,
+            )
+        return self.get(directive_id)
+
+    def create_in_transaction(
+        self,
+        connection: sqlite3.Connection,
+        case_id: str,
+        title: str,
+        search_brief: str,
+        lead_ids: tuple[str, ...],
+        allowed_hosts: tuple[str, ...],
+        *,
+        question_run_id: str | None = None,
+    ) -> str:
         normalized_leads = tuple(sorted(set(lead_ids)))
         normalized_hosts = tuple(
             sorted(
@@ -201,57 +226,77 @@ class ResearchDirectiveStore:
         )
         directive_id = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:20]
         timestamp = _now()
-        with self._connect() as connection:
-            rows = connection.execute(
-                f"""
-                SELECT id, case_id
-                  FROM research_queue
-                 WHERE id IN ({",".join("?" for _ in normalized_leads)})
-                """,
-                normalized_leads,
-            ).fetchall()
-            found = {str(row["id"]) for row in rows}
-            missing = sorted(set(normalized_leads) - found)
-            if missing:
-                raise ResearchDispatchError(
-                    f"Directive refers to unknown leads: {', '.join(missing)}"
+        rows = connection.execute(
+            f"""
+            SELECT id, case_id
+              FROM research_queue
+             WHERE id IN ({",".join("?" for _ in normalized_leads)})
+            """,
+            normalized_leads,
+        ).fetchall()
+        found = {str(row["id"]) for row in rows}
+        missing = sorted(set(normalized_leads) - found)
+        if missing:
+            raise ResearchDispatchError(
+                f"Directive refers to unknown leads: {', '.join(missing)}"
+            )
+        wrong_case = [
+            str(row["id"])
+            for row in rows
+            if str(row["case_id"]) != case_id
+        ]
+        if wrong_case:
+            raise ResearchDispatchError(
+                "Directive combines leads from another case: "
+                + ", ".join(sorted(wrong_case))
+            )
+        if question_run_id is not None:
+            associated_leads = {
+                str(row["gap_id"])
+                for row in connection.execute(
+                    """
+                    SELECT gap_id
+                      FROM research_question_run_gaps
+                     WHERE run_id = ?
+                    """,
+                    (question_run_id,),
                 )
-            wrong_case = [
-                str(row["id"])
-                for row in rows
-                if str(row["case_id"]) != case_id
-            ]
-            if wrong_case:
+            }
+            missing_from_run = sorted(
+                set(normalized_leads) - associated_leads
+            )
+            if missing_from_run:
                 raise ResearchDispatchError(
-                    "Directive combines leads from another case: "
-                    + ", ".join(sorted(wrong_case))
+                    "Directive leads are not associated with question run "
+                    f"{question_run_id}: {', '.join(missing_from_run)}"
                 )
+        connection.execute(
+            """
+            INSERT INTO research_directives
+              (id, case_id, title, search_brief, allowed_hosts_json,
+               status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'pending_approval', ?, ?)
+            """,
+            (
+                directive_id,
+                case_id,
+                normalized_title,
+                normalized_brief,
+                json.dumps(normalized_hosts),
+                timestamp,
+                timestamp,
+            ),
+        )
+        for lead_id in normalized_leads:
             connection.execute(
                 """
-                INSERT INTO research_directives
-                  (id, case_id, title, search_brief, allowed_hosts_json,
-                   status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, 'pending_approval', ?, ?)
+                INSERT INTO research_directive_leads
+                  (directive_id, lead_id)
+                VALUES (?, ?)
                 """,
-                (
-                    directive_id,
-                    case_id,
-                    normalized_title,
-                    normalized_brief,
-                    json.dumps(normalized_hosts),
-                    timestamp,
-                    timestamp,
-                ),
+                (directive_id, lead_id),
             )
-            for lead_id in normalized_leads:
-                connection.execute(
-                    """
-                    INSERT INTO research_directive_leads
-                      (directive_id, lead_id)
-                    VALUES (?, ?)
-                    """,
-                    (directive_id, lead_id),
-                )
+            if question_run_id is None:
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO research_directive_question_runs
@@ -265,15 +310,24 @@ class ResearchDirectiveStore:
                     """,
                     (directive_id, lead_id, timestamp),
                 )
-                connection.execute(
-                    """
-                    UPDATE research_queue
-                       SET status = 'directive_pending'
-                     WHERE id = ?
-                    """,
-                    (lead_id,),
-                )
-        return self.get(directive_id)
+            connection.execute(
+                """
+                UPDATE research_queue
+                   SET status = 'directive_pending'
+                 WHERE id = ?
+                """,
+                (lead_id,),
+            )
+        if question_run_id is not None:
+            connection.execute(
+                """
+                INSERT INTO research_directive_question_runs
+                  (directive_id, question_run_id)
+                VALUES (?, ?)
+                """,
+                (directive_id, question_run_id),
+            )
+        return directive_id
 
     def get(self, directive_id: str) -> ResearchDirective:
         with self._connect() as connection:

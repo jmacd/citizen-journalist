@@ -1,0 +1,21 @@
+[Unit]
+Description=Citizen Journalist Foundry research triage worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/jmacd/observatory/app
+EnvironmentFile=/home/jmacd/observatory/env/workbench.env
+ExecStart=/home/jmacd/observatory/agents-venv/bin/mendo-triage-worker --repo-root /home/jmacd/observatory/app --provider foundry
+Restart=on-failure
+RestartSec=15s
+TimeoutStopSec=30s
+MemoryAccounting=yes
+MemoryHigh=1536M
+MemoryMax=2048M
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

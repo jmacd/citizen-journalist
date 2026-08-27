@@ -526,6 +526,72 @@ class WorkbenchStore:
                     "gap_statuses": latest_statuses,
                     "directive_statuses": latest_directive_statuses,
                 }
+            triage_configured = os.environ.get(
+                "MENDO_TRIAGE_AUTOMATION_ENABLED",
+                "false",
+            ).lower() in {"1", "true", "yes"}
+            triage_automation: dict[str, object] = {
+                "configured": triage_configured,
+                "state": "not_configured",
+                "healthy": False,
+                "heartbeat_at": None,
+                "current_question_run_id": None,
+                "current_triage_run_id": None,
+                "last_error": None,
+                "copilot_required": False,
+            }
+            if triage_configured:
+                table_exists = connection.execute(
+                    """
+                    SELECT 1
+                      FROM sqlite_master
+                     WHERE type = 'table'
+                       AND name = 'research_triage_worker_status'
+                    """
+                ).fetchone()
+                status_row = (
+                    connection.execute(
+                        """
+                        SELECT state, heartbeat_at, current_question_run_id,
+                               current_triage_run_id, last_error
+                          FROM research_triage_worker_status
+                         WHERE id = 1
+                        """
+                    ).fetchone()
+                    if table_exists
+                    else None
+                )
+                if status_row is None:
+                    triage_automation["state"] = "not_started"
+                else:
+                    heartbeat_at = str(status_row["heartbeat_at"])
+                    poll_seconds = max(
+                        int(os.environ.get("MENDO_TRIAGE_POLL_SECONDS", "30")),
+                        1,
+                    )
+                    heartbeat_age = (
+                        datetime.now(UTC)
+                        - datetime.fromisoformat(heartbeat_at)
+                    ).total_seconds()
+                    healthy = heartbeat_age <= max(poll_seconds * 3, 120)
+                    triage_automation.update(
+                        {
+                            "state": (
+                                str(status_row["state"])
+                                if healthy
+                                else "stale"
+                            ),
+                            "healthy": healthy,
+                            "heartbeat_at": heartbeat_at,
+                            "current_question_run_id": status_row[
+                                "current_question_run_id"
+                            ],
+                            "current_triage_run_id": status_row[
+                                "current_triage_run_id"
+                            ],
+                            "last_error": status_row["last_error"],
+                        }
+                    )
         return {
             "queue_count": sum(queue_statuses.values()),
             "queue_statuses": queue_statuses,
@@ -538,10 +604,7 @@ class WorkbenchStore:
             "registration_count": registration_count,
             "latest_activity_at": latest_activity_at,
             "latest_question": latest_question,
-            "triage_automation": {
-                "configured": False,
-                "state": "not_configured",
-            },
+            "triage_automation": triage_automation,
         }
 
     def approve_research_directive(

@@ -97,9 +97,14 @@ agent:
 | `mendo-corpus.service` | Event replay, catalog build, integrity verification, and release build | oneshot |
 | `mendo-corpus.timer` | Starts the corpus build after new finalized events | periodic initially |
 | `mendo-workbench.service` | Private CIO API and UI | continuous, loopback or private LAN only |
+| `mendo-chat.service` | Foundry-backed case question workflow | continuous request service |
+| `mendo-triage-worker.service` | Foundry-backed evidence-gap triage | continuous, bounded by pending CIO approvals |
 
 Agent roles run inside Pipeline, Atlas, Workbench, or Casebook workflows and
-call Microsoft Foundry as needed. They are not separate systemd services.
+call Microsoft Foundry as needed. The triage unit is a workflow worker, not a
+service for a model persona: it persists execution state, validates Foundry
+output, and stops producing directives when the CIO approval inbox reaches its
+configured cap.
 
 Every unit must:
 
@@ -120,6 +125,11 @@ Only the first manual units currently exist:
 - `mendo-workbench.service` serves the private evidence inbox and candidate
   review API on port 4180. It records audited CIO decisions but does not itself
   mutate canonical manifests.
+- `mendo-chat.service` answers case questions with Foundry and records typed
+  evidence gaps in the NFS-backed queue.
+- `mendo-triage-worker.service` consumes those question runs without Copilot,
+  asks Foundry for one bounded disposition, validates official hosts, and
+  prepares at most the configured number of directives awaiting CIO approval.
 
 The Workbench is intended to sit behind the existing host-owned Caddy service.
 This repository provides `Caddyfile.workbench.example` for a dedicated private

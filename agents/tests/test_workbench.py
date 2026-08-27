@@ -11,6 +11,7 @@ from pathlib import Path
 from mendo_agents.models import EvidenceGap
 from mendo_agents.research_dispatch import ResearchDirectiveStore
 from mendo_agents.research_queue import ResearchQueue
+from mendo_agents.research_triage import ResearchTriageStore
 from mendo_agents.workbench import (
     CandidateStore,
     WorkbenchStore,
@@ -213,6 +214,38 @@ def test_progress_records_question_with_no_gaps(tmp_path: Path) -> None:
     assert progress["latest_question"]["run_id"] == "question-no-gaps"
     assert progress["latest_question"]["gap_count"] == 0
     assert progress["latest_question"]["gap_statuses"] == {}
+
+
+def test_progress_reports_healthy_foundry_triage_loop(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Question awaiting autonomous triage",
+        (
+            EvidenceGap(
+                description="The policy is missing.",
+                deciding_record="Final policy",
+                likely_custodian="Public Agency",
+            ),
+        ),
+        origin_run_id="question-foundry-loop",
+    )
+    ResearchTriageStore(queue_path).heartbeat("idle")
+    monkeypatch.setenv("MENDO_TRIAGE_AUTOMATION_ENABLED", "true")
+    monkeypatch.setenv("MENDO_TRIAGE_POLL_SECONDS", "30")
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["triage_automation"]["configured"] is True
+    assert progress["triage_automation"]["healthy"] is True
+    assert progress["triage_automation"]["state"] == "idle"
+    assert progress["triage_automation"]["copilot_required"] is False
 
 
 def test_workbench_rejects_candidate_hash_mismatch(tmp_path: Path) -> None:

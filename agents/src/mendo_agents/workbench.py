@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import hmac
+import ipaddress
 import json
 import mimetypes
 import os
@@ -21,8 +22,28 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 from .config import Settings
+from .acquisition_engineering import (
+    AcquisitionEngineeringStore,
+    FoundryAcquisitionEngineer,
+    ResearchRecoveryOrchestrator,
+)
+from .repository import CorpusRepository
 from .research_queue import ResearchQueue
-from .research_dispatch import ResearchDirectiveStore, ResearchDispatchError
+from .research_dispatch import (
+    FoundryWebSearchScout,
+    ResearchDirectiveStore,
+    ResearchDispatchError,
+    ResearchDispatcher,
+)
+
+
+def is_trusted_private_client(address: str) -> bool:
+    try:
+        client = ipaddress.ip_address(address)
+    except ValueError:
+        return False
+    return client.is_private or client.is_loopback
+
 
 MAX_DECISION_BYTES = 16_384
 MAX_NOTE_CHARACTERS = 2_000
@@ -59,7 +80,7 @@ class CandidateStore:
             return self._cached_candidates
         candidates: list[dict[str, object]] = []
         validation_errors: list[dict[str, str]] = []
-        seen: set[str] = set()
+        seen: dict[str, dict[str, object]] = {}
         if not self.root.exists():
             return candidates
         for bundle_path in bundle_paths:
@@ -68,17 +89,36 @@ class CandidateStore:
                 raw_candidates = payload.get("candidates")
                 if not isinstance(raw_candidates, list):
                     raise RuntimeError("candidates must be an array")
-                bundle_candidates = []
-                for raw in raw_candidates:
-                    candidate = self._validate_candidate(bundle_path.parent, raw)
+                bundle_candidates = [
+                    self._validate_candidate(bundle_path.parent, raw)
+                    for raw in raw_candidates
+                ]
+                relative_bundle = str(bundle_path.relative_to(self.root))
+                for candidate in bundle_candidates:
+                    candidate["_bundle_path"] = relative_bundle
+                local_seen: dict[str, dict[str, object]] = {}
+                for candidate in bundle_candidates:
                     candidate_id = str(candidate["id"])
-                    if candidate_id in seen:
+                    if candidate_id in local_seen:
                         raise RuntimeError(
-                            f"duplicate candidate ID: {candidate_id}"
+                            f"duplicate candidate ID within bundle: {candidate_id}"
                         )
-                    seen.add(candidate_id)
-                    bundle_candidates.append(candidate)
-                candidates.extend(bundle_candidates)
+                    existing = seen.get(candidate_id)
+                    if existing is not None:
+                        self._assert_same_candidate(existing, candidate)
+                    local_seen[candidate_id] = candidate
+                for candidate in bundle_candidates:
+                    candidate_id = str(candidate["id"])
+                    existing = seen.get(candidate_id)
+                    if existing is None:
+                        candidate["occurrences"] = [
+                            self._candidate_occurrence(candidate)
+                        ]
+                        candidate["duplicate_occurrence_count"] = 1
+                        seen[candidate_id] = candidate
+                        candidates.append(candidate)
+                    else:
+                        self._merge_candidate_occurrence(existing, candidate)
             except (OSError, json.JSONDecodeError, RuntimeError) as error:
                 validation_errors.append(
                     {
@@ -90,6 +130,100 @@ class CandidateStore:
         self._cached_candidates = candidates
         self.validation_errors = validation_errors
         return self._cached_candidates
+
+    @staticmethod
+    def _assert_same_candidate(
+        existing: dict[str, object],
+        candidate: dict[str, object],
+    ) -> None:
+        candidate_id = str(candidate["id"])
+        identity = (
+            "sha256",
+            "bytes",
+            "mime_type",
+        )
+        conflicts = [
+            name for name in identity if existing.get(name) != candidate.get(name)
+        ]
+        if CandidateStore._normalized_source_url(
+            str(existing["source_url"])
+        ) != CandidateStore._normalized_source_url(str(candidate["source_url"])):
+            conflicts.append("source_url")
+        if conflicts:
+            existing_bundle = existing.get("_bundle_path", "unknown bundle")
+            candidate_bundle = candidate.get("_bundle_path", "unknown bundle")
+            raise RuntimeError(
+                f"conflicting duplicate candidate ID: {candidate_id} "
+                f"between {existing_bundle} and {candidate_bundle} "
+                f"({', '.join(conflicts)})"
+            )
+
+    @staticmethod
+    def _normalized_source_url(source_url: str) -> str:
+        parsed = urlsplit(source_url)
+        hostname = parsed.hostname
+        if hostname is None:
+            return source_url
+        try:
+            port = parsed.port
+        except ValueError:
+            return source_url
+        default_port = (
+            parsed.scheme.lower() == "https" and port == 443
+        ) or (parsed.scheme.lower() == "http" and port == 80)
+        netloc = hostname.lower()
+        if ":" in netloc:
+            netloc = f"[{netloc}]"
+        if port is not None and not default_port:
+            netloc = f"{netloc}:{port}"
+        if parsed.username is not None:
+            credentials = parsed.username
+            if parsed.password is not None:
+                credentials = f"{credentials}:{parsed.password}"
+            netloc = f"{credentials}@{netloc}"
+        return parsed._replace(
+            scheme=parsed.scheme.lower(),
+            netloc=netloc,
+            fragment="",
+        ).geturl()
+
+    @staticmethod
+    def _candidate_occurrence(
+        candidate: dict[str, object],
+    ) -> dict[str, object]:
+        return {
+            "bundle": candidate.get("_bundle_path"),
+            "title": candidate["title"],
+            "publisher": candidate["publisher"],
+            "document_date": candidate.get("document_date"),
+            "source_url": candidate["source_url"],
+            "retrieved_at": candidate["retrieved_at"],
+            "version": candidate.get("version"),
+            "signature_status": candidate.get("signature_status"),
+            "related_lead_ids": list(candidate.get("related_lead_ids", [])),
+            "establishes": list(candidate.get("establishes", [])),
+            "does_not_establish": list(
+                candidate.get("does_not_establish", [])
+            ),
+            "proposed_manifest": candidate["proposed_manifest"],
+        }
+
+    @staticmethod
+    def _merge_candidate_occurrence(
+        existing: dict[str, object],
+        candidate: dict[str, object],
+    ) -> None:
+        CandidateStore._assert_same_candidate(existing, candidate)
+        for name in ("related_lead_ids", "establishes", "does_not_establish"):
+            existing_values = list(existing.get(name, []))
+            candidate_values = list(candidate.get(name, []))
+            existing[name] = list(dict.fromkeys(existing_values + candidate_values))
+        occurrences = list(existing.get("occurrences", []))
+        occurrences.append(CandidateStore._candidate_occurrence(candidate))
+        existing["occurrences"] = occurrences
+        existing["duplicate_occurrence_count"] = (
+            int(existing.get("duplicate_occurrence_count", 1)) + 1
+        )
 
     def get_candidate(self, candidate_id: str) -> dict[str, object]:
         for candidate in self.list_candidates():
@@ -295,6 +429,8 @@ class WorkbenchStore:
         self.candidates = candidates
         ResearchQueue(self.queue_path)
         self.directive_store = ResearchDirectiveStore(self.queue_path)
+        self.directive_store.recover_interrupted_dispatches()
+        self.acquisition_store = AcquisitionEngineeringStore(self.queue_path)
         with self._connect() as connection:
             connection.execute(
                 """
@@ -359,6 +495,13 @@ class WorkbenchStore:
             public = asdict(directive)
             runs = self.directive_store.runs(directive.id)
             latest = runs[0] if runs else None
+            if latest is not None:
+                diagnosis = self.acquisition_store.get_for_run(
+                    int(latest["id"])
+                )
+                latest["acquisition_diagnosis"] = (
+                    asdict(diagnosis) if diagnosis is not None else None
+                )
             if latest is not None and latest.get("report_json"):
                 try:
                     latest["report"] = json.loads(str(latest["report_json"]))
@@ -370,6 +513,213 @@ class WorkbenchStore:
             public["latest_run"] = latest
             result.append(public)
         return result
+
+    def progress_summary(self) -> dict[str, object]:
+        with self._connect() as connection:
+            queue_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_queue
+                     GROUP BY status
+                    """
+                )
+            }
+            directive_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_directives
+                     GROUP BY status
+                    """
+                )
+            }
+            run_statuses = {
+                str(row["status"]): int(row["count"])
+                for row in connection.execute(
+                    """
+                    SELECT status, COUNT(*) AS count
+                      FROM research_dispatch_runs
+                     GROUP BY status
+                    """
+                )
+            }
+            recent_triage_count = int(
+                connection.execute(
+                    """
+                    SELECT COUNT(*)
+                      FROM research_queue
+                     WHERE status = 'triage'
+                        AND julianday(created_at) >= julianday('now', '-6 hours')
+                    """
+                ).fetchone()[0]
+            )
+            decision_count = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM workbench_decisions"
+                ).fetchone()[0]
+            )
+            registration_count = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM workbench_registrations"
+                ).fetchone()[0]
+            )
+            latest_activity_at = connection.execute(
+                """
+                SELECT MAX(activity_at)
+                  FROM (
+                    SELECT MAX(last_seen_at) AS activity_at FROM research_queue
+                    UNION ALL
+                    SELECT MAX(updated_at) FROM research_directives
+                    UNION ALL
+                    SELECT MAX(COALESCE(completed_at, started_at))
+                      FROM research_dispatch_runs
+                    UNION ALL
+                    SELECT MAX(created_at) FROM workbench_decisions
+                    UNION ALL
+                    SELECT MAX(registered_at) FROM workbench_registrations
+                  )
+                """
+            ).fetchone()[0]
+            latest_question_row = connection.execute(
+                """
+                SELECT r.id, r.question, r.created_at AS last_activity_at,
+                       COUNT(g.gap_id) AS gap_count,
+                       COALESCE(SUM(g.was_new), 0) AS new_gap_count
+                  FROM research_question_runs r
+                  LEFT JOIN research_question_run_gaps g ON g.run_id = r.id
+                 GROUP BY r.id
+                 ORDER BY r.created_at DESC, r.id DESC
+                 LIMIT 1
+                """
+            ).fetchone()
+            latest_question = None
+            if latest_question_row is not None:
+                run_id = str(latest_question_row["id"])
+                question = str(latest_question_row["question"])
+                latest_statuses = {
+                    str(row["status"]): int(row["count"])
+                    for row in connection.execute(
+                        """
+                        SELECT q.status, COUNT(*) AS count
+                          FROM research_question_run_gaps g
+                          JOIN research_queue q ON q.id = g.gap_id
+                         WHERE g.run_id = ?
+                         GROUP BY q.status
+                        """,
+                        (run_id,),
+                    )
+                }
+                latest_directive_statuses = {
+                    str(row["status"]): int(row["count"])
+                    for row in connection.execute(
+                        """
+                        SELECT d.status, COUNT(DISTINCT d.id) AS count
+                          FROM research_directives d
+                          JOIN research_directive_question_runs q
+                            ON q.directive_id = d.id
+                         WHERE q.question_run_id = ?
+                         GROUP BY d.status
+                        """,
+                        (run_id,),
+                    )
+                }
+                gap_count = int(latest_question_row["gap_count"])
+                new_gap_count = int(latest_question_row["new_gap_count"])
+                latest_question = {
+                    "run_id": run_id,
+                    "question": question,
+                    "last_activity_at": str(
+                        latest_question_row["last_activity_at"]
+                    ),
+                    "gap_count": gap_count,
+                    "new_gap_count": new_gap_count,
+                    "matched_gap_count": gap_count - new_gap_count,
+                    "gap_statuses": latest_statuses,
+                    "directive_statuses": latest_directive_statuses,
+                }
+            triage_configured = os.environ.get(
+                "MENDO_TRIAGE_AUTOMATION_ENABLED",
+                "false",
+            ).lower() in {"1", "true", "yes"}
+            triage_automation: dict[str, object] = {
+                "configured": triage_configured,
+                "state": "not_configured",
+                "healthy": False,
+                "heartbeat_at": None,
+                "current_question_run_id": None,
+                "current_triage_run_id": None,
+                "last_error": None,
+                "copilot_required": False,
+            }
+            if triage_configured:
+                table_exists = connection.execute(
+                    """
+                    SELECT 1
+                      FROM sqlite_master
+                     WHERE type = 'table'
+                       AND name = 'research_triage_worker_status'
+                    """
+                ).fetchone()
+                status_row = (
+                    connection.execute(
+                        """
+                        SELECT state, heartbeat_at, current_question_run_id,
+                               current_triage_run_id, last_error
+                          FROM research_triage_worker_status
+                         WHERE id = 1
+                        """
+                    ).fetchone()
+                    if table_exists
+                    else None
+                )
+                if status_row is None:
+                    triage_automation["state"] = "not_started"
+                else:
+                    heartbeat_at = str(status_row["heartbeat_at"])
+                    poll_seconds = max(
+                        int(os.environ.get("MENDO_TRIAGE_POLL_SECONDS", "30")),
+                        1,
+                    )
+                    heartbeat_age = (
+                        datetime.now(UTC)
+                        - datetime.fromisoformat(heartbeat_at)
+                    ).total_seconds()
+                    healthy = heartbeat_age <= max(poll_seconds * 3, 120)
+                    triage_automation.update(
+                        {
+                            "state": (
+                                str(status_row["state"])
+                                if healthy
+                                else "stale"
+                            ),
+                            "healthy": healthy,
+                            "heartbeat_at": heartbeat_at,
+                            "current_question_run_id": status_row[
+                                "current_question_run_id"
+                            ],
+                            "current_triage_run_id": status_row[
+                                "current_triage_run_id"
+                            ],
+                            "last_error": status_row["last_error"],
+                        }
+                    )
+        return {
+            "queue_count": sum(queue_statuses.values()),
+            "queue_statuses": queue_statuses,
+            "recent_triage_count": recent_triage_count,
+            "directive_count": sum(directive_statuses.values()),
+            "directive_statuses": directive_statuses,
+            "run_count": sum(run_statuses.values()),
+            "run_statuses": run_statuses,
+            "decision_count": decision_count,
+            "registration_count": registration_count,
+            "latest_activity_at": latest_activity_at,
+            "latest_question": latest_question,
+            "triage_automation": triage_automation,
+        }
 
     def approve_research_directive(
         self, directive_id: str, actor: str
@@ -601,6 +951,11 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
         expected = self.workbench_server.proxy_token
         if not expected and self.workbench_server.allow_unauthenticated_loopback:
             return self.client_address[0] in {"127.0.0.1", "::1"}
+        if (
+            not expected
+            and self.workbench_server.allow_unauthenticated_private_network
+        ):
+            return is_trusted_private_client(self.client_address[0])
         actual = self.headers.get("X-Mendo-Workbench-Auth", "")
         return hmac.compare_digest(expected, actual)
 
@@ -656,6 +1011,12 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
             if path == "/api/workbench/research-activity":
                 items = self.workbench_server.store.research_activity()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            if path == "/api/workbench/progress":
+                self._json(
+                    HTTPStatus.OK,
+                    self.workbench_server.store.progress_summary(),
+                )
                 return
             if path == "/api/workbench/candidates":
                 items = self.workbench_server.store.candidates_with_decisions()
@@ -713,6 +1074,28 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 )
                 self._json(HTTPStatus.OK, result)
             except (ResearchDispatchError, ValueError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        dispatch_match = re.fullmatch(
+            r"/api/workbench/research-directives/([^/]+)/dispatch", path
+        )
+        if dispatch_match:
+            dispatcher = self.workbench_server.research_dispatcher
+            if dispatcher is None:
+                self._json(
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    {
+                        "error": (
+                            "Foundry dispatch is not configured for this "
+                            "Workbench process."
+                        )
+                    },
+                )
+                return
+            try:
+                result = dispatcher.dispatch(unquote(dispatch_match.group(1)))
+                self._json(HTTPStatus.OK, result)
+            except ResearchDispatchError as error:
                 self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             return
         if path != "/api/workbench/decisions":
@@ -828,12 +1211,18 @@ class WorkbenchHTTPServer(ThreadingHTTPServer):
         store: WorkbenchStore,
         web_root: Path,
         proxy_token: str | None,
+        research_dispatcher: ResearchDispatcher | None = None,
         allow_unauthenticated_loopback: bool = False,
+        allow_unauthenticated_private_network: bool = False,
     ) -> None:
         self.store = store
         self.web_root = web_root.resolve()
         self.proxy_token = proxy_token or ""
+        self.research_dispatcher = research_dispatcher
         self.allow_unauthenticated_loopback = allow_unauthenticated_loopback
+        self.allow_unauthenticated_private_network = (
+            allow_unauthenticated_private_network
+        )
         super().__init__(address, WorkbenchRequestHandler)
 
 
@@ -847,6 +1236,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="allow direct loopback access for local development only",
     )
+    parser.add_argument(
+        "--allow-unauthenticated-private-network",
+        action="store_true",
+        help="trust direct clients with private or loopback source addresses",
+    )
     return parser
 
 
@@ -854,21 +1248,44 @@ def main() -> None:
     args = _parser().parse_args()
     settings = Settings.from_env(args.repo_root)
     proxy_token = os.environ.get("MENDO_WORKBENCH_PROXY_TOKEN", "").strip()
-    if not proxy_token and not args.allow_unauthenticated_loopback:
+    if not proxy_token and not (
+        args.allow_unauthenticated_loopback
+        or args.allow_unauthenticated_private_network
+    ):
         raise RuntimeError(
             "MENDO_WORKBENCH_PROXY_TOKEN is required unless explicit "
-            "loopback development access is enabled"
+            "unauthenticated local-network access is enabled"
         )
     store = WorkbenchStore(
         settings.research_queue_path,
         CandidateStore(settings.research_staging_root),
     )
+    research_dispatcher = None
+    if os.environ.get("MENDO_FOUNDRY_WEB_SEARCH_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        research_dispatcher = ResearchDispatcher(
+            store.directive_store,
+            FoundryWebSearchScout(),
+            CorpusRepository(settings.repo_root, settings.case_id),
+            settings.research_staging_root,
+            failure_recovery=ResearchRecoveryOrchestrator(
+                AcquisitionEngineeringStore(settings.research_queue_path),
+                FoundryAcquisitionEngineer(),
+            ),
+        )
     server = WorkbenchHTTPServer(
         (args.host, args.port),
         store,
         settings.repo_root / "web",
         proxy_token=proxy_token,
+        research_dispatcher=research_dispatcher,
         allow_unauthenticated_loopback=args.allow_unauthenticated_loopback,
+        allow_unauthenticated_private_network=(
+            args.allow_unauthenticated_private_network
+        ),
     )
     print(
         f"Mendocino evidence Workbench: http://{args.host}:{args.port}/workbench",

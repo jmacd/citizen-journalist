@@ -22,6 +22,59 @@ variable "workbench_identity_enabled" {
   default     = false
 }
 
+variable "foundry_identity_enabled" {
+  description = "Create and retain a least-privilege Azure identity for the watershop Foundry runtime."
+  type        = bool
+  default     = false
+}
+
+variable "workbench_trusted_lan_enabled" {
+  description = "Bind chat and Workbench to the LAN and trust unauthenticated clients only when their source address is private or loopback."
+  type        = bool
+  default     = false
+}
+
+variable "azure_subscription_id" {
+  description = "Azure subscription containing the Foundry project."
+  type        = string
+  default     = ""
+}
+
+variable "azure_tenant_id" {
+  description = "Microsoft Entra tenant used by the Foundry runtime identity."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_project_resource_id" {
+  description = "Complete Azure resource ID of the Foundry project."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_project_endpoint" {
+  description = "Microsoft Foundry project endpoint used by chat and acquisition agents."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_model" {
+  description = "Foundry model deployment used by the watershop runtime."
+  type        = string
+  default     = ""
+}
+
+variable "foundry_client_secret_end_date" {
+  description = "Explicit RFC3339 expiry for the watershop Foundry client secret; rotate deliberately before this date."
+  type        = string
+  default     = "2031-08-26T05:00:00Z"
+
+  validation {
+    condition     = can(formatdate("YYYY-MM-DD'T'hh:mm:ssZ", var.foundry_client_secret_end_date))
+    error_message = "foundry_client_secret_end_date must be an RFC3339 timestamp."
+  }
+}
+
 variable "observatory_revision" {
   description = "Complete committed mendo-codebook Git revision to deploy."
   type        = string
@@ -33,6 +86,20 @@ variable "observatory_revision" {
       can(regex("^[0-9a-f]{40}$", var.observatory_revision))
     )
     error_message = "observatory_revision must be empty or a complete lowercase Git SHA."
+  }
+}
+
+variable "workbench_revision" {
+  description = "Complete committed Citizen Journalist application revision to deploy on watershop."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.workbench_revision == "" ||
+      can(regex("^[0-9a-f]{40}$", var.workbench_revision))
+    )
+    error_message = "workbench_revision must be empty or a complete lowercase Git SHA."
   }
 }
 
@@ -53,11 +120,10 @@ variable "watershop_user" {
   }
 }
 
-variable "watershop_ssh_private_key_path" {
-  description = "Local path to the SSH private key used for watershop provisioning."
+variable "watershop_ssh_identity_path" {
+  description = "Public or private identity path used to prioritize the matching key in the local SSH agent."
   type        = string
-  default     = "~/.ssh/id_ed25519"
-
+  default     = "~/.ssh/watershop"
 }
 
 variable "watershop_host_key" {
@@ -86,20 +152,52 @@ variable "observatory_home" {
 }
 
 variable "staging_archive_root" {
-  description = "NFS-backed staging archive, separate from the preservation primary."
+  description = "NFS-backed append-only Citizen Journalist archive."
   type        = string
-  default     = "/home/shared/observatory/staging/archive"
+  default     = "/home/citizen/journalist/archive"
 
   validation {
-    condition     = var.staging_archive_root == "/home/shared/observatory/staging/archive"
-    error_message = "The staging safety checks require staging_archive_root to be /home/shared/observatory/staging/archive."
+    condition     = var.staging_archive_root == "/home/citizen/journalist/archive"
+    error_message = "The archive safety checks require staging_archive_root to be /home/citizen/journalist/archive."
   }
 }
 
 variable "staging_archive_birthplace" {
   description = "Stable birthplace recorded in the staging archive identity."
   type        = string
-  default     = "watershop-nfs-staging"
+  default     = "watershop-citizen-journalist-nfs"
+}
+
+variable "import_accepted_workspace" {
+  description = "Perform the one-time import of accepted captures, approvals, case metadata, and generated casebook data."
+  type        = bool
+  default     = false
+}
+
+variable "accepted_workspace_identity_enabled" {
+  description = "Retain the accepted-workspace snapshot UUID independently of the one-time import execution."
+  type        = bool
+  default     = false
+}
+
+variable "accepted_workspace_transport_sha256" {
+  description = "Recorded transport SHA-256 after the one-time accepted-workspace import."
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.accepted_workspace_transport_sha256 == "" ||
+      can(regex("^[0-9a-f]{64}$", var.accepted_workspace_transport_sha256))
+    )
+    error_message = "accepted_workspace_transport_sha256 must be empty or a lowercase SHA-256 digest."
+  }
+}
+
+variable "accepted_workspace_source_root" {
+  description = "Local citizen-journalist checkout containing the accepted workspace to import."
+  type        = string
+  default     = "../.."
 }
 
 variable "observatory_archive_id" {

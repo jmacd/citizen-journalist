@@ -12,6 +12,11 @@ from uuid import uuid4
 
 from agent_framework import FileCheckpointStorage
 
+from .acquisition_engineering import (
+    AcquisitionEngineeringStore,
+    FoundryAcquisitionEngineer,
+    ResearchRecoveryOrchestrator,
+)
 from .acquisition import PublicRecordFetcher
 from .config import Settings
 from .journal import RunJournal, _json_default
@@ -92,6 +97,9 @@ def _parser() -> argparse.ArgumentParser:
     research_dispatch.add_argument("directive_id")
     research_runs = research_commands.add_parser("runs")
     research_runs.add_argument("directive_id", nargs="?")
+    research_diagnose = research_commands.add_parser("diagnose")
+    research_diagnose.add_argument("run_id", type=int)
+    research_commands.add_parser("diagnoses")
     return parser
 
 
@@ -164,7 +172,29 @@ async def _run(args: argparse.Namespace) -> int:
                 FoundryWebSearchScout(),
                 CorpusRepository(settings.repo_root, settings.case_id),
                 settings.research_staging_root,
+                failure_recovery=ResearchRecoveryOrchestrator(
+                    AcquisitionEngineeringStore(settings.research_queue_path),
+                    FoundryAcquisitionEngineer(),
+                ),
             ).dispatch(args.directive_id)
+        elif args.research_command == "diagnose":
+            if effective_provider != "foundry":
+                raise RuntimeError(
+                    "Acquisition diagnosis currently requires --provider foundry"
+                )
+            value = asdict(
+                ResearchRecoveryOrchestrator(
+                    AcquisitionEngineeringStore(settings.research_queue_path),
+                    FoundryAcquisitionEngineer(),
+                ).diagnose(args.run_id)
+            )
+        elif args.research_command == "diagnoses":
+            value = [
+                asdict(item)
+                for item in AcquisitionEngineeringStore(
+                    settings.research_queue_path
+                ).list()
+            ]
         else:
             value = store.runs(args.directive_id)
         print(json.dumps(value, indent=2, sort_keys=True))

@@ -11,11 +11,24 @@ from pathlib import Path
 from mendo_agents.models import EvidenceGap
 from mendo_agents.research_dispatch import ResearchDirectiveStore
 from mendo_agents.research_queue import ResearchQueue
-from mendo_agents.workbench import CandidateStore, WorkbenchStore
+from mendo_agents.research_triage import ResearchTriageStore
+from mendo_agents.workbench import (
+    CandidateStore,
+    WorkbenchStore,
+    is_trusted_private_client,
+)
 
 
-def write_bundle(root: Path, lead_id: str) -> None:
-    bundle_root = root / "run-1"
+def test_trusted_private_clients_exclude_public_addresses() -> None:
+    assert is_trusted_private_client("127.0.0.1")
+    assert is_trusted_private_client("192.168.80.25")
+    assert is_trusted_private_client("10.20.30.40")
+    assert not is_trusted_private_client("8.8.8.8")
+    assert not is_trusted_private_client("not-an-address")
+
+
+def write_bundle(root: Path, lead_id: str, run_id: str = "run-1") -> None:
+    bundle_root = root / run_id
     bundle_root.mkdir(parents=True)
     evidence = bundle_root / "record.pdf"
     evidence.write_bytes(b"%PDF-1.7\nreview fixture\n%%EOF\n")
@@ -56,6 +69,98 @@ def write_bundle(root: Path, lead_id: str) -> None:
     (bundle_root / "review-bundle.json").write_text(
         json.dumps(payload), encoding="utf-8"
     )
+
+
+def test_workbench_merges_exact_cross_bundle_candidate_duplicates(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1", "run-1")
+    write_bundle(staging, "lead-2", "run-2")
+    second_bundle = staging / "run-2" / "review-bundle.json"
+    payload = json.loads(second_bundle.read_text(encoding="utf-8"))
+    payload["candidates"][0]["title"] = "Found by a second workflow"
+    payload["candidates"][0]["version"] = "operative signed copy"
+    payload["candidates"][0]["signature_status"] = "executed"
+    payload["candidates"][0]["proposed_manifest"]["id"] = (
+        "resolution_2026_333"
+    )
+    payload["candidates"][0]["source_url"] = (
+        "https://EXAMPLE.GOV:443/record.pdf#download"
+    )
+    second_bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["lead-1", "lead-2"]
+    assert candidates[0]["duplicate_occurrence_count"] == 2
+    assert [item["title"] for item in candidates[0]["occurrences"]] == [
+        "Official Record",
+        "Found by a second workflow",
+    ]
+    assert store.validation_errors == []
+
+
+def test_workbench_rejects_conflicting_cross_bundle_candidate_duplicates(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1", "run-1")
+    write_bundle(staging, "lead-2", "run-2")
+    second_bundle = staging / "run-2" / "review-bundle.json"
+    payload = json.loads(second_bundle.read_text(encoding="utf-8"))
+    payload["candidates"][0]["source_url"] = (
+        "https://example.gov/different-record.pdf"
+    )
+    second_bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["lead-1"]
+    assert "conflicting duplicate candidate ID" in (
+        store.validation_errors[0]["error"]
+    )
+    assert "run-1/review-bundle.json" in store.validation_errors[0]["error"]
+    assert "run-2/review-bundle.json" in store.validation_errors[0]["error"]
+
+
+def test_workbench_rejects_duplicate_ids_within_one_bundle(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "lead-1")
+    bundle = staging / "run-1" / "review-bundle.json"
+    payload = json.loads(bundle.read_text(encoding="utf-8"))
+    payload["candidates"].append(dict(payload["candidates"][0]))
+    bundle.write_text(json.dumps(payload), encoding="utf-8")
+
+    store = CandidateStore(staging)
+
+    assert store.list_candidates() == []
+    assert "duplicate candidate ID within bundle" in (
+        store.validation_errors[0]["error"]
+    )
+
+
+def test_invalid_bundle_does_not_reserve_candidate_id(tmp_path: Path) -> None:
+    staging = tmp_path / "research-staging"
+    write_bundle(staging, "invalid-lead", "a-invalid")
+    invalid_bundle = staging / "a-invalid" / "review-bundle.json"
+    payload = json.loads(invalid_bundle.read_text(encoding="utf-8"))
+    payload["candidates"].append(dict(payload["candidates"][0]))
+    invalid_bundle.write_text(json.dumps(payload), encoding="utf-8")
+    write_bundle(staging, "valid-lead", "b-valid")
+
+    store = CandidateStore(staging)
+    candidates = store.list_candidates()
+
+    assert len(candidates) == 1
+    assert candidates[0]["related_lead_ids"] == ["valid-lead"]
+    assert len(store.validation_errors) == 1
 
 
 def test_workbench_lists_validated_candidate_and_records_approval(
@@ -118,6 +223,121 @@ def test_workbench_lists_validated_candidate_and_records_approval(
             "SELECT status FROM research_queue WHERE id = ?", (lead.id,)
         ).fetchone()[0]
     assert status == "registered"
+    queue.enqueue(
+        "CASE-1",
+        "Is the same approval still operative?",
+        (
+            EvidenceGap(
+                description="The approval should be checked again.",
+                deciding_record="Final agency approval",
+                likely_custodian="Public Agency",
+            ),
+        ),
+        origin_run_id="follow-up-run",
+    )
+    progress = store.progress_summary()
+    assert progress["queue_statuses"] == {"registered": 1}
+    assert progress["decision_count"] == 1
+    assert progress["registration_count"] == 1
+    assert progress["latest_activity_at"] is not None
+    assert progress["latest_question"]["question"] == (
+        "Is the same approval still operative?"
+    )
+    assert progress["latest_question"]["new_gap_count"] == 0
+    assert progress["latest_question"]["matched_gap_count"] == 1
+    assert progress["latest_question"]["gap_statuses"] == {"registered": 1}
+    assert progress["triage_automation"]["state"] == "not_configured"
+
+
+def test_progress_keeps_prior_directive_out_of_deduplicated_question(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    queue = ResearchQueue(queue_path)
+    gap = EvidenceGap(
+        description="The approval is missing.",
+        deciding_record="Final agency approval",
+        likely_custodian="Public Agency",
+    )
+    lead = queue.enqueue(
+        "CASE-1",
+        "First question",
+        (gap,),
+        origin_run_id="question-1",
+    )[0]
+    ResearchDirectiveStore(queue_path).create(
+        "CASE-1",
+        "Find final approval",
+        "Retrieve the final approval.",
+        (lead.id,),
+        ("agency.example.gov",),
+    )
+    queue.enqueue(
+        "CASE-1",
+        "Follow-up question",
+        (gap,),
+        origin_run_id="question-2",
+    )
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["latest_question"]["run_id"] == "question-2"
+    assert progress["latest_question"]["matched_gap_count"] == 1
+    assert progress["latest_question"]["directive_statuses"] == {}
+
+
+def test_progress_records_question_with_no_gaps(tmp_path: Path) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Question with a complete answer",
+        (),
+        origin_run_id="question-no-gaps",
+    )
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["latest_question"]["run_id"] == "question-no-gaps"
+    assert progress["latest_question"]["gap_count"] == 0
+    assert progress["latest_question"]["gap_statuses"] == {}
+
+
+def test_progress_reports_healthy_foundry_triage_loop(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Question awaiting autonomous triage",
+        (
+            EvidenceGap(
+                description="The policy is missing.",
+                deciding_record="Final policy",
+                likely_custodian="Public Agency",
+            ),
+        ),
+        origin_run_id="question-foundry-loop",
+    )
+    ResearchTriageStore(queue_path).heartbeat("idle")
+    monkeypatch.setenv("MENDO_TRIAGE_AUTOMATION_ENABLED", "true")
+    monkeypatch.setenv("MENDO_TRIAGE_POLL_SECONDS", "30")
+
+    progress = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).progress_summary()
+
+    assert progress["triage_automation"]["configured"] is True
+    assert progress["triage_automation"]["healthy"] is True
+    assert progress["triage_automation"]["state"] == "idle"
+    assert progress["triage_automation"]["copilot_required"] is False
 
 
 def test_workbench_rejects_candidate_hash_mismatch(tmp_path: Path) -> None:
@@ -278,6 +498,8 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     ).read_text(encoding="utf-8")
 
     assert "canonical registration is a separate, deterministic step" in html
+    assert "What should I do now?" in html
+    assert "This audit history does not require action" in html
     assert "Agent-produced evidence gaps" in html
     assert "Search directives and outcomes" in html
     assert "not questions awaiting your response" in html
@@ -287,11 +509,33 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "window.confirm" in javascript
     assert "Review decision complete" in javascript
     assert "Review next pending candidate" in javascript
+    assert "function updateActionCenter()" in javascript
+    assert "function renderProgressSummary()" in javascript
+    assert "/api/workbench/progress" in javascript
+    assert "No triage run is recorded yet" in javascript
+    assert "Counts report persisted outcomes" in html
+    assert "Automation loop status" in html
+    assert "Acquisition Engineer diagnosis" in javascript
+    assert "IN THE LOOP — Foundry research is running" in javascript
+    assert "OUT OF THE LOOP — no agent is processing these gaps" in javascript
+    assert "directiveActionsInFlight" in javascript
+    assert "researchActivityLoadSequence" in javascript
+    assert "postJSONWithTimeout" in javascript
+    assert "watershop may still be processing" in javascript
+    assert "compare the workflow ID" in html
+    assert "No automatic triage worker is configured" in javascript
+    assert "No action needed — research is running" in javascript
+    assert "Workbench complete — return to chat" in javascript
+    assert "function sortCandidates(items)" in javascript
+    assert javascript.count("candidates = sortCandidates(") == 2
     assert "OpenStreetMap basemap" in javascript
     assert "Promise.allSettled(tileJobs)" in javascript
-    assert "Approve this bounded search" in javascript
+    assert "Approve and start Foundry search" in javascript
+    assert "Start Foundry search" in javascript
+    assert "/dispatch" in javascript
     assert "not a water-service area" in javascript
-    assert "--host 127.0.0.1 --port 4180" in unit
+    assert "--host ${MENDO_WORKBENCH_HOST} --port 4180" in unit
+    assert "${MENDO_WORKBENCH_EXTRA_ARGS}" in unit
     assert "EnvironmentFile=/home/jmacd/observatory/env/workbench.env" in unit
     assert "basic_auth" in caddy
     assert "X-Mendo-Workbench-Auth" in caddy

@@ -113,6 +113,71 @@ class ObjectStoredEvent(StrictModel):
         return IngestMetadata.normalize_collections(values)
 
 
+class CaptureSnapshotEntry(StrictModel):
+    path: str
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    bytes: int = Field(ge=0)
+    mode: int = Field(ge=0, le=0o777)
+    modified_at: datetime
+
+    @field_validator("path")
+    @classmethod
+    def require_safe_snapshot_path(cls, value: str) -> str:
+        path = PurePosixPath(value)
+        if (
+            not value
+            or path.is_absolute()
+            or ".." in path.parts
+            or "." in path.parts
+            or path.as_posix() != value
+        ):
+            raise ValueError("snapshot paths must be normalized relative paths")
+        return value
+
+    @field_validator("modified_at")
+    @classmethod
+    def require_modified_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("modified_at must include a timezone")
+        return value
+
+
+class CaptureSnapshot(StrictModel):
+    schema_uri: Literal["mendo-capture-snapshot/v1"] = Field(
+        default="mendo-capture-snapshot/v1",
+        alias="schema",
+        serialization_alias="schema",
+    )
+    snapshot_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    created_at: datetime
+    source_revision: str = Field(pattern=r"^[0-9a-f]{40}$")
+    source_label: str = Field(min_length=1)
+    includes: list[str] = Field(min_length=1)
+    entries: list[CaptureSnapshotEntry]
+
+    @field_validator("created_at")
+    @classmethod
+    def require_snapshot_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("created_at must include a timezone")
+        return value
+
+    @field_validator("includes")
+    @classmethod
+    def require_safe_includes(cls, values: list[str]) -> list[str]:
+        normalized = sorted(set(values))
+        for value in normalized:
+            CaptureSnapshotEntry.require_safe_snapshot_path(value)
+        return normalized
+
+    @model_validator(mode="after")
+    def require_unique_snapshot_paths(self) -> "CaptureSnapshot":
+        paths = [entry.path for entry in self.entries]
+        if paths != sorted(paths) or len(paths) != len(set(paths)):
+            raise ValueError("snapshot entries must have unique sorted paths")
+        return self
+
+
 class ReleaseEntry(StrictModel):
     source_path: str
     destination_path: str

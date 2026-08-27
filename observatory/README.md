@@ -26,7 +26,7 @@ Initialize the intended NFS archive once:
 
 ```sh
 observatory/.venv/bin/mendo-archive init \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --birthplace watershop
 ```
 
@@ -36,7 +36,7 @@ unmounted NFS path from silently becoming a new local archive.
 
 ```sh
 observatory/.venv/bin/mendo-archive ingest ./record.pdf \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --record-id county-pc-2024-0019 \
   --title 'Resolution PC 2024-0019' \
   --collection UM_2025-0004 \
@@ -59,14 +59,51 @@ unique `object_stored` event beneath `events/<UTC-date>/`.
 The finalized event is the durable commit point. A workflow database may be
 updated afterward and recovered from the event if that update fails.
 
+## Preserve and restore an accepted workspace
+
+The Workbench decision database and accepted capture tree can be preserved
+without repeating CIO approvals. Snapshot selected repository-relative paths
+into the immutable archive:
+
+```sh
+mendo-archive snapshot \
+  --root /home/citizen/journalist/archive \
+  --source-root /home/jmacd/observatory/app \
+  --source-revision "$(git rev-parse HEAD)" \
+  --source-label citizen-journalist-workstation \
+  --collection UM_2025-0004 \
+  --include captures \
+  --include cases/UM_2025-0004 \
+  --include web/casebook-data.js
+```
+
+Every file becomes a content-addressed object and finalized event. The
+snapshot manifest records its original relative path, hash, byte count, mode,
+mtime, and source Git revision. SQLite files are captured with SQLite's online
+backup API and pass `PRAGMA integrity_check` before ingestion.
+
+Restore into a new directory only:
+
+```sh
+mendo-archive restore-snapshot \
+  --root /home/citizen/journalist/archive \
+  --snapshot-id <uuid> \
+  --destination /home/jmacd/observatory/recovery/<uuid>
+```
+
+Restore verifies every object before publishing the reconstructed tree. It
+never overlays an existing checkout. Recovered Workbench decisions remain
+bound to their reviewed SHA-256 values, so accepted documents do not require
+new approval merely because the service moved hosts.
+
 ## Verify and rebuild catalogs
 
 ```sh
 observatory/.venv/bin/mendo-corpus verify \
-  --root /home/shared/observatory/archive
+  --root /home/citizen/journalist/archive
 
 observatory/.venv/bin/mendo-corpus build \
-  --root /home/shared/observatory/archive
+  --root /home/citizen/journalist/archive
 ```
 
 `verify` re-hashes every distinct object referenced by an event. Missing,
@@ -90,12 +127,12 @@ planning cases, legal repositories, agency archives, or meeting series.
 
 ```sh
 observatory/.venv/bin/mendo-release create \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --reuse-unchanged
 
 observatory/.venv/bin/mendo-release materialize \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --destination /home/jmacd/observatory/releases/private-current
 ```
@@ -121,7 +158,7 @@ export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 
 observatory/.venv/bin/mendo-release push-s3 \
-  --root /home/shared/observatory/archive \
+  --root /home/citizen/journalist/archive \
   --channel private \
   --bucket mendo-releases \
   --endpoint-url http://localhost:9000
@@ -142,7 +179,7 @@ Materialize a remote channel into a new local directory:
 ```sh
 archive_id=$(
   python -c \
-    'import json; print(json.load(open("/home/shared/observatory/archive/archive.json"))["archive_id"])'
+    'import json; print(json.load(open("/home/citizen/journalist/archive/archive.json"))["archive_id"])'
 )
 
 observatory/.venv/bin/mendo-release materialize-s3 \

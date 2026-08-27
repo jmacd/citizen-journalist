@@ -43,6 +43,15 @@ roles:
       and bounded negative findings. Block promotion when evidence is inadequate.
     allowed_tools: [search_corpus, read_source, validate_locator, create_proposal]
     prohibited_actions: [canonical_write, external_communication, evidence_creation]
+  - id: acquisition_engineer
+    name: Acquisition Engineer
+    instructions: >-
+      Consume typed terminal retrieval failures, research official repository
+      behavior, and propose bounded configuration repairs or new deterministic
+      adapters. Code proposals must remain isolated, preserve every trust
+      control, and stop for CIO review before integration.
+    allowed_tools: [read_terminal_failure, search_official_repository, create_repair_proposal]
+    prohibited_actions: [canonical_write, external_communication, trust_control_weakening, self_merge, deployment]
 
 approval_policy:
   mode: balanced

@@ -23,6 +23,48 @@
       evidence; canonical registration is a separate, deterministic step.
     </aside>
 
+    <section id="action-center" class="action-center waiting" role="status" aria-live="polite">
+      <p class="eyebrow">What should I do now?</p>
+      <h2 id="action-center-heading">Loading your next action…</h2>
+      <p id="action-center-detail">Checking document reviews, searches, and registration.</p>
+      <button id="review-next-candidate" class="primary-button" type="button" hidden>
+      Review next document
+      </button>
+      <div id="pending-search-approvals" hidden>
+      <p class="action-subheading"><span id="pending-search-count">0</span> search actions need your attention</p>
+      <p class="pane-explainer">
+        Starting one workflow frees an approval slot. Foundry may immediately prepare a
+        different workflow; compare the workflow ID rather than the button position.
+      </p>
+      <ol id="pending-search-list"></ol>
+      </div>
+      <p id="action-center-progress" class="action-progress"></p>
+      <section class="system-activity" aria-labelledby="system-activity-heading">
+        <p class="eyebrow">Automation loop status</p>
+        <h3 id="system-activity-heading">Loading current activity…</h3>
+        <p id="system-activity-question" class="system-question" hidden></p>
+        <p id="system-activity-detail">Tracing the latest question through the evidence workflow.</p>
+        <ol id="system-activity-stages" class="activity-stages" hidden></ol>
+      </section>
+      <section class="progress-summary" aria-labelledby="progress-summary-heading">
+        <header>
+          <div>
+            <p class="eyebrow">Audited workflow state</p>
+            <h3 id="progress-summary-heading">Research progress</h3>
+          </div>
+          <button id="view-research-detail" type="button">View detailed activity</button>
+        </header>
+        <div id="progress-summary-state" class="state" role="status" aria-live="polite">
+          Loading progress…
+        </div>
+        <div id="progress-summary-metrics" class="progress-metrics" hidden></div>
+        <p id="progress-summary-latest" class="progress-latest" hidden></p>
+        <p class="progress-caveat">
+          Counts report persisted outcomes and queues, not a percent-complete estimate.
+        </p>
+      </section>
+    </section>
+
     <details class="research-drawer">
       <summary>
         <span>
@@ -42,7 +84,7 @@
         <h3 class="gap-heading">Individual evidence gaps</h3>
         <p class="pane-explainer">
           These are records the analysis identified as missing, not questions awaiting your response.
-          Parent prompts are shown only as context and may include operator test runs.
+          This audit history does not require action unless the panel above explicitly asks you.
         </p>
         <div id="queue-state" class="state" role="status" aria-live="polite">Loading queue…</div>
         <ol id="queue-list" class="item-list queue-list" aria-label="Agent-produced evidence gaps"></ol>

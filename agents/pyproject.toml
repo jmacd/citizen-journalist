@@ -33,6 +33,7 @@ otel = [
 [project.scripts]
 mendo-agents = "mendo_agents.cli:main"
 mendo-chat = "mendo_agents.chat:main"
+mendo-triage-worker = "mendo_agents.research_triage:main"
 mendo-workbench = "mendo_agents.workbench:main"
 
 [tool.hatch.build.targets.wheel]

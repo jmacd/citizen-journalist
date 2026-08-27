@@ -142,6 +142,39 @@ class ResearchDirective:
 
 
 @dataclass(frozen=True)
+class RetrievalFailure:
+    run_id: int
+    directive_id: str
+    case_id: str
+    directive_title: str
+    search_brief: str
+    allowed_hosts: tuple[str, ...]
+    error_type: str
+    error_message: str
+    failed_at: str
+    directive_snapshot_status: str
+
+
+@dataclass(frozen=True)
+class AcquisitionDiagnosis:
+    id: str
+    run_id: int
+    directive_id: str
+    failure_kind: str
+    summary: str
+    root_cause: str
+    repair_kind: str
+    code_change_required: bool
+    proposed_changes: tuple[dict[str, str], ...]
+    safety_constraints: tuple[str, ...]
+    citations: tuple[str, ...]
+    provider: str
+    model: str
+    status: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class SearchCandidate:
     target_id: str
     url: str

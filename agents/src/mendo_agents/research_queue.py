@@ -9,6 +9,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 from .models import EvidenceGap
 
@@ -68,6 +69,37 @@ class ResearchQueue:
             for name, statement in migrations.items():
                 if name not in columns:
                     connection.execute(statement)
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS research_question_runs (
+                  id TEXT PRIMARY KEY,
+                  case_id TEXT NOT NULL,
+                  question TEXT NOT NULL,
+                  origin_type TEXT NOT NULL,
+                  initiating_actor TEXT NOT NULL,
+                  created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS research_question_run_gaps (
+                  run_id TEXT NOT NULL,
+                  gap_id TEXT NOT NULL,
+                  was_new INTEGER NOT NULL,
+                  PRIMARY KEY (run_id, gap_id),
+                  FOREIGN KEY (run_id) REFERENCES research_question_runs(id),
+                  FOREIGN KEY (gap_id) REFERENCES research_queue(id)
+                );
+                INSERT OR IGNORE INTO research_question_runs
+                  (id, case_id, question, origin_type, initiating_actor,
+                   created_at)
+                SELECT COALESCE(origin_run_id, 'legacy-' || id),
+                       case_id, question, origin_type, initiating_actor,
+                       created_at
+                  FROM research_queue;
+                INSERT OR IGNORE INTO research_question_run_gaps
+                  (run_id, gap_id, was_new)
+                SELECT COALESCE(origin_run_id, 'legacy-' || id), id, 1
+                  FROM research_queue;
+                """
+            )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
@@ -95,8 +127,25 @@ class ResearchQueue:
                 initiating_actor=initiating_actor,
             )
         now = datetime.now(UTC).isoformat()
+        run_id = origin_run_id or f"enqueue-{uuid4()}"
         queued: list[QueuedResearch] = []
         with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO research_question_runs
+                  (id, case_id, question, origin_type, initiating_actor,
+                   created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_id,
+                    case_id,
+                    question,
+                    origin_type,
+                    initiating_actor,
+                    now,
+                ),
+            )
             for gap in gaps:
                 identity = "\n".join(
                     (
@@ -105,6 +154,13 @@ class ResearchQueue:
                     )
                 )
                 item_id = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:20]
+                was_new = (
+                    connection.execute(
+                        "SELECT 1 FROM research_queue WHERE id = ?",
+                        (item_id,),
+                    ).fetchone()
+                    is None
+                )
                 connection.execute(
                     """
                     INSERT INTO research_queue
@@ -130,11 +186,25 @@ class ResearchQueue:
                         initiating_actor,
                     ),
                 )
+                connection.execute(
+                    """
+                    INSERT INTO research_question_run_gaps
+                      (run_id, gap_id, was_new)
+                    VALUES (?, ?, ?)
+                    """,
+                    (run_id, item_id, int(was_new)),
+                )
+                status = str(
+                    connection.execute(
+                        "SELECT status FROM research_queue WHERE id = ?",
+                        (item_id,),
+                    ).fetchone()["status"]
+                )
                 queued.append(
                     QueuedResearch(
                         id=item_id,
                         deciding_record=gap.deciding_record,
-                        status="triage",
+                        status=status,
                     )
                 )
         return tuple(queued)

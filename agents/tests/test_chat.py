@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import json
+import sqlite3
 from pathlib import Path
 
 from mendo_agents.chat import PublicChatError, PublicChatService, _settings_from_args
@@ -76,6 +78,22 @@ async def test_public_chat_returns_skeptic_checked_citations(
         "field": None,
         "invalid": False,
     }
+    with sqlite3.connect(service.research_queue.path) as connection:
+        row = connection.execute(
+            """
+            SELECT r.question, a.result_json
+              FROM research_question_runs r
+              JOIN research_question_analyses a
+                ON a.question_run_id = r.id
+            """
+        ).fetchone()
+    snapshot = json.loads(row[1])
+    assert row[0] == "Did the commission continue the hearing?"
+    assert snapshot["analysis"]["claims"][0]["text"] == (
+        "The commission continued the hearing."
+    )
+    assert snapshot["review"]["accepted"] is True
+    assert snapshot["conversation_context"] == []
 
 
 async def test_public_chat_rejects_empty_questions(
@@ -217,6 +235,36 @@ def test_blocked_chat_labels_invalid_draft_locator(
     citation = result["withheld_claims"][0]["citations"][0]
     assert citation["invalid"] is True
     assert citation["title"] == "Invalid evidence locator: invented-source"
+
+
+def test_public_gaps_merge_claim_relationships_for_same_record() -> None:
+    output = RunDisposition(
+        kind=DispositionKind.ANSWER_READY,
+        summary="A further record is needed.",
+        gaps=(
+            EvidenceGap(
+                description="The project location is unresolved.",
+                deciding_record="Project approval",
+                rationale="The order does not identify the location.",
+                related_claim_indices=(0,),
+            ),
+            EvidenceGap(
+                description="The approving action is unresolved.",
+                deciding_record="Project approval",
+                rationale="The minutes do not contain the signed action.",
+                related_claim_indices=(1,),
+            ),
+        ),
+    )
+
+    gaps = PublicChatService._public_gaps(output)
+
+    assert len(gaps) == 1
+    assert gaps[0].related_claim_indices == (0, 1)
+    assert gaps[0].rationale == (
+        "The order does not identify the location.\n"
+        "The minutes do not contain the signed action."
+    )
 
 
 async def test_public_chat_uses_bounded_history_for_followup(

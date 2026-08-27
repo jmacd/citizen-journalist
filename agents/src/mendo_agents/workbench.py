@@ -489,6 +489,504 @@ class WorkbenchStore:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def provenance_questions(self) -> list[dict[str, object]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT r.id, r.case_id, r.question, r.origin_type,
+                       r.initiating_actor, r.created_at,
+                       a.result_json,
+                       COUNT(DISTINCT g.gap_id) AS gap_count,
+                       COUNT(DISTINCT q.directive_id) AS directive_count
+                  FROM research_question_runs r
+                  LEFT JOIN research_question_analyses a
+                    ON a.question_run_id = r.id
+                  LEFT JOIN research_question_run_gaps g
+                    ON g.run_id = r.id
+                  LEFT JOIN research_directive_question_runs q
+                    ON q.question_run_id = r.id
+                 GROUP BY r.id
+                 ORDER BY r.created_at DESC, r.id DESC
+                 LIMIT 100
+                """
+            ).fetchall()
+        result = []
+        for row in rows:
+            item = {
+                key: row[key]
+                for key in (
+                    "id",
+                    "case_id",
+                    "question",
+                    "origin_type",
+                    "initiating_actor",
+                    "created_at",
+                    "gap_count",
+                    "directive_count",
+                )
+            }
+            item["analysis_available"] = row["result_json"] is not None
+            if row["result_json"] is not None:
+                try:
+                    snapshot = json.loads(str(row["result_json"]))
+                except json.JSONDecodeError as error:
+                    raise RuntimeError(
+                        f"Question analysis is corrupt for {row['id']}"
+                    ) from error
+                item["disposition"] = snapshot.get("disposition")
+                analysis = snapshot.get("analysis")
+                item["claim_count"] = (
+                    len(analysis.get("claims", []))
+                    if isinstance(analysis, dict)
+                    else 0
+                )
+            else:
+                item["disposition"] = None
+                item["claim_count"] = 0
+            result.append(item)
+        return result
+
+    def provenance_graph(self, question_run_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            question = connection.execute(
+                """
+                SELECT r.id, r.case_id, r.question, r.origin_type,
+                       r.initiating_actor, r.created_at, a.result_json
+                  FROM research_question_runs r
+                  LEFT JOIN research_question_analyses a
+                    ON a.question_run_id = r.id
+                 WHERE r.id = ?
+                """,
+                (question_run_id,),
+            ).fetchone()
+            if question is None:
+                raise WorkbenchError(
+                    f"Unknown question run: {question_run_id}"
+                )
+            gaps = connection.execute(
+                """
+                SELECT q.id,
+                       COALESCE(g.description, q.description) AS description,
+                       COALESCE(g.deciding_record, q.deciding_record)
+                         AS deciding_record,
+                       COALESCE(g.likely_custodian, q.likely_custodian)
+                         AS likely_custodian,
+                       q.status, q.created_at,
+                       g.was_new, g.rationale,
+                       g.related_claim_indices_json
+                  FROM research_question_run_gaps g
+                  JOIN research_queue q ON q.id = g.gap_id
+                 WHERE g.run_id = ?
+                 ORDER BY q.created_at, q.id
+                """,
+                (question_run_id,),
+            ).fetchall()
+            triage_table = connection.execute(
+                """
+                SELECT 1
+                  FROM sqlite_master
+                 WHERE type = 'table' AND name = 'research_triage_runs'
+                """
+            ).fetchone()
+            triage_columns = (
+                {
+                    str(row["name"])
+                    for row in connection.execute(
+                        "PRAGMA table_info(research_triage_runs)"
+                    )
+                }
+                if triage_table is not None
+                else set()
+            )
+            directive_column = (
+                "directive_id"
+                if "directive_id" in triage_columns
+                else "NULL AS directive_id"
+            )
+            triage_runs = (
+                connection.execute(
+                    f"""
+                    SELECT id, status, provider, model, started_at, completed_at,
+                           output_json, error_type, error, {directive_column}
+                      FROM research_triage_runs
+                     WHERE question_run_id = ?
+                     ORDER BY id
+                    """,
+                    (question_run_id,),
+                ).fetchall()
+                if triage_table is not None
+                else []
+            )
+            directives = connection.execute(
+                """
+                SELECT DISTINCT d.id, d.title, d.search_brief, d.status,
+                       d.created_at, d.updated_at, d.approved_by, d.approved_at,
+                       q.attribution
+                  FROM research_directives d
+                  JOIN research_directive_question_runs q
+                    ON q.directive_id = d.id
+                 WHERE q.question_run_id = ?
+                 ORDER BY d.created_at, d.id
+                """,
+                (question_run_id,),
+            ).fetchall()
+            directive_leads = connection.execute(
+                """
+                SELECT l.directive_id, l.lead_id
+                  FROM research_directive_leads l
+                  JOIN research_directive_question_runs q
+                    ON q.directive_id = l.directive_id
+                 WHERE q.question_run_id = ?
+                """,
+                (question_run_id,),
+            ).fetchall()
+            dispatch_runs = connection.execute(
+                """
+                SELECT r.id, r.directive_id, r.status, r.provider, r.model,
+                       r.started_at, r.completed_at, r.error_type, r.error
+                  FROM research_dispatch_runs r
+                  JOIN research_directive_question_runs q
+                    ON q.directive_id = r.directive_id
+                 WHERE q.question_run_id = ?
+                 ORDER BY r.id
+                """,
+                (question_run_id,),
+            ).fetchall()
+
+        snapshot = None
+        if question["result_json"] is not None:
+            try:
+                snapshot = json.loads(str(question["result_json"]))
+            except json.JSONDecodeError as error:
+                raise RuntimeError(
+                    f"Question analysis is corrupt for {question_run_id}"
+                ) from error
+
+        nodes: list[dict[str, object]] = []
+        edges: list[dict[str, object]] = []
+        node_ids: set[str] = set()
+        edge_ids: set[tuple[str, str, str, str]] = set()
+
+        def add_node(
+            node_id: str,
+            kind: str,
+            label: str,
+            **attributes: object,
+        ) -> None:
+            if node_id in node_ids:
+                return
+            node_ids.add(node_id)
+            nodes.append(
+                {"id": node_id, "kind": kind, "label": label, **attributes}
+            )
+
+        def add_edge(
+            source: str,
+            target: str,
+            kind: str,
+            label: str,
+            **attributes: object,
+        ) -> None:
+            identity = (
+                source,
+                target,
+                kind,
+                json.dumps(attributes, sort_keys=True),
+            )
+            if identity in edge_ids:
+                return
+            edge_ids.add(identity)
+            edges.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "kind": kind,
+                    "label": label,
+                    **attributes,
+                }
+            )
+
+        question_node = f"question:{question_run_id}"
+        add_node(
+            question_node,
+            "question",
+            str(question["question"]),
+            timestamp=question["created_at"],
+            status=(
+                snapshot.get("disposition")
+                if isinstance(snapshot, dict)
+                else "legacy"
+            ),
+        )
+
+        analysis = (
+            snapshot.get("analysis")
+            if isinstance(snapshot, dict)
+            else None
+        )
+        claims = (
+            analysis.get("claims", [])
+            if isinstance(analysis, dict)
+            else []
+        )
+        answer_claim_indices = set(
+            analysis.get("answer_claim_indices", [])
+            if isinstance(analysis, dict)
+            else []
+        )
+        for index, claim in enumerate(claims):
+            if not isinstance(claim, dict):
+                raise RuntimeError(
+                    f"Question claim is corrupt for {question_run_id}"
+                )
+            claim_node = f"claim:{question_run_id}:{index}"
+            add_node(
+                claim_node,
+                "claim",
+                str(claim.get("text", "")),
+                status=claim.get("confidence"),
+                limitation=claim.get("does_not_establish"),
+                answers_question=index in answer_claim_indices,
+            )
+            add_edge(
+                question_node,
+                claim_node,
+                "answered_by" if index in answer_claim_indices else "analyzed_by",
+                "answer relies on" if index in answer_claim_indices else "analysis",
+            )
+            for citation in claim.get("citations", []):
+                if not isinstance(citation, dict):
+                    raise RuntimeError(
+                        f"Question citation is corrupt for {question_run_id}"
+                    )
+                document_id = str(citation.get("document_id", "unknown"))
+                source_node = f"source:{document_id}"
+                add_node(
+                    source_node,
+                    "source",
+                    str(citation.get("title") or document_id),
+                    status="invalid" if citation.get("invalid") else "registered",
+                    document_id=document_id,
+                    publisher=citation.get("publisher"),
+                    url=citation.get("url"),
+                )
+                locator = {
+                    key: citation.get(key)
+                    for key in ("page", "section", "timestamp", "field")
+                    if citation.get(key) is not None
+                }
+                add_edge(
+                    claim_node,
+                    source_node,
+                    "supported_by",
+                    "cites",
+                    locator=locator,
+                )
+
+        review = (
+            snapshot.get("review")
+            if isinstance(snapshot, dict)
+            else None
+        )
+        if isinstance(review, dict):
+            for index, finding in enumerate(review.get("findings", [])):
+                if not isinstance(finding, dict):
+                    raise RuntimeError(
+                        f"Skeptic finding is corrupt for {question_run_id}"
+                    )
+                finding_node = f"finding:{question_run_id}:{index}"
+                add_node(
+                    finding_node,
+                    "finding",
+                    str(finding.get("message", "")),
+                    status=finding.get("severity"),
+                    code=finding.get("code"),
+                )
+                claim_index = finding.get("claim_index")
+                if isinstance(claim_index, int) and 0 <= claim_index < len(claims):
+                    add_edge(
+                        f"claim:{question_run_id}:{claim_index}",
+                        finding_node,
+                        "reviewed_by",
+                        "Skeptic finding",
+                    )
+                else:
+                    add_edge(
+                        question_node,
+                        finding_node,
+                        "reviewed_by",
+                        "Skeptic finding",
+                    )
+
+        gap_ids = {str(row["id"]) for row in gaps}
+        for gap in gaps:
+            gap_id = str(gap["id"])
+            gap_node = f"gap:{gap_id}"
+            add_node(
+                gap_node,
+                "gap",
+                str(gap["deciding_record"]),
+                detail=gap["description"],
+                custodian=gap["likely_custodian"],
+                status=gap["status"],
+                was_new=bool(gap["was_new"]),
+                timestamp=gap["created_at"],
+            )
+            try:
+                related_claim_indices = json.loads(
+                    str(gap["related_claim_indices_json"])
+                )
+            except json.JSONDecodeError as error:
+                raise RuntimeError(
+                    f"Gap claim relationships are corrupt for {gap_id}"
+                ) from error
+            if not isinstance(related_claim_indices, list) or not all(
+                isinstance(index, int) for index in related_claim_indices
+            ):
+                raise RuntimeError(
+                    f"Gap claim relationships are invalid for {gap_id}"
+                )
+            if related_claim_indices:
+                for claim_index in related_claim_indices:
+                    if 0 <= claim_index < len(claims):
+                        add_edge(
+                            f"claim:{question_run_id}:{claim_index}",
+                            gap_node,
+                            "requires_record",
+                            "does not establish; needs",
+                            rationale=gap["rationale"],
+                        )
+                    else:
+                        raise RuntimeError(
+                            f"Gap {gap_id} refers to missing claim "
+                            f"{claim_index}"
+                        )
+            else:
+                add_edge(
+                    question_node,
+                    gap_node,
+                    "identified_gap",
+                    "identified evidence gap",
+                    rationale=gap["rationale"],
+                )
+
+        directive_by_id = {str(row["id"]): row for row in directives}
+        for row in triage_runs:
+            triage_node = f"triage:{row['id']}"
+            add_node(
+                triage_node,
+                "triage",
+                f"Foundry triage run {row['id']}",
+                status=row["status"],
+                provider=row["provider"],
+                model=row["model"],
+                timestamp=row["started_at"],
+                completed_at=row["completed_at"],
+                error_type=row["error_type"],
+                error=row["error"],
+            )
+            add_edge(question_node, triage_node, "triaged_by", "triaged by")
+            if (
+                row["directive_id"] is not None
+                and str(row["directive_id"]) in directive_by_id
+            ):
+                add_edge(
+                    triage_node,
+                    f"directive:{row['directive_id']}",
+                    "prepared",
+                    "prepared search",
+                )
+
+        for row in directives:
+            directive_id = str(row["id"])
+            add_node(
+                f"directive:{directive_id}",
+                "directive",
+                str(row["title"]),
+                detail=row["search_brief"],
+                status=row["status"],
+                timestamp=row["created_at"],
+                approved_by=row["approved_by"],
+                approved_at=row["approved_at"],
+                attribution=row["attribution"],
+            )
+        for row in directive_leads:
+            lead_id = str(row["lead_id"])
+            directive_id = str(row["directive_id"])
+            if lead_id in gap_ids and directive_id in directive_by_id:
+                add_edge(
+                    f"gap:{lead_id}",
+                    f"directive:{directive_id}",
+                    "investigated_by",
+                    "investigated by",
+                    attribution=directive_by_id[directive_id]["attribution"],
+                )
+
+        for row in dispatch_runs:
+            dispatch_node = f"dispatch:{row['id']}"
+            add_node(
+                dispatch_node,
+                "dispatch",
+                f"Foundry search run {row['id']}",
+                status=row["status"],
+                provider=row["provider"],
+                model=row["model"],
+                timestamp=row["started_at"],
+                completed_at=row["completed_at"],
+                error_type=row["error_type"],
+                error=row["error"],
+            )
+            add_edge(
+                f"directive:{row['directive_id']}",
+                dispatch_node,
+                "executed_as",
+                "executed as",
+            )
+
+        for candidate in self.candidates_with_decisions():
+            related_gap_ids = gap_ids.intersection(
+                str(item) for item in candidate.get("related_lead_ids", [])
+            )
+            if not related_gap_ids:
+                continue
+            candidate_id = str(candidate["id"])
+            candidate_node = f"candidate:{candidate_id}"
+            registration = candidate.get("canonical_registration")
+            decision = candidate.get("latest_decision")
+            add_node(
+                candidate_node,
+                "candidate",
+                str(candidate["title"]),
+                status=(
+                    "registered"
+                    if registration
+                    else (
+                        decision.get("action")
+                        if isinstance(decision, dict)
+                        else candidate.get("status")
+                    )
+                ),
+                sha256=candidate.get("sha256"),
+                source_url=candidate.get("source_url"),
+                registration=registration,
+            )
+            for gap_id in sorted(related_gap_ids):
+                add_edge(
+                    f"gap:{gap_id}",
+                    candidate_node,
+                    "produced_candidate",
+                    "produced candidate",
+                    attribution="directive_scope",
+                )
+
+        return {
+            "schema_version": 1,
+            "question_run_id": question_run_id,
+            "semantic_analysis_available": snapshot is not None,
+            "nodes": nodes,
+            "edges": edges,
+        }
+
     def research_activity(self) -> list[dict[str, object]]:
         result = []
         for directive in self.directive_store.list():
@@ -1007,6 +1505,21 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
             if path == "/api/workbench/queue":
                 items = self.workbench_server.store.queue()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            if path == "/api/workbench/provenance/questions":
+                items = self.workbench_server.store.provenance_questions()
+                self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
+            provenance_match = re.fullmatch(
+                r"/api/workbench/provenance/questions/([^/]+)", path
+            )
+            if provenance_match:
+                self._json(
+                    HTTPStatus.OK,
+                    self.workbench_server.store.provenance_graph(
+                        unquote(provenance_match.group(1))
+                    ),
+                )
                 return
             if path == "/api/workbench/research-activity":
                 items = self.workbench_server.store.research_activity()

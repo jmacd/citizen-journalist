@@ -65,6 +65,30 @@
       </section>
     </section>
 
+    <details class="provenance-panel" open>
+      <summary>
+        <span>
+          <span class="eyebrow">How the research developed</span>
+          <span class="drawer-title">Question evidence map</span>
+        </span>
+      </summary>
+      <div class="provenance-content">
+        <label class="provenance-question-label" for="provenance-question">
+          Question run
+        </label>
+        <select id="provenance-question"></select>
+        <p class="pane-explainer">
+          This map shows persisted claims, citations, explicit limitations, evidence gaps,
+          searches, and discovered records. It records concise rationale, not hidden model
+          reasoning.
+        </p>
+        <div id="provenance-state" class="state" role="status" aria-live="polite">
+          Loading question history…
+        </div>
+        <div id="provenance-graph" hidden></div>
+      </div>
+    </details>
+
     <details class="research-drawer">
       <summary>
         <span>

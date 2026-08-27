@@ -308,6 +308,180 @@ def test_progress_records_question_with_no_gaps(tmp_path: Path) -> None:
     assert progress["latest_question"]["gap_statuses"] == {}
 
 
+def test_question_provenance_graph_preserves_claim_gap_rationale(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    queue = ResearchQueue(queue_path)
+    snapshot = {
+        "schema_version": 1,
+        "disposition": "answer_ready",
+        "analysis": {
+            "short_answer": "The order authorizes the general program.",
+            "answer_claim_indices": [0],
+            "claims": [
+                {
+                    "text": "The order authorizes the general program.",
+                    "confidence": "supported_interpretation",
+                    "does_not_establish": "Approval of this project site.",
+                    "citations": [
+                        {
+                            "document_id": "general-order",
+                            "title": "General Order",
+                            "publisher": "Public Agency",
+                            "url": "https://example.gov/order.pdf",
+                            "page": 4,
+                            "section": None,
+                            "timestamp": None,
+                            "field": None,
+                            "invalid": False,
+                        },
+                        {
+                            "document_id": "general-order",
+                            "title": "General Order",
+                            "publisher": "Public Agency",
+                            "url": "https://example.gov/order.pdf",
+                            "page": 12,
+                            "section": None,
+                            "timestamp": None,
+                            "field": None,
+                            "invalid": False,
+                        },
+                    ],
+                }
+            ],
+        },
+        "review": {"accepted": True, "findings": []},
+    }
+    gap = EvidenceGap(
+        description="Project approval is unresolved.",
+        deciding_record="Project-specific approval",
+        likely_custodian="Public Agency",
+        rationale=(
+            "The general order does not identify this project site."
+        ),
+        related_claim_indices=(0,),
+    )
+    lead = queue.enqueue(
+        "CASE-1",
+        "Was this project approved?",
+        (gap,),
+        origin_run_id="question-provenance",
+        provenance_snapshot=snapshot,
+    )[0]
+    directive = ResearchDirectiveStore(queue_path).create(
+        "CASE-1",
+        "Find project approval",
+        "Retrieve the project-specific approval.",
+        (lead.id,),
+        ("example.gov",),
+        question_run_id="question-provenance",
+    )
+    store = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    )
+
+    questions = store.provenance_questions()
+    graph = store.provenance_graph("question-provenance")
+
+    assert questions[0]["analysis_available"] is True
+    assert questions[0]["claim_count"] == 1
+    assert {node["kind"] for node in graph["nodes"]} == {
+        "question",
+        "claim",
+        "source",
+        "gap",
+        "directive",
+    }
+    relationship = next(
+        edge
+        for edge in graph["edges"]
+        if edge["kind"] == "requires_record"
+    )
+    assert relationship["source"] == "claim:question-provenance:0"
+    assert relationship["target"] == f"gap:{lead.id}"
+    assert relationship["rationale"] == gap.rationale
+    assert len(
+        [
+            edge
+            for edge in graph["edges"]
+            if edge["kind"] == "supported_by"
+        ]
+    ) == 2
+    assert any(
+        edge["target"] == f"directive:{directive.id}"
+        and edge["kind"] == "investigated_by"
+        and edge["attribution"] == "recorded"
+        for edge in graph["edges"]
+    )
+
+
+def test_legacy_question_graph_does_not_invent_semantic_nodes(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Legacy question",
+        (),
+        origin_run_id="legacy-question",
+    )
+    graph = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).provenance_graph("legacy-question")
+
+    assert graph["semantic_analysis_available"] is False
+    assert [node["kind"] for node in graph["nodes"]] == ["question"]
+    assert graph["edges"] == []
+
+
+def test_question_graph_reads_legacy_triage_schema(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "research-queue.sqlite"
+    ResearchQueue(queue_path).enqueue(
+        "CASE-1",
+        "Legacy triage question",
+        (),
+        origin_run_id="legacy-triage-question",
+    )
+    with sqlite3.connect(queue_path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE research_triage_runs (
+              id INTEGER PRIMARY KEY,
+              question_run_id TEXT NOT NULL,
+              status TEXT NOT NULL,
+              provider TEXT NOT NULL,
+              model TEXT,
+              started_at TEXT NOT NULL,
+              completed_at TEXT,
+              output_json TEXT,
+              error_type TEXT,
+              error TEXT
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO research_triage_runs
+              (id, question_run_id, status, provider, started_at)
+            VALUES (1, 'legacy-triage-question', 'completed', 'foundry',
+                    '2026-08-27T01:00:00+00:00')
+            """
+        )
+
+    graph = WorkbenchStore(
+        queue_path,
+        CandidateStore(tmp_path / "staging"),
+    ).provenance_graph("legacy-triage-question")
+
+    assert any(node["kind"] == "triage" for node in graph["nodes"])
+    assert not any(edge["kind"] == "prepared" for edge in graph["edges"])
+
+
 def test_progress_reports_healthy_foundry_triage_loop(
     tmp_path: Path,
     monkeypatch,
@@ -515,6 +689,11 @@ def test_workbench_ui_and_watershop_service_preserve_approval_boundary() -> None
     assert "No triage run is recorded yet" in javascript
     assert "Counts report persisted outcomes" in html
     assert "Automation loop status" in html
+    assert "Question evidence map" in html
+    assert "not hidden model" in html
+    assert "/api/workbench/provenance/questions" in javascript
+    assert "function renderProvenanceGraph(graph)" in javascript
+    assert javascript.count("loadProvenanceQuestions(),") == 2
     assert "Acquisition Engineer diagnosis" in javascript
     assert "IN THE LOOP — Foundry research is running" in javascript
     assert "OUT OF THE LOOP — no agent is processing these gaps" in javascript

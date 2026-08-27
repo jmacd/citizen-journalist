@@ -90,6 +90,7 @@ class ResearchDirectiveStore:
                 CREATE TABLE IF NOT EXISTS research_directive_question_runs (
                   directive_id TEXT NOT NULL,
                   question_run_id TEXT NOT NULL,
+                  attribution TEXT NOT NULL DEFAULT 'recorded',
                   PRIMARY KEY (directive_id, question_run_id),
                   FOREIGN KEY (directive_id) REFERENCES research_directives(id),
                   FOREIGN KEY (question_run_id)
@@ -120,27 +121,6 @@ class ResearchDirectiveStore:
                   PRIMARY KEY (run_id, target_id),
                   FOREIGN KEY (run_id) REFERENCES research_dispatch_runs(id)
                 );
-                INSERT OR IGNORE INTO research_directive_question_runs
-                  (directive_id, question_run_id)
-                SELECT l.directive_id,
-                       (
-                         SELECT g.run_id
-                           FROM research_question_run_gaps g
-                           JOIN research_question_runs q ON q.id = g.run_id
-                          WHERE g.gap_id = l.lead_id
-                            AND q.created_at <= d.created_at
-                          ORDER BY q.created_at DESC, q.id DESC
-                          LIMIT 1
-                       )
-                  FROM research_directive_leads l
-                  JOIN research_directives d ON d.id = l.directive_id
-                 WHERE EXISTS (
-                         SELECT 1
-                           FROM research_question_run_gaps g
-                           JOIN research_question_runs q ON q.id = g.run_id
-                          WHERE g.gap_id = l.lead_id
-                            AND q.created_at <= d.created_at
-                       );
                 """
             )
             columns = {
@@ -158,6 +138,44 @@ class ResearchDirectiveStore:
                     "ALTER TABLE research_dispatch_runs "
                     "ADD COLUMN directive_snapshot_json TEXT"
                 )
+            question_run_columns = {
+                str(row["name"])
+                for row in connection.execute(
+                    "PRAGMA table_info(research_directive_question_runs)"
+                )
+            }
+            if "attribution" not in question_run_columns:
+                connection.execute(
+                    "ALTER TABLE research_directive_question_runs "
+                    "ADD COLUMN attribution TEXT NOT NULL "
+                    "DEFAULT 'inferred_legacy'"
+                )
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO research_directive_question_runs
+                  (directive_id, question_run_id, attribution)
+                SELECT l.directive_id,
+                       (
+                         SELECT g.run_id
+                           FROM research_question_run_gaps g
+                           JOIN research_question_runs q ON q.id = g.run_id
+                          WHERE g.gap_id = l.lead_id
+                            AND q.created_at <= d.created_at
+                          ORDER BY q.created_at DESC, q.id DESC
+                          LIMIT 1
+                       ),
+                       'inferred_legacy'
+                  FROM research_directive_leads l
+                  JOIN research_directives d ON d.id = l.directive_id
+                 WHERE EXISTS (
+                         SELECT 1
+                           FROM research_question_run_gaps g
+                           JOIN research_question_runs q ON q.id = g.run_id
+                          WHERE g.gap_id = l.lead_id
+                            AND q.created_at <= d.created_at
+                       )
+                """
+            )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
@@ -363,8 +381,8 @@ class ResearchDirectiveStore:
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO research_directive_question_runs
-                      (directive_id, question_run_id)
-                    SELECT ?, g.run_id
+                      (directive_id, question_run_id, attribution)
+                    SELECT ?, g.run_id, 'inferred_legacy'
                       FROM research_question_run_gaps g
                       JOIN research_question_runs q ON q.id = g.run_id
                      WHERE g.gap_id = ? AND q.created_at <= ?
@@ -385,8 +403,8 @@ class ResearchDirectiveStore:
             connection.execute(
                 """
                 INSERT INTO research_directive_question_runs
-                  (directive_id, question_run_id)
-                VALUES (?, ?)
+                  (directive_id, question_run_id, attribution)
+                VALUES (?, ?, 'recorded')
                 """,
                 (directive_id, question_run_id),
             )

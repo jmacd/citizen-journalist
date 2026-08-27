@@ -24,6 +24,9 @@ const candidatesState = document.getElementById("candidates-state");
 const candidateCount = document.getElementById("candidate-count");
 const detailState = document.getElementById("detail-state");
 const detail = document.getElementById("candidate-detail");
+const provenanceQuestion = document.getElementById("provenance-question");
+const provenanceState = document.getElementById("provenance-state");
+const provenanceGraph = document.getElementById("provenance-graph");
 
 let candidates = [];
 let researchDirectives = [];
@@ -33,6 +36,9 @@ let researchActivityLoadSequence = 0;
 const directiveActionsInFlight = new Set();
 let selectedCandidateId = null;
 const decisionMessages = new Map();
+let provenanceQuestions = [];
+let selectedProvenanceQuestionId = null;
+let provenanceQuestionLoadSequence = 0;
 
 function element(tag, options = {}) {
   const node = document.createElement(tag);
@@ -103,6 +109,160 @@ function valueOrDash(value) {
 function countStatus(group, status) {
   return Number(group?.[status] || 0);
 }
+
+function provenanceLane(kind) {
+  if (kind === "question") return "Question";
+  if (["claim", "source"].includes(kind)) return "Claims and sources";
+  if (["finding", "gap"].includes(kind)) return "Limits and gaps";
+  if (["triage", "directive", "dispatch"].includes(kind)) return "Research actions";
+  return "Discovered records";
+}
+
+function renderProvenanceGraph(graph) {
+  provenanceGraph.replaceChildren();
+  const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+  const edges = Array.isArray(graph.edges) ? graph.edges : [];
+  const labels = new Map(nodes.map((node) => [node.id, node.label]));
+
+  if (!graph.semantic_analysis_available) {
+    provenanceGraph.append(element("p", {
+      className: "provenance-legacy",
+      text: "This question predates semantic snapshots. Its recorded gaps and search actions are shown without reconstructed claims or rationale.",
+    }));
+  }
+
+  const lanes = element("div", { className: "provenance-lanes" });
+  [
+    "Question",
+    "Claims and sources",
+    "Limits and gaps",
+    "Research actions",
+    "Discovered records",
+  ].forEach((laneName) => {
+    const lane = element("section", { className: "provenance-lane" });
+    lane.append(element("h4", { text: laneName }));
+    const laneNodes = nodes.filter(
+      (node) => provenanceLane(node.kind) === laneName,
+    );
+    if (!laneNodes.length) {
+      lane.append(element("p", {
+        className: "empty-copy",
+        text: "No persisted nodes",
+      }));
+    }
+    laneNodes.forEach((node) => {
+      const card = element("article", {
+        className: `provenance-node node-${node.kind}`,
+      });
+      card.append(
+        element("span", { className: "provenance-kind", text: node.kind }),
+        element("strong", { text: valueOrDash(node.label) }),
+      );
+      if (node.status) {
+        card.append(element("span", {
+          className: "provenance-status",
+          text: node.status,
+        }));
+      }
+      if (node.detail) {
+        card.append(element("p", { text: node.detail }));
+      }
+      if (node.limitation) {
+        card.append(element("p", {
+          className: "provenance-limitation",
+          text: `Does not establish: ${node.limitation}`,
+        }));
+      }
+      lane.append(card);
+    });
+    lanes.append(lane);
+  });
+  provenanceGraph.append(lanes);
+
+  if (edges.length) {
+    const connections = element("section", {
+      className: "provenance-connections",
+    });
+    connections.append(element("h4", { text: "Recorded connections" }));
+    const list = element("ol");
+    edges.forEach((edge) => {
+      const rationale = edge.rationale ? ` — ${edge.rationale}` : "";
+      const attribution = edge.attribution && edge.attribution !== "recorded"
+        ? ` [${edge.attribution.replaceAll("_", " ")}]`
+        : "";
+      list.append(element("li", {
+        text: `${valueOrDash(labels.get(edge.source))} → ${edge.label}${attribution} → ${valueOrDash(labels.get(edge.target))}${rationale}`,
+      }));
+    });
+    connections.append(list);
+    provenanceGraph.append(connections);
+  }
+  provenanceGraph.hidden = false;
+}
+
+async function loadProvenanceGraph(questionRunId) {
+  selectedProvenanceQuestionId = questionRunId;
+  provenanceGraph.hidden = true;
+  setState(provenanceState, "Loading persisted provenance…");
+  try {
+    const graph = await getJSON(
+      `/api/workbench/provenance/questions/${encodeURIComponent(questionRunId)}`,
+    );
+    if (questionRunId !== selectedProvenanceQuestionId) return;
+    renderProvenanceGraph(graph);
+    provenanceState.hidden = true;
+  } catch (error) {
+    if (questionRunId !== selectedProvenanceQuestionId) return;
+    setState(
+      provenanceState,
+      `Could not load question provenance: ${error.message}`,
+      true,
+    );
+  }
+}
+
+async function loadProvenanceQuestions() {
+  const loadSequence = ++provenanceQuestionLoadSequence;
+  setState(provenanceState, "Loading question history…");
+  try {
+    const payload = await getJSON("/api/workbench/provenance/questions");
+    if (loadSequence !== provenanceQuestionLoadSequence) return;
+    provenanceQuestions = Array.isArray(payload.items) ? payload.items : [];
+    provenanceQuestion.replaceChildren();
+    provenanceQuestions.forEach((item) => {
+      const option = element("option", {
+        text: `${String(item.created_at || "").slice(0, 10)} · ${item.question}`,
+      });
+      option.value = item.id;
+      provenanceQuestion.append(option);
+    });
+    if (!provenanceQuestions.length) {
+      provenanceGraph.hidden = true;
+      setState(provenanceState, "No question runs have been recorded.");
+      return;
+    }
+    const selected = provenanceQuestions.some(
+      (item) => item.id === selectedProvenanceQuestionId,
+    )
+      ? selectedProvenanceQuestionId
+      : provenanceQuestions[0].id;
+    provenanceQuestion.value = selected;
+    await loadProvenanceGraph(selected);
+  } catch (error) {
+    if (loadSequence !== provenanceQuestionLoadSequence) return;
+    setState(
+      provenanceState,
+      `Could not load question history: ${error.message}`,
+      true,
+    );
+  }
+}
+
+provenanceQuestion.addEventListener("change", () => {
+  if (provenanceQuestion.value) {
+    loadProvenanceGraph(provenanceQuestion.value);
+  }
+});
 
 function metric(value, label, detail, warning = false) {
   const card = element("div", {
@@ -407,6 +567,7 @@ async function runDirectiveAction(directive, button, requiresApproval) {
         loadQueue(),
         loadCandidates(),
         loadProgressSummary(),
+        loadProvenanceQuestions(),
       ]);
     } finally {
       directiveActionsInFlight.delete(directive.id);
@@ -1472,6 +1633,7 @@ await Promise.all([
   loadQueue(),
   loadCandidates(),
   loadProgressSummary(),
+  loadProvenanceQuestions(),
 ]);
 setInterval(() => {
   if (!document.hidden) {

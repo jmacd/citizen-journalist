@@ -61,6 +61,7 @@ locals {
     MENDO_RESEARCH_QUEUE_PATH        = "/home/citizen/journalist/research/research-queue.sqlite"
     MENDO_RESEARCH_STAGING_ROOT      = "/home/citizen/journalist/research"
     MENDO_RUN_ROOT                   = "/home/citizen/journalist/research/agent-runs"
+    MENDO_CHECKPOINT_ROOT            = "/home/citizen/journalist/research/checkpoints"
     MENDO_TRIAGE_ALLOWED_HOSTS = join(",", [
       "documents.coastal.ca.gov",
       "leginfo.legislature.ca.gov",

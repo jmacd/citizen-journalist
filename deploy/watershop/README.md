@@ -126,10 +126,18 @@ Only the first manual units currently exist:
   review API on port 4180. It records audited CIO decisions but does not itself
   mutate canonical manifests.
 - `mendo-chat.service` answers case questions with Foundry and records typed
-  evidence gaps in the NFS-backed queue.
+  evidence gaps and immutable semantic question snapshots in the NFS-backed
+  queue.
 - `mendo-triage-worker.service` consumes those question runs without Copilot,
   asks Foundry for one bounded disposition, validates official hosts, and
   prepares at most the configured number of directives awaiting CIO approval.
+
+Terraform places operational question provenance under
+`/home/citizen/journalist/research`. This includes the SQLite queue, immutable
+semantic snapshots, staged review bundles, and MAF chat checkpoints at
+`/home/citizen/journalist/research/checkpoints`. The snapshots retain bounded
+conversation context so follow-up questions remain intelligible; they do not
+store hidden model reasoning.
 
 The Workbench is intended to sit behind the existing host-owned Caddy service.
 This repository provides `Caddyfile.workbench.example` for a dedicated private

@@ -124,6 +124,8 @@ class EvidenceGap:
     deciding_record: str
     likely_custodian: str | None = None
     search_before_request: tuple[str, ...] = ()
+    rationale: str | None = None
+    related_claim_indices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)

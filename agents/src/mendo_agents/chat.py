@@ -8,7 +8,7 @@ import json
 from uuid import uuid4
 import mimetypes
 import traceback
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -120,7 +120,7 @@ class PublicChatService:
         if output is None:
             raise RuntimeError("Public workflow ended without a disposition")
         public_gaps = self._public_gaps(output)
-        queued = ()
+        queue_gaps = ()
         if output.analysis is not None and output.review is not None and (
             (
                 output.kind == DispositionKind.ANSWER_READY
@@ -131,17 +131,26 @@ class PublicChatService:
                 and not output.review.accepted
             )
         ):
-            queued = self.research_queue.enqueue(
-                self.settings.case_id,
-                normalized,
-                public_gaps,
-                origin_type="foundry_public_chat",
-                origin_run_id=origin_run_id,
-                initiating_actor="public_cio",
-            )
+            queue_gaps = public_gaps
         result = self._serialize(output)
-        result["queued_research"] = [asdict(item) for item in queued]
         runtime = provider_identity(self.settings.model_provider)
+        provenance_snapshot = self._provenance_snapshot(
+            output,
+            normalized,
+            contextual_question,
+            normalized_history,
+            runtime,
+        )
+        queued = self.research_queue.enqueue(
+            self.settings.case_id,
+            normalized,
+            queue_gaps,
+            origin_type="foundry_public_chat",
+            origin_run_id=origin_run_id,
+            initiating_actor="public_cio",
+            provenance_snapshot=provenance_snapshot,
+        )
+        result["queued_research"] = [asdict(item) for item in queued]
         result["runtime"] = runtime
         self.telemetry.run_completed(output.kind.value)
         print(
@@ -162,6 +171,63 @@ class PublicChatService:
             flush=True,
         )
         return result
+
+    def _provenance_snapshot(
+        self,
+        output: RunDisposition,
+        submitted_question: str,
+        contextual_question: str,
+        history: tuple[ChatHistoryMessage, ...],
+        runtime: dict[str, str | None],
+    ) -> dict[str, object]:
+        analysis = output.analysis
+        review = output.review
+        return {
+            "schema_version": 1,
+            "submitted_question": submitted_question,
+            "contextual_question": contextual_question,
+            "conversation_context": [dict(message) for message in history],
+            "disposition": output.kind.value,
+            "summary": output.summary,
+            "runtime": runtime,
+            "analysis": (
+                {
+                    "short_answer": analysis.short_answer,
+                    "claims": self._serialize_claims(
+                        analysis.claims,
+                        allow_invalid_locators=not (
+                            output.kind == DispositionKind.ANSWER_READY
+                            and review is not None
+                            and review.accepted
+                        ),
+                    ),
+                    "answer_claim_indices": list(
+                        analysis.answer_claim_indices
+                    ),
+                    "gaps": [asdict(gap) for gap in analysis.gaps],
+                    "rules": [asdict(rule) for rule in analysis.rules],
+                    "watches": [asdict(watch) for watch in analysis.watches],
+                    "request_drafts": [
+                        asdict(draft) for draft in analysis.request_drafts
+                    ],
+                }
+                if analysis is not None
+                else None
+            ),
+            "review": (
+                {
+                    "accepted": review.accepted,
+                    "findings": [
+                        asdict(finding) for finding in review.findings
+                    ],
+                    "targeted_gaps": [
+                        asdict(gap) for gap in review.targeted_gaps
+                    ],
+                }
+                if review is not None
+                else None
+            ),
+        }
 
     @staticmethod
     def _normalize_history(
@@ -321,11 +387,37 @@ class PublicChatService:
             candidates.extend(output.review.targeted_gaps)
         unique = {}
         for gap in candidates:
-            key = (
-                gap.description.strip().lower(),
-                gap.deciding_record.strip().lower(),
+            key = gap.deciding_record.strip().lower()
+            existing = unique.get(key)
+            if existing is None:
+                unique[key] = gap
+                continue
+            rationales = tuple(
+                dict.fromkeys(
+                    rationale
+                    for rationale in (existing.rationale, gap.rationale)
+                    if rationale
+                )
             )
-            unique.setdefault(key, gap)
+            unique[key] = replace(
+                existing,
+                likely_custodian=(
+                    existing.likely_custodian or gap.likely_custodian
+                ),
+                search_before_request=tuple(
+                    dict.fromkeys(
+                        existing.search_before_request
+                        + gap.search_before_request
+                    )
+                ),
+                rationale="\n".join(rationales) if rationales else None,
+                related_claim_indices=tuple(
+                    dict.fromkeys(
+                        existing.related_claim_indices
+                        + gap.related_claim_indices
+                    )
+                ),
+            )
         return tuple(unique.values())
 
 

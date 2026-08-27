@@ -303,6 +303,19 @@ proposed manifest metadata. Decisions are appended to SQLite and update the
 related lead status, but the Workbench does not write canonical manifests or
 move evidence into the archive.
 
+The Workbench question evidence map reads the semantic provenance stored with
+new public-chat question runs. A snapshot records the submitted question,
+bounded conversation context, answer claims, precise citations, claim limits,
+Skeptic findings, and evidence gaps. Gap records may carry explicit claim
+indices and a concise rationale explaining why a deciding record is needed.
+This is reviewable justification, not hidden model chain-of-thought.
+
+The map continues through recorded triage, directives, dispatch runs, staged
+candidates, CIO decisions, and registrations. Relationships inherited from
+legacy data or attributable only to a multi-gap directive are labeled rather
+than presented as exact claim-level causality. Question runs created before
+semantic snapshots remain visible without reconstructed claims.
+
 On watershop the service remains loopback-only behind Caddy authentication.
 Set `MENDO_WORKBENCH_PROXY_TOKEN`; Caddy must inject the same value through
 `X-Mendo-Workbench-Auth`. The shared Caddy installation remains outside this

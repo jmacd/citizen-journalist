@@ -99,6 +99,7 @@ class ResearchTriageStore:
                   error TEXT,
                   failure_class TEXT,
                   retry_after TEXT,
+                  directive_id TEXT,
                   FOREIGN KEY (question_run_id)
                     REFERENCES research_question_runs(id)
                 );
@@ -127,6 +128,11 @@ class ResearchTriageStore:
                 connection.execute(
                     "ALTER TABLE research_triage_runs "
                     "ADD COLUMN retry_after TEXT"
+                )
+            if "directive_id" not in columns:
+                connection.execute(
+                    "ALTER TABLE research_triage_runs "
+                    "ADD COLUMN directive_id TEXT"
                 )
 
     def _connect(self) -> sqlite3.Connection:
@@ -386,6 +392,7 @@ class ResearchTriageStore:
                 raise ResearchTriageError(
                     "Gap state changed during triage; disposition refused"
                 )
+            directive_id = None
             if plan.disposition == "prepare_search":
                 pending_count = int(
                     connection.execute(
@@ -401,7 +408,7 @@ class ResearchTriageStore:
                         "CIO approval backpressure cap was reached during "
                         "triage; directive creation deferred"
                     )
-                directive_store.create_in_transaction(
+                directive_id = directive_store.create_in_transaction(
                     connection,
                     question.case_id,
                     plan.title or "",
@@ -429,6 +436,7 @@ class ResearchTriageStore:
                 UPDATE research_triage_runs
                    SET status = 'completed', heartbeat_at = ?,
                        completed_at = ?, output_json = ?,
+                       directive_id = ?,
                        error_type = NULL, error = NULL,
                        failure_class = NULL, retry_after = NULL
                  WHERE id = ? AND status = 'running'
@@ -437,6 +445,7 @@ class ResearchTriageStore:
                     timestamp,
                     timestamp,
                     json.dumps(asdict(plan), sort_keys=True),
+                    directive_id,
                     run_id,
                 ),
             )

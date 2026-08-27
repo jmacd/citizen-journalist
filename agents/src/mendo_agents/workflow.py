@@ -441,6 +441,14 @@ class AnalystExecutor(Executor):
                             "description": "unresolved fact",
                             "deciding_record": "specific missing record",
                             "likely_custodian": "agency or null",
+                            "rationale": (
+                                "concise explanation of why the existing cited "
+                                "record does not decide the unresolved fact"
+                            ),
+                            "related_claim_indices": (
+                                "zero-based indices of claims whose limits create "
+                                "this gap; use an empty array when no claim does"
+                            ),
                         }
                     ],
                     "rules": [
@@ -596,9 +604,25 @@ class AnalystExecutor(Executor):
                     description=item["description"],
                     deciding_record=item["deciding_record"],
                     likely_custodian=item.get("likely_custodian"),
+                    rationale=item.get("rationale"),
+                    related_claim_indices=tuple(
+                        int(index)
+                        for index in item.get("related_claim_indices", [])
+                    ),
                 )
                 for item in value.get("gaps", [])
             )
+            for gap in parsed_gaps:
+                invalid_indices = [
+                    index
+                    for index in gap.related_claim_indices
+                    if index < 0 or index >= len(claims)
+                ]
+                if invalid_indices:
+                    raise ValueError(
+                        "Gap refers to nonexistent claim indices: "
+                        + ", ".join(str(index) for index in invalid_indices)
+                    )
             rules = tuple(
                 InstitutionalRuleProposal(
                     actor=item["actor"],

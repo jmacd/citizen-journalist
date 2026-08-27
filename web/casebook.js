@@ -11,6 +11,13 @@ const humanize = (value) => String(value ?? "")
   .replaceAll("_", " ")
   .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+const conclusionLabel = (value) => ({
+  affirmative: "Affirmatively established",
+  not_established: "Not established by reviewed records",
+  prohibited: "Affirmatively prohibited",
+  unspecified: "Unclassified legacy answer",
+})[value] || humanize(value);
+
 const sourceById = new Map(data.sources.map((source) => [source.id, source]));
 
 function locatorLabel(citation) {
@@ -40,10 +47,17 @@ function renderChatResult(question, result) {
         <strong>${result.answer ? "Casebook answer" : "Answer withheld"}</strong>
       </header>
       <p class="chat-answer-text">${escapeHtml(result.answer || result.summary)}</p>
+      ${result.conclusion_kind ? `<p class="chat-answer-kind">
+        <strong>Conclusion:</strong> ${escapeHtml(conclusionLabel(result.conclusion_kind))}
+      </p>` : ""}
+      ${result.answer && result.scope_statement ? `<p class="chat-answer-scope">
+        <strong>Reviewed scope:</strong> ${escapeHtml(result.scope_statement)}
+      </p>` : ""}
       ${!result.answer && (result.withheld_answer || withheldClaims.length) ? `
         <details class="chat-withheld" open>
           <summary>Withheld draft context — not an answer</summary>
           <p class="withheld-warning">These are propositions the Analyst attempted. The Skeptic did not approve them for publication. Use the claim numbers below to understand the review findings; do not rely on them as conclusions.</p>
+          ${result.scope_statement ? `<p><strong>Draft scope:</strong> ${escapeHtml(result.scope_statement)}</p>` : ""}
           ${result.withheld_answer ? `<blockquote>${escapeHtml(result.withheld_answer)}</blockquote>` : ""}
           ${withheldClaims.length ? `<ol class="chat-claims">${withheldClaims.map((claim) => `
             <li>
@@ -86,8 +100,10 @@ function renderChatResult(question, result) {
       `).join("")}</ol>
       </details>` : ""}
       ${reviewFindings.length ? `<details class="chat-review" open>
-        <summary>Why the Skeptic blocked this answer</summary>
-        <p>The draft was withheld because these evidence problems remained after two revision attempts:</p>
+        <summary>${result.answer ? "Analysis excluded from this answer" : "Why the Skeptic blocked this answer"}</summary>
+        <p>${result.answer
+          ? "These supplementary propositions were not needed for the answer and were excluded after review:"
+          : "The draft was withheld because these evidence problems remained after two revision attempts:"}</p>
         <ul>${reviewFindings.map((finding) => `<li class="${escapeHtml(finding.severity)}">
           <strong>${finding.claim_number
             ? `Claim ${escapeHtml(finding.claim_number)} · `

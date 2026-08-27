@@ -540,9 +540,15 @@ class WorkbenchStore:
                     if isinstance(analysis, dict)
                     else 0
                 )
+                item["conclusion_kind"] = (
+                    analysis.get("conclusion_kind")
+                    if isinstance(analysis, dict)
+                    else None
+                )
             else:
                 item["disposition"] = None
                 item["claim_count"] = 0
+                item["conclusion_kind"] = None
             result.append(item)
         return result
 
@@ -706,6 +712,12 @@ class WorkbenchStore:
                 }
             )
 
+        snapshot_analysis = (
+            snapshot.get("analysis")
+            if isinstance(snapshot, dict)
+            and isinstance(snapshot.get("analysis"), dict)
+            else None
+        )
         question_node = f"question:{question_run_id}"
         add_node(
             question_node,
@@ -717,13 +729,19 @@ class WorkbenchStore:
                 if isinstance(snapshot, dict)
                 else "legacy"
             ),
+            conclusion_kind=(
+                snapshot_analysis.get("conclusion_kind")
+                if snapshot_analysis is not None
+                else None
+            ),
+            detail=(
+                snapshot_analysis.get("scope_statement")
+                if snapshot_analysis is not None
+                else None
+            ),
         )
 
-        analysis = (
-            snapshot.get("analysis")
-            if isinstance(snapshot, dict)
-            else None
-        )
+        analysis = snapshot_analysis
         claims = (
             analysis.get("claims", [])
             if isinstance(analysis, dict)

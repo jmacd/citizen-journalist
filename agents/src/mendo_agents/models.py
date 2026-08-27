@@ -253,6 +253,13 @@ class Analysis:
     short_answer: str
     claims: tuple[Claim, ...]
     answer_claim_indices: tuple[int, ...] = ()
+    conclusion_kind: Literal[
+        "unspecified",
+        "affirmative",
+        "not_established",
+        "prohibited",
+    ] = "unspecified"
+    scope_statement: str | None = None
     gaps: tuple[EvidenceGap, ...] = ()
     rules: tuple[InstitutionalRuleProposal, ...] = ()
     watches: tuple[WatchProposal, ...] = ()

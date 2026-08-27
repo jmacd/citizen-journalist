@@ -100,7 +100,7 @@ class PublicChatService:
             max_iterations=self.settings.max_iterations,
             max_research_rounds=0,
             auto_publish_read_only=True,
-            max_review_revisions=1,
+            max_review_revisions=2,
         )
         output: RunDisposition | None = None
         async for event in workflow.run(
@@ -193,17 +193,27 @@ class PublicChatService:
             "analysis": (
                 {
                     "short_answer": analysis.short_answer,
-                    "claims": self._serialize_claims(
-                        analysis.claims,
-                        allow_invalid_locators=not (
-                            output.kind == DispositionKind.ANSWER_READY
-                            and review is not None
-                            and review.accepted
-                        ),
-                    ),
+                    "claims": [
+                        self._serialize_claims(
+                            (claim,),
+                            allow_invalid_locators=(
+                                not (
+                                    output.kind
+                                    == DispositionKind.ANSWER_READY
+                                    and review is not None
+                                    and review.accepted
+                                )
+                                or index
+                                not in analysis.answer_claim_indices
+                            ),
+                        )[0]
+                        for index, claim in enumerate(analysis.claims)
+                    ],
                     "answer_claim_indices": list(
                         analysis.answer_claim_indices
                     ),
+                    "conclusion_kind": analysis.conclusion_kind,
+                    "scope_statement": analysis.scope_statement,
                     "gaps": [asdict(gap) for gap in analysis.gaps],
                     "rules": [asdict(rule) for rule in analysis.rules],
                     "watches": [asdict(watch) for watch in analysis.watches],
@@ -285,6 +295,16 @@ class PublicChatService:
             return {
                 "status": output.kind.value,
                 "summary": output.summary,
+                "conclusion_kind": (
+                    output.analysis.conclusion_kind
+                    if output.analysis is not None
+                    else None
+                ),
+                "scope_statement": (
+                    output.analysis.scope_statement
+                    if output.analysis is not None
+                    else None
+                ),
                 "answer": None,
                 "claims": [],
                 "withheld_answer": (
@@ -317,9 +337,33 @@ class PublicChatService:
         return {
             "status": output.kind.value,
             "summary": output.summary,
+            "conclusion_kind": output.analysis.conclusion_kind,
+            "scope_statement": output.analysis.scope_statement,
             "answer": output.analysis.short_answer,
-            "claims": self._serialize_claims(output.analysis.claims),
-            "gaps": [asdict(gap) for gap in self._public_gaps(output)],
+            "claims": self._serialize_claims(
+                tuple(
+                    output.analysis.claims[index]
+                    for index in output.analysis.answer_claim_indices
+                )
+            ),
+            "gaps": self._serialize_public_gaps(output),
+            "review_findings": (
+                [
+                    {
+                        "severity": finding.severity,
+                        "code": finding.code,
+                        "message": finding.message,
+                        "claim_number": (
+                            finding.claim_index + 1
+                            if finding.claim_index is not None
+                            else None
+                        ),
+                    }
+                    for finding in output.review.findings
+                ]
+                if output.review is not None
+                else []
+            ),
         }
 
     def _serialize_claims(
@@ -418,7 +462,51 @@ class PublicChatService:
                     )
                 ),
             )
-        return tuple(unique.values())
+        gaps = tuple(unique.values())
+        if (
+            output.kind != DispositionKind.ANSWER_READY
+            or output.analysis is None
+        ):
+            return gaps
+        return tuple(
+            gap
+            for gap in gaps
+            if not gap.related_claim_indices
+            or any(
+                index in output.analysis.answer_claim_indices
+                for index in gap.related_claim_indices
+            )
+        )
+
+    @classmethod
+    def _serialize_public_gaps(
+        cls, output: RunDisposition
+    ) -> list[dict[str, object]]:
+        gaps = cls._public_gaps(output)
+        if (
+            output.kind != DispositionKind.ANSWER_READY
+            or output.analysis is None
+        ):
+            return [asdict(gap) for gap in gaps]
+        index_map = {
+            original: replacement
+            for replacement, original in enumerate(
+                output.analysis.answer_claim_indices
+            )
+        }
+        return [
+            asdict(
+                replace(
+                    gap,
+                    related_claim_indices=tuple(
+                        index_map[index]
+                        for index in gap.related_claim_indices
+                        if index in index_map
+                    ),
+                )
+            )
+            for gap in gaps
+        ]
 
 
 class ChatRequestHandler(BaseHTTPRequestHandler):

@@ -34,13 +34,18 @@ roles:
     instructions: >-
       Produce atomic claims with precise source locators, confidence, version
       status, and an express statement of what each authority does not establish.
+      Distinguish affirmative authority, affirmative prohibition, and a bounded
+      finding that the reviewed records do not establish authority.
     allowed_tools: [search_corpus, read_source, create_proposal]
     prohibited_actions: [canonical_write, external_communication, unsupported_claim]
   - id: skeptic
     name: Skeptic
     instructions: >-
       Test premises, locators, contradictions, supersession, authority limits,
-      and bounded negative findings. Block promotion when evidence is inadequate.
+      and bounded negative findings. Treat a properly scoped finding that reviewed
+      records do not establish authority as a valid conclusion, not as an assertion
+      that authority or a record does not exist. Block promotion when evidence is
+      inadequate or a negative finding overstates its reviewed scope.
     allowed_tools: [search_corpus, read_source, validate_locator, create_proposal]
     prohibited_actions: [canonical_write, external_communication, evidence_creation]
   - id: acquisition_engineer

@@ -61,6 +61,10 @@ async def test_public_chat_returns_skeptic_checked_citations(
     assert result["answer"] == (
         "The commission continued the hearing to September 3."
     )
+    assert result["conclusion_kind"] == "unspecified"
+    assert result["scope_statement"] == (
+        "The cited curated records and locators for this casebook answer."
+    )
     assert result["runtime"] == {
         "provider": "scripted",
         "model": None,
@@ -167,6 +171,8 @@ def test_blocked_chat_exposes_labeled_draft_context_and_targeted_gap(
     result = service._serialize(output)
 
     assert result["answer"] is None
+    assert result["conclusion_kind"] == "unspecified"
+    assert result["scope_statement"] is None
     assert result["claims"] == []
     assert result["withheld_answer"] == (
         "The commission may have approved the service."
@@ -187,6 +193,130 @@ def test_blocked_chat_exposes_labeled_draft_context_and_targeted_gap(
             "claim_number": 1,
         }
     ]
+
+
+def test_chat_publishes_only_answer_mapped_claims(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    service = PublicChatService(
+        Settings(
+            repo_root=fixture_repo,
+            case_id="TEST-CASE",
+            checkpoint_root=tmp_path / "checkpoints",
+        ),
+        policy_path=REPO_ROOT / "agents/organization/society.yaml",
+    )
+    output = RunDisposition(
+        kind=DispositionKind.ANSWER_READY,
+        summary="The answer passed review.",
+        analysis=Analysis(
+            short_answer="The records do not establish approval.",
+            claims=(
+                Claim(
+                    text="Approval always requires another vote.",
+                    confidence=Confidence.DISPUTED,
+                    locators=(EvidenceLocator("minutes", page=4),),
+                    does_not_establish="Whether an exception applies.",
+                ),
+                Claim(
+                    text="The records do not establish approval.",
+                    confidence=Confidence.UNRESOLVED,
+                    locators=(EvidenceLocator("minutes", page=4),),
+                    does_not_establish="That approval was prohibited.",
+                ),
+            ),
+            answer_claim_indices=(1,),
+            conclusion_kind="not_established",
+            scope_statement="The registered minutes reviewed in this run.",
+            gaps=(
+                EvidenceGap(
+                    description="Approval remains unresolved.",
+                    deciding_record="The final approval instrument",
+                    related_claim_indices=(1,),
+                ),
+            ),
+        ),
+        review=SkepticReview(
+            accepted=True,
+            findings=(
+                SkepticFinding(
+                    severity="warning",
+                    code="excluded_context_overclaim",
+                    message="The context claim was excluded.",
+                    claim_index=0,
+                ),
+            ),
+        ),
+    )
+
+    result = service._serialize(output)
+
+    assert [claim["text"] for claim in result["claims"]] == [
+        "The records do not establish approval."
+    ]
+    assert result["conclusion_kind"] == "not_established"
+    assert result["scope_statement"] == (
+        "The registered minutes reviewed in this run."
+    )
+    assert result["gaps"][0]["related_claim_indices"] == (0,)
+    assert service._public_gaps(output)[0].related_claim_indices == (1,)
+
+
+def test_provenance_preserves_invalid_unmapped_context_without_crashing(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    service = PublicChatService(
+        Settings(
+            repo_root=fixture_repo,
+            case_id="TEST-CASE",
+            checkpoint_root=tmp_path / "checkpoints",
+        ),
+        policy_path=REPO_ROOT / "agents/organization/society.yaml",
+    )
+    output = RunDisposition(
+        kind=DispositionKind.ANSWER_READY,
+        summary="The answer passed review.",
+        analysis=Analysis(
+            short_answer="The hearing continued.",
+            claims=(
+                Claim(
+                    text="The hearing continued.",
+                    confidence=Confidence.SUPPORTED_INTERPRETATION,
+                    locators=(EvidenceLocator("minutes", page=4),),
+                    does_not_establish="The final outcome.",
+                ),
+                Claim(
+                    text="An unrelated proposition.",
+                    confidence=Confidence.DISPUTED,
+                    locators=(EvidenceLocator("missing-document", page=1),),
+                    does_not_establish="Anything about the answer.",
+                ),
+            ),
+            answer_claim_indices=(0,),
+            conclusion_kind="affirmative",
+        ),
+        review=SkepticReview(
+            accepted=True,
+            findings=(
+                SkepticFinding(
+                    severity="warning",
+                    code="excluded_context_invalid_locator",
+                    message="The context claim was excluded.",
+                    claim_index=1,
+                ),
+            ),
+        ),
+    )
+
+    snapshot = service._provenance_snapshot(
+        output,
+        "What happened?",
+        "What happened?",
+        (),
+        {"provider": "scripted", "model": None, "label": "test"},
+    )
+
+    assert snapshot["analysis"]["claims"][1]["citations"][0]["invalid"] is True
 
 
 def test_blocked_chat_labels_invalid_draft_locator(

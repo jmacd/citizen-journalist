@@ -54,6 +54,7 @@ def test_analyst_output_supports_multiple_page_and_timestamp_locators() -> None:
                     }
                 ],
                 "answer_claim_indices": [0],
+                "conclusion_kind": "affirmative",
             }
         ),
         [],
@@ -143,7 +144,8 @@ async def test_provider_answer_without_claims_is_blocked(
             if role_id == "analyst":
                 return (
                     '{"short_answer":"An unsupported factual answer.",'
-                    '"claims":[],"answer_claim_indices":[]}'
+                    '"claims":[],"answer_claim_indices":[],'
+                    '"conclusion_kind":"affirmative"}'
                 )
             return "{}"
 
@@ -186,10 +188,14 @@ async def test_provider_answer_is_replaced_by_skeptic_accepted_claims(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"The minutes do not establish approval."}],'
-                    '"answer_claim_indices":[0]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative"}'
                 )
             if role_id == "skeptic":
-                return '{"accepted":true,"findings":[]}'
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
             return "{}"
 
     storage = FileCheckpointStorage(tmp_path / "checkpoints")
@@ -241,17 +247,22 @@ async def test_skeptic_rejection_returns_to_analyst_for_bounded_revision(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"The minutes do not establish approval."}],'
-                    '"answer_claim_indices":[0]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative"}'
                 )
             if role_id == "skeptic":
                 self.skeptic_calls += 1
                 if self.skeptic_calls == 1:
                     return (
-                        '{"accepted":false,"findings":[{"severity":"error",'
+                        '{"accepted":false,"conclusion_kind_supported":true,'
+                        '"findings":[{"severity":"error",'
                         '"code":"overclaim","message":"Approval is not established.",'
                         '"claim_index":0}]}'
                     )
-                return '{"accepted":true,"findings":[]}'
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
             return "{}"
 
     reasoner = RevisingReasoner()
@@ -315,10 +326,14 @@ async def test_provider_answer_retains_curated_research_gaps(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"The minutes do not establish approval."}],'
-                    '"answer_claim_indices":[0]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative"}'
                 )
             if role_id == "skeptic":
-                return '{"accepted":true,"findings":[]}'
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
             return "{}"
 
     workflow = build_evidence_workflow(
@@ -362,10 +377,14 @@ async def test_public_analyst_repairs_invalid_json_once(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"The final outcome."}],'
-                    '"answer_claim_indices":[0],"gaps":[]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative","gaps":[]}'
                 )
             if role_id == "skeptic":
-                return '{"accepted":true,"findings":[]}'
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
             return "{}"
 
     reasoner = RepairingReasoner()
@@ -406,12 +425,14 @@ async def test_persistent_skeptic_rejection_blocks_after_two_revisions(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"Nothing further."}],'
-                    '"answer_claim_indices":[0]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative"}'
                 )
             if role_id == "skeptic":
                 self.skeptic_calls += 1
                 return (
-                    '{"accepted":false,"findings":[{"severity":"error",'
+                    '{"accepted":false,"conclusion_kind_supported":true,'
+                    '"findings":[{"severity":"error",'
                     '"code":"overclaim","message":"Approval is not established.",'
                     '"claim_index":0}]}'
                 )
@@ -454,12 +475,14 @@ async def test_public_review_stops_after_one_revision(
                     '"confidence":"supported_interpretation",'
                     '"document_id":"minutes","page":4,'
                     '"does_not_establish":"The permit itself."}],'
-                    '"answer_claim_indices":[0],"gaps":[]}'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative","gaps":[]}'
                 )
             if role_id == "skeptic":
                 self.skeptic_calls += 1
                 return (
-                    '{"accepted":false,"findings":[{"severity":"error",'
+                    '{"accepted":false,"conclusion_kind_supported":true,'
+                    '"findings":[{"severity":"error",'
                     '"code":"overclaim","message":"Approval is not established.",'
                     '"claim_index":0}]}'
                 )
@@ -486,6 +509,286 @@ async def test_public_review_stops_after_one_revision(
     assert reasoner.analyst_calls == 2
     assert reasoner.skeptic_calls == 2
     assert output.kind == DispositionKind.BLOCKED
+
+
+async def test_skeptic_accepts_scoped_not_established_conclusion(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class BoundedNegativeReasoner:
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                request = json.loads(prompt.splitlines()[-1])
+                assert "not_established answer is a valid bounded conclusion" in (
+                    request["bounded_negative_policy"]
+                )
+                assert "conclusion_kind" in request["requirements"]
+                return (
+                    '{"short_answer":"The reviewed minutes do not establish '
+                    'that the permit was approved.",'
+                    '"claims":[{"text":"The reviewed minutes do not establish '
+                    'that the permit was approved.",'
+                    '"confidence":"unresolved",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"That approval was prohibited or '
+                    'that no approval exists elsewhere."}],'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"not_established",'
+                    '"scope_statement":"The registered corpus pages retrieved '
+                    'for this question as of this run.",'
+                    '"gaps":[]}'
+                )
+            if role_id == "skeptic":
+                request = json.loads(prompt.splitlines()[-1])
+                assert request["conclusion_kind"] == "not_established"
+                assert request["scope_statement"]
+                assert "without demanding proof of nonexistence" in prompt
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
+            return "{}"
+
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        BoundedNegativeReasoner(),
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="Was it approved?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert output.kind == DispositionKind.ANSWER_READY
+    assert output.analysis.conclusion_kind == "not_established"
+    assert output.analysis.short_answer == (
+        "The reviewed minutes do not establish that the permit was approved."
+    )
+
+
+async def test_missing_bounded_negative_scope_blocks_normally(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class UnscopedReasoner:
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                return (
+                    '{"short_answer":"The records do not establish approval.",'
+                    '"claims":[{"text":"The records do not establish approval.",'
+                    '"confidence":"unresolved","document_id":"minutes","page":4,'
+                    '"does_not_establish":"That approval was prohibited."}],'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"not_established","gaps":[]}'
+                )
+            if role_id == "skeptic":
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
+            return "{}"
+
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        UnscopedReasoner(),
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+        max_review_revisions=0,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="Was it approved?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert output.kind == DispositionKind.BLOCKED
+    assert {finding.code for finding in output.review.findings} == {
+        "unbounded_negative_finding"
+    }
+
+
+async def test_rejected_unmapped_context_does_not_withhold_supported_answer(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class ContextRejectingReasoner:
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                return (
+                    '{"short_answer":"The records do not establish approval.",'
+                    '"claims":['
+                    '{"text":"The records do not establish approval.",'
+                    '"confidence":"unresolved","document_id":"minutes","page":4,'
+                    '"does_not_establish":"That approval was prohibited."},'
+                    '{"text":"Approval always requires a second vote.",'
+                    '"confidence":"supported_interpretation",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"Whether an exception applies."}],'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"not_established",'
+                    '"scope_statement":"The registered minutes reviewed in this run.",'
+                    '"gaps":[]}'
+                )
+            if role_id == "skeptic":
+                return (
+                    '{"accepted":false,"conclusion_kind_supported":true,'
+                    '"findings":[{"severity":"error",'
+                    '"code":"overclaim","message":"The second-vote rule is not '
+                    'established.","claim_index":1}]}'
+                )
+            return "{}"
+
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        ContextRejectingReasoner(),
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="Was it approved?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert output.kind == DispositionKind.ANSWER_READY
+    assert output.analysis.answer_claim_indices == (0,)
+    assert len(output.analysis.claims) == 2
+    assert output.review.findings[0].severity == "warning"
+    assert output.review.findings[0].code == "excluded_context_overclaim"
+
+
+async def test_out_of_range_skeptic_claim_index_blocks_publication(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class MisindexedReasoner:
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                return (
+                    '{"short_answer":"The hearing continued.",'
+                    '"claims":[{"text":"The hearing continued.",'
+                    '"confidence":"supported_interpretation",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"The final outcome."}],'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative","gaps":[]}'
+                )
+            if role_id == "skeptic":
+                return (
+                    '{"accepted":false,"conclusion_kind_supported":true,'
+                    '"findings":[{"severity":"error","code":"overclaim",'
+                    '"message":"The claim is unsupported.","claim_index":99}]}'
+                )
+            return "{}"
+
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        MisindexedReasoner(),
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        auto_publish_read_only=True,
+        max_review_revisions=0,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="What happened?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert output.kind == DispositionKind.BLOCKED
+    assert {finding.code for finding in output.review.findings} == {
+        "invalid_skeptic_output"
+    }
+
+
+async def test_rule_validation_error_cannot_be_downgraded_as_context(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    class InvalidRuleReasoner:
+        async def respond(self, role_id, instructions, prompt):
+            if role_id == "analyst":
+                rule = (
+                    '{"actor":"Commission","action":"continue a hearing",'
+                    '"trigger":"a public vote","procedure":"vote at a meeting",'
+                    '"geography":"Mendocino County",'
+                    '"temporal_scope":"the cited meeting",'
+                    '"effect":"continues the hearing",'
+                    '"does_not_establish":"the final outcome",'
+                    '"document_id":"minutes","page":4}'
+                )
+                invalid_rule = rule.replace(
+                    '"document_id":"minutes"',
+                    '"document_id":"missing-document"',
+                )
+                return (
+                    '{"short_answer":"The hearing continued.",'
+                    '"claims":[{"text":"The hearing continued.",'
+                    '"confidence":"supported_interpretation",'
+                    '"document_id":"minutes","page":4,'
+                    '"does_not_establish":"The final outcome."}],'
+                    '"answer_claim_indices":[0],'
+                    '"conclusion_kind":"affirmative","gaps":[],'
+                    f'"rules":[{rule},{invalid_rule}]}}'
+                )
+            if role_id == "skeptic":
+                return (
+                    '{"accepted":true,"conclusion_kind_supported":true,'
+                    '"findings":[]}'
+                )
+            return "{}"
+
+    workflow = build_evidence_workflow(
+        CorpusRepository(fixture_repo, "TEST-CASE"),
+        load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+        load_skills(fixture_repo),
+        InvalidRuleReasoner(),
+        FileCheckpointStorage(tmp_path / "checkpoints"),
+        max_review_revisions=0,
+    )
+    output = None
+    async for event in workflow.run(
+        CaseQuestion(case_id="TEST-CASE", question="What happened?"),
+        stream=True,
+    ):
+        if event.type == "output":
+            output = event.data
+
+    assert output.kind == DispositionKind.BLOCKED
+    assert "rule_invalid_locator" in {
+        finding.code for finding in output.review.findings
+    }
+
+
+def test_review_revision_budget_requires_enough_workflow_iterations(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    try:
+        build_evidence_workflow(
+            CorpusRepository(fixture_repo, "TEST-CASE"),
+            load_society_policy(REPO_ROOT / "agents/organization/society.yaml"),
+            load_skills(fixture_repo),
+            ScriptedReasoner(),
+            FileCheckpointStorage(tmp_path / "checkpoints"),
+            max_iterations=10,
+            max_review_revisions=2,
+        )
+    except ValueError as error:
+        assert "minimum 11" in str(error)
+    else:
+        raise AssertionError("Unsafe workflow iteration budget was accepted")
 
 
 async def test_unchanged_monitor_stops_without_approval(

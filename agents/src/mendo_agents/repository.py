@@ -315,6 +315,9 @@ class CorpusRepository:
             short_answer=best["short_answer"],
             claims=tuple(claims),
             answer_claim_indices=tuple(range(len(claims))),
+            scope_statement=(
+                "The cited curated records and locators for this casebook answer."
+            ),
             gaps=tuple(
                 EvidenceGap(
                     description="The curated answer identifies a missing record.",

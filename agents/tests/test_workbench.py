@@ -14,6 +14,7 @@ from mendo_agents.research_queue import ResearchQueue
 from mendo_agents.research_triage import ResearchTriageStore
 from mendo_agents.workbench import (
     CandidateStore,
+    WorkbenchError,
     WorkbenchStore,
     is_trusted_private_client,
 )
@@ -25,6 +26,30 @@ def test_trusted_private_clients_exclude_public_addresses() -> None:
     assert is_trusted_private_client("10.20.30.40")
     assert not is_trusted_private_client("8.8.8.8")
     assert not is_trusted_private_client("not-an-address")
+
+
+def test_consultations_are_persisted_and_validated(tmp_path: Path) -> None:
+    store = WorkbenchStore(
+        tmp_path / "queue.sqlite",
+        CandidateStore(tmp_path / "staging"),
+    )
+    created = store.create_consultation(
+        "UM_2025-0004",
+        "theorem_proposal",
+        "  Compare recurring authority gaps. ",
+        "cio",
+    )
+
+    assert created["status"] == "requested"
+    assert created["brief"] == "Compare recurring authority gaps."
+    assert store.consultations() == [created]
+
+    try:
+        store.create_consultation("UM_2025-0004", "unknown", "brief", "cio")
+    except WorkbenchError as error:
+        assert str(error) == "Unknown consultation type"
+    else:
+        raise AssertionError("invalid consultation type was accepted")
 
 
 def write_bundle(root: Path, lead_id: str, run_id: str = "run-1") -> None:

@@ -27,6 +27,11 @@ const detail = document.getElementById("candidate-detail");
 const provenanceQuestion = document.getElementById("provenance-question");
 const provenanceState = document.getElementById("provenance-state");
 const provenanceGraph = document.getElementById("provenance-graph");
+const consultationForm = document.getElementById("consultation-form");
+const consultationKind = document.getElementById("consultation-kind");
+const consultationBrief = document.getElementById("consultation-brief");
+const consultationState = document.getElementById("consultation-state");
+const consultationList = document.getElementById("consultation-list");
 
 let candidates = [];
 let researchDirectives = [];
@@ -39,6 +44,13 @@ const decisionMessages = new Map();
 let provenanceQuestions = [];
 let selectedProvenanceQuestionId = null;
 let provenanceQuestionLoadSequence = 0;
+
+const consultationLabels = {
+  theorem_proposal: "Theorem Builder",
+  story_update: "Journalist",
+  information_architecture: "Information Architect / Data Scientist",
+  site_design: "Site Designer",
+};
 
 function element(tag, options = {}) {
   const node = document.createElement(tag);
@@ -1025,6 +1037,48 @@ async function loadQueue() {
       setState(queueState, "The research queue is empty.");
       return;
     }
+
+    async function loadConsultations() {
+      try {
+        const payload = await getJSON("/api/workbench/consultations");
+        consultationList.replaceChildren();
+        for (const item of payload.items || []) {
+          const row = element("li");
+          row.append(element("article", {
+            className: "item-button",
+            text: `${consultationLabels[item.kind] || item.kind} · ${item.status}\n${item.brief}`,
+          }));
+          consultationList.append(row);
+        }
+        if (!payload.items?.length) {
+          setState(consultationState, "No specialist consultations requested yet.");
+        } else {
+          consultationState.hidden = true;
+        }
+      } catch (error) {
+        setState(consultationState, `Could not load consultations: ${error.message}`, true);
+      }
+    }
+
+    consultationForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      consultationState.hidden = true;
+      try {
+        await getJSON("/api/workbench/consultations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: consultationKind.value,
+            brief: consultationBrief.value,
+          }),
+        });
+        consultationBrief.value = "";
+        setState(consultationState, "Consultation requested and recorded.");
+        await loadConsultations();
+      } catch (error) {
+        setState(consultationState, `Could not request consultation: ${error.message}`, true);
+      }
+    });
     queueState.hidden = true;
     items.forEach((item) => {
       const row = element("li");
@@ -1726,6 +1780,7 @@ await Promise.all([
   loadCandidates(),
   loadProgressSummary(),
   loadProvenanceQuestions(),
+  loadConsultations(),
 ]);
 setInterval(() => {
   if (!document.hidden) {

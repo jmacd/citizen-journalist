@@ -65,6 +65,39 @@
       </section>
     </section>
 
+    <details class="research-drawer" open>
+      <summary>
+        <span>
+          <span class="eyebrow">CIO consultations</span>
+          <span class="drawer-title">Ask a specialist</span>
+        </span>
+      </summary>
+      <div class="research-drawer-content">
+        <p class="pane-explainer">
+          These requests are durable proposals for specialist work. They do not
+          publish stories, change evidence, or alter the site automatically.
+        </p>
+        <form id="consultation-form" class="consultation-form">
+          <label>Specialist
+            <select id="consultation-kind">
+              <option value="theorem_proposal">Theorem Builder — elicit a theorem</option>
+              <option value="story_update">Journalist — update stories</option>
+              <option value="information_architecture">Information Architect / Data Scientist — organize data</option>
+              <option value="site_design">Site Designer — propose a layout</option>
+            </select>
+          </label>
+          <label>Brief
+            <textarea id="consultation-brief" rows="3" maxlength="2000" required
+              placeholder="What should the specialist inspect or propose?"></textarea>
+          </label>
+          <button class="primary-button" type="submit">Request consultation</button>
+          <p id="consultation-state" class="state" role="status" aria-live="polite"></p>
+        </form>
+        <h3>Consultation history</h3>
+        <ol id="consultation-list" class="item-list"></ol>
+      </div>
+    </details>
+
     <details class="provenance-panel" open>
       <summary>
         <span>

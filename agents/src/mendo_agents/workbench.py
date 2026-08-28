@@ -469,6 +469,19 @@ class WorkbenchStore:
                 )
                 """
             )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS cio_consultations (
+                  id TEXT PRIMARY KEY,
+                  case_id TEXT NOT NULL,
+                  kind TEXT NOT NULL,
+                  brief TEXT NOT NULL,
+                  requested_by TEXT NOT NULL,
+                  status TEXT NOT NULL,
+                  created_at TEXT NOT NULL
+                )
+                """
+            )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.queue_path, timeout=30)
@@ -488,6 +501,56 @@ class WorkbenchStore:
                 """
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def consultations(self) -> list[dict[str, object]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT id, case_id, kind, brief, requested_by, status, created_at
+                  FROM cio_consultations
+                 ORDER BY created_at DESC, id DESC
+                """
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def create_consultation(
+        self, case_id: str, kind: str, brief: str, requested_by: str
+    ) -> dict[str, object]:
+        allowed = {
+            "theorem_proposal",
+            "story_update",
+            "information_architecture",
+            "site_design",
+        }
+        if kind not in allowed:
+            raise WorkbenchError("Unknown consultation type")
+        normalized_brief = " ".join(brief.split())
+        if not normalized_brief:
+            raise WorkbenchError("Consultation brief is required")
+        if len(normalized_brief) > MAX_NOTE_CHARACTERS:
+            raise WorkbenchError("Consultation brief is too long")
+        created_at = datetime.now(UTC).isoformat()
+        consultation_id = hashlib.sha256(
+            f"{case_id}\n{kind}\n{normalized_brief}\n{created_at}".encode()
+        ).hexdigest()[:20]
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO cio_consultations
+                  (id, case_id, kind, brief, requested_by, status, created_at)
+                VALUES (?, ?, ?, ?, ?, 'requested', ?)
+                """,
+                (consultation_id, case_id, kind, normalized_brief, requested_by, created_at),
+            )
+        return {
+            "id": consultation_id,
+            "case_id": case_id,
+            "kind": kind,
+            "brief": normalized_brief,
+            "requested_by": requested_by,
+            "status": "requested",
+            "created_at": created_at,
+        }
 
     def provenance_questions(self) -> list[dict[str, object]]:
         with self._connect() as connection:
@@ -1707,6 +1770,10 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 items = self.workbench_server.store.queue()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
                 return
+            if path == "/api/workbench/consultations":
+                items = self.workbench_server.store.consultations()
+                self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
+                return
             if path == "/api/workbench/provenance/questions":
                 items = self.workbench_server.store.provenance_questions()
                 self._json(HTTPStatus.OK, {"items": items, "count": len(items)})
@@ -1789,6 +1856,31 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
         if not self._require_authorized():
             return
         path = urlsplit(self.path).path
+        if path == "/api/workbench/consultations":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if (
+                    length <= 0
+                    or length > MAX_DECISION_BYTES
+                    or self.headers.get_content_type() != "application/json"
+                ):
+                    raise WorkbenchError("Invalid consultation request body")
+                payload = json.loads(self.rfile.read(length))
+                if not isinstance(payload, dict):
+                    raise WorkbenchError("Consultation body must be an object")
+                case_id = payload.get("case_id", "UM_2025-0004")
+                kind = payload.get("kind")
+                brief = payload.get("brief")
+                if not all(isinstance(value, str) for value in (case_id, kind, brief)):
+                    raise WorkbenchError("Consultation fields must be strings")
+                actor = self.headers.get("X-Mendo-Workbench-User", "cio")
+                result = self.workbench_server.store.create_consultation(
+                    case_id, kind, brief, actor
+                )
+                self._json(HTTPStatus.CREATED, result)
+            except (ValueError, json.JSONDecodeError, WorkbenchError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
         directive_match = re.fullmatch(
             r"/api/workbench/research-directives/([^/]+)/approval", path
         )

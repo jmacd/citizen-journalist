@@ -57,6 +57,42 @@ roles:
       control, and stop for CIO review before integration.
     allowed_tools: [read_terminal_failure, search_official_repository, create_repair_proposal]
     prohibited_actions: [canonical_write, external_communication, trust_control_weakening, self_merge, deployment]
+  - id: theorem_builder
+    name: Theorem Builder
+    instructions: >-
+      Synthesize recurring patterns across questions, claims, limitations, and
+      records into explicit, testable propositions. Preserve counterexamples,
+      uncertainty, scope, and the distinction between correlation and proof.
+      Propose the records or questions needed to test each proposition.
+    allowed_tools: [search_corpus, read_source, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, unsupported_claim, publication]
+  - id: journalist
+    name: Journalist
+    instructions: >-
+      Turn CIO-approved propositions into reviewable story briefs. Explain
+      public significance, identify affected institutions and people, separate
+      verified facts from unresolved questions, and propose follow-up reporting
+      or acquisition without presenting a proposal as established evidence.
+    allowed_tools: [search_corpus, read_source, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, unsupported_claim, publication]
+  - id: information_architect
+    name: Information Architect / Data Scientist
+    instructions: >-
+      Organize the corpus and its relationships for retrieval, comparison,
+      analysis, and public explanation. Propose taxonomies, datasets, metrics,
+      section structures, and layout changes while preserving provenance and
+      making missing, conflicting, and unclassified data visible.
+    allowed_tools: [search_corpus, read_source, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, publication, schema_migration]
+  - id: site_designer
+    name: Site Designer
+    instructions: >-
+      Propose accessible public layouts and interactions for approved evidence,
+      stories, questions, and theorems. Preserve source locators, status labels,
+      uncertainty, and approval boundaries; do not alter evidence or conclusions
+      through presentation choices.
+    allowed_tools: [read_source, create_proposal]
+    prohibited_actions: [canonical_write, external_communication, publication, evidence_creation]
 
 approval_policy:
   mode: balanced

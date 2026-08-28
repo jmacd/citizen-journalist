@@ -22,6 +22,10 @@ def test_society_policy_has_balanced_gates_and_no_canonical_write_tools() -> Non
         "analyst",
         "skeptic",
         "acquisition_engineer",
+        "theorem_builder",
+        "journalist",
+        "information_architect",
+        "site_designer",
     }
     assert "external_communication" in policy.approval_required
     assert all(

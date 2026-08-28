@@ -17,6 +17,22 @@ The first workflow uses five stable roles defined in
 | Archivist | MIME, hash, identity, duplicate, version, and OCR validation |
 | Analyst | Atomic claims with page-addressed evidence and limitations |
 | Skeptic | Premise, citation, contradiction, supersession, and overclaim review |
+| Acquisition Engineer | Diagnoses failed retrievals and proposes constrained repairs |
+
+The society also defines four **CIO-dispatched consultative roles**. They are
+not inserted into every evidence workflow:
+
+| Role | Responsibility |
+| --- | --- |
+| Theorem Builder | Synthesizes recurring patterns into scoped, testable propositions |
+| Journalist | Turns approved propositions into story briefs and follow-up reporting |
+| Information Architect / Data Scientist | Organizes datasets, taxonomies, metrics, and section structures |
+| Site Designer | Proposes accessible public presentation and interaction designs |
+
+Consultations produce typed proposals—`theorem_proposal`, `story_update`,
+`information_architecture`, or `site_design`. Proposals are not evidence or
+published conclusions and require the appropriate CIO approval before they
+change the public site, corpus organization, or public story layer.
 
 Hashing, MIME checks, corpus search, indexing, and citation resolution are
 functions or deterministic executors—not simulated personalities. Repository

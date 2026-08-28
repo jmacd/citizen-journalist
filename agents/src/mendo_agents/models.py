@@ -33,6 +33,33 @@ class ApprovalKind(StrEnum):
     EXTERNAL_COMMUNICATION = "external_communication"
 
 
+class ConsultationKind(StrEnum):
+    THEOREM_PROPOSAL = "theorem_proposal"
+    STORY_UPDATE = "story_update"
+    INFORMATION_ARCHITECTURE = "information_architecture"
+    SITE_DESIGN = "site_design"
+
+
+@dataclass(frozen=True)
+class ConsultationRequest:
+    case_id: str
+    kind: ConsultationKind
+    brief: str
+    requested_by: str = "cio"
+
+
+@dataclass(frozen=True)
+class ConsultationProposal:
+    request: ConsultationRequest
+    role_id: str
+    summary: str
+    claims: tuple[str, ...] = ()
+    evidence_ids: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+    follow_up_questions: tuple[str, ...] = ()
+    status: str = "proposed"
+
+
 @dataclass(frozen=True)
 class CaseQuestion:
     case_id: str

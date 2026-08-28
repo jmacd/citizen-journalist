@@ -60,6 +60,10 @@ def validate_society_policy(policy: SocietyPolicy) -> None:
         "analyst",
         "skeptic",
         "acquisition_engineer",
+        "theorem_builder",
+        "journalist",
+        "information_architect",
+        "site_designer",
     }
     missing = expected_roles - set(policy.roles)
     if missing:

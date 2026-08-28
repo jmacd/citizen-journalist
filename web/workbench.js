@@ -896,6 +896,11 @@ async function loadResearchActivity() {
             directive.latest_run?.provider,
             directive.latest_run?.model,
             report ? `${candidateCountValue} discovered` : null,
+            directive.latest_run?.cache_status === "exact_hit"
+              ? "cached search reused"
+              : directive.latest_run?.cache_status === "miss"
+                ? "new external search"
+                : null,
             outcomes.length ? `${stagedCount} new document(s)` : null,
             duplicateCount ? `${duplicateCount} already indexed` : null,
             report ? `${negativeCount} negative finding(s)` : null,

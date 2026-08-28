@@ -121,6 +121,19 @@ class ResearchDirectiveStore:
                   PRIMARY KEY (run_id, target_id),
                   FOREIGN KEY (run_id) REFERENCES research_dispatch_runs(id)
                 );
+                CREATE TABLE IF NOT EXISTS research_search_cache (
+                  cache_key TEXT PRIMARY KEY,
+                  case_id TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  search_brief TEXT NOT NULL,
+                  allowed_hosts_json TEXT NOT NULL,
+                  provider TEXT NOT NULL,
+                  model TEXT NOT NULL,
+                  report_json TEXT NOT NULL,
+                  created_at TEXT NOT NULL,
+                  last_used_at TEXT NOT NULL,
+                  hit_count INTEGER NOT NULL DEFAULT 0
+                );
                 """
             )
             columns = {
@@ -137,6 +150,11 @@ class ResearchDirectiveStore:
                 connection.execute(
                     "ALTER TABLE research_dispatch_runs "
                     "ADD COLUMN directive_snapshot_json TEXT"
+                )
+            if "cache_status" not in columns:
+                connection.execute(
+                    "ALTER TABLE research_dispatch_runs "
+                    "ADD COLUMN cache_status TEXT NOT NULL DEFAULT 'miss'"
                 )
             question_run_columns = {
                 str(row["name"])
@@ -554,6 +572,95 @@ class ResearchDirectiveStore:
             )
             return int(run.lastrowid)
 
+    @staticmethod
+    def cache_key(directive: ResearchDirective) -> str:
+        identity = json.dumps(
+            {
+                "case_id": directive.case_id,
+                "title": " ".join(directive.title.split()).lower(),
+                "search_brief": " ".join(directive.search_brief.split()).lower(),
+                "allowed_hosts": sorted(directive.allowed_hosts),
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+    def cached_report(
+        self, directive: ResearchDirective
+    ) -> ScoutSearchReport | None:
+        key = self.cache_key(directive)
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT report_json FROM research_search_cache WHERE cache_key = ?",
+                (key,),
+            ).fetchone()
+            if row is None:
+                return None
+            connection.execute(
+                """
+                UPDATE research_search_cache
+                   SET last_used_at = ?, hit_count = hit_count + 1
+                 WHERE cache_key = ?
+                """,
+                (_now(), key),
+            )
+        value = json.loads(str(row["report_json"]))
+        return ScoutSearchReport(
+            summary=value["summary"],
+            candidates=tuple(
+                SearchCandidate(
+                    **{
+                        key: item
+                        for key, item in candidate.items()
+                        if key not in {"establishes", "does_not_establish"}
+                    },
+                    establishes=tuple(candidate["establishes"]),
+                    does_not_establish=tuple(candidate["does_not_establish"]),
+                )
+                for candidate in value["candidates"]
+            ),
+            negative_findings=tuple(
+                NegativeSearchFinding(**finding)
+                for finding in value["negative_findings"]
+            ),
+            citations=tuple(value["citations"]),
+            provider=value["provider"],
+            model=value["model"],
+        )
+
+    def cache_report(
+        self, directive: ResearchDirective, report: ScoutSearchReport
+    ) -> None:
+        timestamp = _now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO research_search_cache
+                  (cache_key, case_id, title, search_brief, allowed_hosts_json,
+                   provider, model, report_json, created_at, last_used_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    self.cache_key(directive),
+                    directive.case_id,
+                    directive.title,
+                    directive.search_brief,
+                    json.dumps(directive.allowed_hosts),
+                    report.provider,
+                    report.model,
+                    json.dumps(asdict(report), sort_keys=True),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+
+    def set_cache_status(self, run_id: int, status: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "UPDATE research_dispatch_runs SET cache_status = ? WHERE id = ?",
+                (status, run_id),
+            )
+
     def finish(
         self,
         directive_id: str,
@@ -970,7 +1077,12 @@ class ResearchDispatcher:
         run_id = self.store.start(directive_id)
         directive = self.store.get(directive_id)
         try:
-            report = self.scout.search(directive)
+            report = self.store.cached_report(directive)
+            cache_status = "exact_hit" if report is not None else "miss"
+            if report is None:
+                report = self.scout.search(directive)
+                self.store.cache_report(directive, report)
+            self.store.set_cache_status(run_id, cache_status)
             bundle_path, candidate_outcomes = self._stage(directive, report)
             relative_bundle = (
                 str(bundle_path)

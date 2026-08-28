@@ -142,6 +142,35 @@ def test_approved_directive_stages_validated_review_bundle(
     assert status == "candidate_staged"
 
 
+def test_search_report_cache_is_immutable_and_tracks_reuse(
+    tmp_path: Path,
+) -> None:
+    queue, lead_id = make_queue(tmp_path)
+    store = ResearchDirectiveStore(queue.path)
+    directive = store.create(
+        "CASE-1",
+        "Find final policy",
+        "Locate the signed final outside-agency service policy.",
+        (lead_id,),
+        ("records.example.gov",),
+    )
+    original = report()
+    store.cache_report(directive, original)
+
+    cached = store.cached_report(directive)
+
+    assert cached == original
+    with sqlite3.connect(queue.path) as connection:
+        row = connection.execute(
+            "SELECT hit_count, created_at, last_used_at "
+            "FROM research_search_cache WHERE cache_key = ?",
+            (store.cache_key(directive),),
+        ).fetchone()
+    assert row is not None
+    assert row[0] == 1
+    assert row[2] >= row[1]
+
+
 def test_directive_requires_explicit_approval(tmp_path: Path) -> None:
     queue, lead_id = make_queue(tmp_path)
     store = ResearchDirectiveStore(queue.path)

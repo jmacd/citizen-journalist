@@ -649,7 +649,8 @@ class WorkbenchStore:
             dispatch_runs = connection.execute(
                 """
                 SELECT r.id, r.directive_id, r.status, r.provider, r.model,
-                       r.started_at, r.completed_at, r.error_type, r.error
+                       r.started_at, r.completed_at, r.error_type, r.error,
+                       r.cache_status
                   FROM research_dispatch_runs r
                   JOIN research_directive_question_runs q
                     ON q.directive_id = r.directive_id

@@ -90,6 +90,32 @@
             <textarea id="consultation-brief" rows="3" maxlength="2000" required
               placeholder="What should the specialist inspect or propose?"></textarea>
           </label>
+          <div id="site-design-fields" hidden>
+            <p class="pane-explainer">
+              A front-page draft can use approved facts, links, and story framing.
+              The draft is private until a separate CIO publication approval.
+            </p>
+            <label>Analyst facts and evidence to emphasize
+              <textarea id="analyst-context" rows="3" maxlength="2000"
+                placeholder="Approved claims, limits, and source IDs or locators"></textarea>
+            </label>
+            <label>Journalist story framing
+              <textarea id="journalist-context" rows="3" maxlength="2000"
+                placeholder="Public significance, affected people, and unresolved questions"></textarea>
+            </label>
+            <label>Information architecture guidance
+              <textarea id="architect-context" rows="3" maxlength="2000"
+                placeholder="Sections, navigation, datasets, or relationships readers need"></textarea>
+            </label>
+            <label>Markdown draft
+              <textarea id="consultation-markdown" rows="8" maxlength="8000"
+                placeholder="# Case title&#10;&#10;Write the proposed reader-facing front page here."></textarea>
+            </label>
+            <label>HTML preview draft
+              <textarea id="consultation-html" rows="8" maxlength="8000"
+                placeholder="Optional HTML preview; it is stored as a draft and never served directly."></textarea>
+            </label>
+          </div>
           <button class="primary-button" type="submit">Request consultation</button>
           <p id="consultation-state" class="state" role="status" aria-live="polite"></p>
         </form>

@@ -478,10 +478,30 @@ class WorkbenchStore:
                   brief TEXT NOT NULL,
                   requested_by TEXT NOT NULL,
                   status TEXT NOT NULL,
+                  markdown TEXT NOT NULL DEFAULT '',
+                  html TEXT NOT NULL DEFAULT '',
+                  analyst_context TEXT NOT NULL DEFAULT '',
+                  journalist_context TEXT NOT NULL DEFAULT '',
+                  architect_context TEXT NOT NULL DEFAULT '',
                   created_at TEXT NOT NULL
                 )
                 """
             )
+            columns = {
+                str(row["name"])
+                for row in connection.execute("PRAGMA table_info(cio_consultations)")
+            }
+            for column in (
+                "markdown",
+                "html",
+                "analyst_context",
+                "journalist_context",
+                "architect_context",
+            ):
+                if column not in columns:
+                    connection.execute(
+                        f"ALTER TABLE cio_consultations ADD COLUMN {column} TEXT NOT NULL DEFAULT ''"
+                    )
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.queue_path, timeout=30)
@@ -506,7 +526,8 @@ class WorkbenchStore:
         with self._connect() as connection:
             rows = connection.execute(
                 """
-                SELECT id, case_id, kind, brief, requested_by, status, created_at
+                SELECT id, case_id, kind, brief, requested_by, status, markdown, html,
+                       analyst_context, journalist_context, architect_context, created_at
                   FROM cio_consultations
                  ORDER BY created_at DESC, id DESC
                 """
@@ -514,7 +535,17 @@ class WorkbenchStore:
         return [dict(row) for row in rows]
 
     def create_consultation(
-        self, case_id: str, kind: str, brief: str, requested_by: str
+        self,
+        case_id: str,
+        kind: str,
+        brief: str,
+        requested_by: str,
+        *,
+        markdown: str = "",
+        html: str = "",
+        analyst_context: str = "",
+        journalist_context: str = "",
+        architect_context: str = "",
     ) -> dict[str, object]:
         allowed = {
             "theorem_proposal",
@@ -529,6 +560,17 @@ class WorkbenchStore:
             raise WorkbenchError("Consultation brief is required")
         if len(normalized_brief) > MAX_NOTE_CHARACTERS:
             raise WorkbenchError("Consultation brief is too long")
+        fields = {
+            "markdown": markdown,
+            "html": html,
+            "analyst_context": analyst_context,
+            "journalist_context": journalist_context,
+            "architect_context": architect_context,
+        }
+        if any(not isinstance(value, str) for value in fields.values()):
+            raise WorkbenchError("Consultation content must be strings")
+        if any(len(value) > MAX_NOTE_CHARACTERS * 4 for value in fields.values()):
+            raise WorkbenchError("Consultation content is too long")
         created_at = datetime.now(UTC).isoformat()
         consultation_id = hashlib.sha256(
             f"{case_id}\n{kind}\n{normalized_brief}\n{created_at}".encode()
@@ -537,10 +579,15 @@ class WorkbenchStore:
             connection.execute(
                 """
                 INSERT INTO cio_consultations
-                  (id, case_id, kind, brief, requested_by, status, created_at)
-                VALUES (?, ?, ?, ?, ?, 'requested', ?)
+                  (id, case_id, kind, brief, requested_by, status, markdown, html,
+                   analyst_context, journalist_context, architect_context, created_at)
+                VALUES (?, ?, ?, ?, ?, 'requested', ?, ?, ?, ?, ?, ?)
                 """,
-                (consultation_id, case_id, kind, normalized_brief, requested_by, created_at),
+                (
+                    consultation_id, case_id, kind, normalized_brief, requested_by,
+                    markdown, html, analyst_context, journalist_context,
+                    architect_context, created_at,
+                ),
             )
         return {
             "id": consultation_id,
@@ -549,6 +596,7 @@ class WorkbenchStore:
             "brief": normalized_brief,
             "requested_by": requested_by,
             "status": "requested",
+            **fields,
             "created_at": created_at,
         }
 
@@ -1873,9 +1921,19 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 brief = payload.get("brief")
                 if not all(isinstance(value, str) for value in (case_id, kind, brief)):
                     raise WorkbenchError("Consultation fields must be strings")
+                content = {
+                    name: payload.get(name, "")
+                    for name in (
+                        "markdown",
+                        "html",
+                        "analyst_context",
+                        "journalist_context",
+                        "architect_context",
+                    )
+                }
                 actor = self.headers.get("X-Mendo-Workbench-User", "cio")
                 result = self.workbench_server.store.create_consultation(
-                    case_id, kind, brief, actor
+                    case_id, kind, brief, actor, **content
                 )
                 self._json(HTTPStatus.CREATED, result)
             except (ValueError, json.JSONDecodeError, WorkbenchError) as error:

@@ -32,6 +32,12 @@ const consultationKind = document.getElementById("consultation-kind");
 const consultationBrief = document.getElementById("consultation-brief");
 const consultationState = document.getElementById("consultation-state");
 const consultationList = document.getElementById("consultation-list");
+const siteDesignFields = document.getElementById("site-design-fields");
+const analystContext = document.getElementById("analyst-context");
+const journalistContext = document.getElementById("journalist-context");
+const architectContext = document.getElementById("architect-context");
+const consultationMarkdown = document.getElementById("consultation-markdown");
+const consultationHtml = document.getElementById("consultation-html");
 
 let candidates = [];
 let researchDirectives = [];
@@ -51,6 +57,12 @@ const consultationLabels = {
   information_architecture: "Information Architect / Data Scientist",
   site_design: "Site Designer",
 };
+
+function updateConsultationFields() {
+  siteDesignFields.hidden = consultationKind.value !== "site_design";
+}
+consultationKind.addEventListener("change", updateConsultationFields);
+updateConsultationFields();
 
 function element(tag, options = {}) {
   const node = document.createElement(tag);
@@ -1070,6 +1082,11 @@ async function loadQueue() {
           body: JSON.stringify({
             kind: consultationKind.value,
             brief: consultationBrief.value,
+            analyst_context: analystContext.value,
+            journalist_context: journalistContext.value,
+            architect_context: architectContext.value,
+            markdown: consultationMarkdown.value,
+            html: consultationHtml.value,
           }),
         });
         consultationBrief.value = "";

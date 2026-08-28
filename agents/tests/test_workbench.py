@@ -38,10 +38,17 @@ def test_consultations_are_persisted_and_validated(tmp_path: Path) -> None:
         "theorem_proposal",
         "  Compare recurring authority gaps. ",
         "cio",
+        markdown="# Front page",
+        html="<h1>Front page</h1>",
+        analyst_context="Claim A; source p. 2",
+        journalist_context="Why this matters",
+        architect_context="Summary, evidence, timeline",
     )
 
     assert created["status"] == "requested"
     assert created["brief"] == "Compare recurring authority gaps."
+    assert created["markdown"] == "# Front page"
+    assert created["html"] == "<h1>Front page</h1>"
     assert store.consultations() == [created]
 
     try:

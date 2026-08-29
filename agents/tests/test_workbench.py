@@ -49,7 +49,8 @@ def test_consultations_are_persisted_and_validated(tmp_path: Path) -> None:
     assert created["brief"] == "Compare recurring authority gaps."
     assert created["markdown"] == "# Front page"
     assert created["html"] == "<h1>Front page</h1>"
-    assert store.consultations() == [created]
+    persisted = store.consultations()[0]
+    assert all(persisted[key] == created[key] for key in created)
 
     try:
         store.create_consultation("UM_2025-0004", "unknown", "brief", "cio")
@@ -57,6 +58,22 @@ def test_consultations_are_persisted_and_validated(tmp_path: Path) -> None:
         assert str(error) == "Unknown consultation type"
     else:
         raise AssertionError("invalid consultation type was accepted")
+
+
+def test_theorem_consultation_builds_scoped_proposal(tmp_path: Path, monkeypatch) -> None:
+    store = WorkbenchStore(
+        tmp_path / "queue.sqlite",
+        CandidateStore(tmp_path / "staging"),
+    )
+    created = store.create_consultation(
+        "UM_2025-0004", "theorem_proposal", "Test recurring pattern", "cio"
+    )
+    monkeypatch.setenv("MENDO_MODEL_PROVIDER", "scripted")
+    result = store.build_theorem(str(created["id"]))
+    assert result["status"] == "proposal_ready"
+    items = store.consultations()
+    assert items[0]["status"] == "proposal_ready"
+    assert json.loads(str(items[0]["proposal_json"]))["summary"]
 
 
 def write_bundle(root: Path, lead_id: str, run_id: str = "run-1") -> None:

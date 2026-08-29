@@ -22,6 +22,16 @@ class ScriptedReasoner:
         self.responses = dict(responses or {})
 
     async def respond(self, role_id: str, instructions: str, prompt: str) -> str:
+        if role_id == "theorem_builder" and role_id not in self.responses:
+            return (
+                '{"summary":"A scoped pattern requires testing against the reviewed case record.",'
+                '"proposition":"The reviewed records may reveal a recurring institutional pattern, '
+                'but the proposed relationship is not established by this consultation alone.",'
+                '"supporting_patterns":["The request identifies a recurring concern for review."],'
+                '"counterexamples":["No counterexample has been evaluated in the scripted mode."],'
+                '"limitations":["This deterministic proposal has not independently reviewed source text."],'
+                '"follow_up_questions":["Which records would confirm or disprove the proposed relationship?"]}'
+            )
         return self.responses.get(
             role_id,
             f"{role_id} completed deterministic review of the supplied evidence.",

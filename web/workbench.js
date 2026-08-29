@@ -1056,10 +1056,38 @@ async function loadQueue() {
         consultationList.replaceChildren();
         for (const item of payload.items || []) {
           const row = element("li");
-          row.append(element("article", {
+          const card = element("article", {
             className: "item-button",
-            text: `${consultationLabels[item.kind] || item.kind} · ${item.status}\n${item.brief}`,
-          }));
+          });
+          card.append(
+            element("strong", { text: `${consultationLabels[item.kind] || item.kind} · ${item.status}` }),
+            element("span", { className: "item-summary", text: item.brief }),
+          );
+          if (item.kind === "theorem_proposal" && item.status === "requested") {
+            const button = element("button", { className: "primary-button", text: "Build theorem" });
+            button.type = "button";
+            button.addEventListener("click", async () => {
+              button.disabled = true;
+              setState(consultationState, "Building theorem proposal…");
+              try {
+                await getJSON(`/api/workbench/consultations/${encodeURIComponent(item.id)}/build`, { method: "POST" });
+                await loadConsultations();
+                setState(consultationState, "Theorem proposal ready for CIO review.");
+              } catch (error) {
+                button.disabled = false;
+                setState(consultationState, `Could not build theorem: ${error.message}`, true);
+              }
+            });
+            card.append(button);
+          }
+          if (item.proposal_json) {
+            let proposal;
+            try { proposal = JSON.parse(item.proposal_json); } catch { proposal = null; }
+            if (proposal) {
+              card.append(element("p", { text: proposal.proposition || proposal.summary }));
+            }
+          }
+          row.append(card);
           consultationList.append(row);
         }
         if (!payload.items?.length) {

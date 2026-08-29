@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
 import hmac
 import ipaddress
@@ -22,6 +23,9 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 from .config import Settings
+from .models import ConsultationKind
+from .providers import create_reasoner
+from .theorem_builder import TheoremBuilderError, build_theorem
 from .acquisition_engineering import (
     AcquisitionEngineeringStore,
     FoundryAcquisitionEngineer,
@@ -483,6 +487,8 @@ class WorkbenchStore:
                   analyst_context TEXT NOT NULL DEFAULT '',
                   journalist_context TEXT NOT NULL DEFAULT '',
                   architect_context TEXT NOT NULL DEFAULT '',
+                  proposal_json TEXT NOT NULL DEFAULT '',
+                  raw_output TEXT NOT NULL DEFAULT '',
                   created_at TEXT NOT NULL
                 )
                 """
@@ -497,6 +503,8 @@ class WorkbenchStore:
                 "analyst_context",
                 "journalist_context",
                 "architect_context",
+                "proposal_json",
+                "raw_output",
             ):
                 if column not in columns:
                     connection.execute(
@@ -527,7 +535,8 @@ class WorkbenchStore:
             rows = connection.execute(
                 """
                 SELECT id, case_id, kind, brief, requested_by, status, markdown, html,
-                       analyst_context, journalist_context, architect_context, created_at
+                       analyst_context, journalist_context, architect_context,
+                       proposal_json, created_at
                   FROM cio_consultations
                  ORDER BY created_at DESC, id DESC
                 """
@@ -599,6 +608,44 @@ class WorkbenchStore:
             **fields,
             "created_at": created_at,
         }
+
+    def build_theorem(self, consultation_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM cio_consultations WHERE id = ?", (consultation_id,)
+            ).fetchone()
+        if row is None:
+            raise WorkbenchError("Unknown consultation")
+        if row["kind"] != ConsultationKind.THEOREM_PROPOSAL.value:
+            raise WorkbenchError("Only theorem consultations can be built here")
+        context = self.provenance_questions()
+        try:
+            proposal, raw = asyncio.run(
+                build_theorem(
+                    create_reasoner(os.environ.get("MENDO_MODEL_PROVIDER", "scripted")),
+                    brief=str(row["brief"]),
+                    context=context[:20],
+                )
+            )
+        except (TheoremBuilderError, RuntimeError) as error:
+            with self._connect() as connection:
+                connection.execute(
+                    "UPDATE cio_consultations SET status = 'blocked' WHERE id = ?",
+                    (consultation_id,),
+                )
+            raise WorkbenchError(str(error)) from error
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE cio_consultations
+                   SET status = 'proposal_ready', proposal_json = ?, raw_output = ?
+                 WHERE id = ?
+                """,
+                (json.dumps(proposal, ensure_ascii=True), raw, consultation_id),
+            )
+        result = dict(row)
+        result.update(status="proposal_ready", proposal=proposal)
+        return result
 
     def provenance_questions(self) -> list[dict[str, object]]:
         with self._connect() as connection:
@@ -1937,6 +1984,14 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 )
                 self._json(HTTPStatus.CREATED, result)
             except (ValueError, json.JSONDecodeError, WorkbenchError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        theorem_match = re.fullmatch(r"/api/workbench/consultations/([^/]+)/build", path)
+        if theorem_match:
+            try:
+                result = self.workbench_server.store.build_theorem(unquote(theorem_match.group(1)))
+                self._json(HTTPStatus.OK, result)
+            except WorkbenchError as error:
                 self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
             return
         directive_match = re.fullmatch(

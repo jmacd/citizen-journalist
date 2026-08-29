@@ -64,6 +64,97 @@ function updateConsultationFields() {
 consultationKind.addEventListener("change", updateConsultationFields);
 updateConsultationFields();
 
+async function loadConsultations() {
+  try {
+    const payload = await getJSON("/api/workbench/consultations");
+    consultationList.replaceChildren();
+    for (const item of payload.items || []) {
+      const row = element("li");
+      const card = element("article", { className: "item-button" });
+      card.append(
+        element("strong", {
+          text: `${consultationLabels[item.kind] || item.kind} · ${item.status}`,
+        }),
+        element("span", { className: "item-summary", text: item.brief }),
+      );
+      if (item.kind === "theorem_proposal" && item.status === "requested") {
+        const button = element("button", {
+          className: "primary-button",
+          text: "Build theorem",
+        });
+        button.type = "button";
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          setState(consultationState, "Building theorem proposal…");
+          try {
+            await getJSON(
+              `/api/workbench/consultations/${encodeURIComponent(item.id)}/build`,
+              { method: "POST" },
+            );
+            await loadConsultations();
+            setState(consultationState, "Theorem proposal ready for CIO review.");
+          } catch (error) {
+            button.disabled = false;
+            setState(
+              consultationState,
+              `Could not build theorem: ${error.message}`,
+              true,
+            );
+          }
+        });
+        card.append(button);
+      }
+      if (item.proposal_json) {
+        let proposal;
+        try {
+          proposal = JSON.parse(item.proposal_json);
+        } catch {
+          proposal = null;
+        }
+        if (proposal) {
+          card.append(element("p", {
+            text: proposal.proposition || proposal.summary,
+          }));
+        }
+      }
+      row.append(card);
+      consultationList.append(row);
+    }
+    if (!payload.items?.length) {
+      setState(consultationState, "No specialist consultations requested yet.");
+    } else {
+      consultationState.hidden = true;
+    }
+  } catch (error) {
+    setState(consultationState, `Could not load consultations: ${error.message}`, true);
+  }
+}
+
+consultationForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  consultationState.hidden = true;
+  try {
+    await getJSON("/api/workbench/consultations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind: consultationKind.value,
+        brief: consultationBrief.value,
+        analyst_context: analystContext.value,
+        journalist_context: journalistContext.value,
+        architect_context: architectContext.value,
+        markdown: consultationMarkdown.value,
+        html: consultationHtml.value,
+      }),
+    });
+    consultationBrief.value = "";
+    setState(consultationState, "Consultation requested and recorded.");
+    await loadConsultations();
+  } catch (error) {
+    setState(consultationState, `Could not request consultation: ${error.message}`, true);
+  }
+});
+
 function element(tag, options = {}) {
   const node = document.createElement(tag);
   if (options.className) node.className = options.className;
@@ -1050,80 +1141,6 @@ async function loadQueue() {
       return;
     }
 
-    async function loadConsultations() {
-      try {
-        const payload = await getJSON("/api/workbench/consultations");
-        consultationList.replaceChildren();
-        for (const item of payload.items || []) {
-          const row = element("li");
-          const card = element("article", {
-            className: "item-button",
-          });
-          card.append(
-            element("strong", { text: `${consultationLabels[item.kind] || item.kind} · ${item.status}` }),
-            element("span", { className: "item-summary", text: item.brief }),
-          );
-          if (item.kind === "theorem_proposal" && item.status === "requested") {
-            const button = element("button", { className: "primary-button", text: "Build theorem" });
-            button.type = "button";
-            button.addEventListener("click", async () => {
-              button.disabled = true;
-              setState(consultationState, "Building theorem proposal…");
-              try {
-                await getJSON(`/api/workbench/consultations/${encodeURIComponent(item.id)}/build`, { method: "POST" });
-                await loadConsultations();
-                setState(consultationState, "Theorem proposal ready for CIO review.");
-              } catch (error) {
-                button.disabled = false;
-                setState(consultationState, `Could not build theorem: ${error.message}`, true);
-              }
-            });
-            card.append(button);
-          }
-          if (item.proposal_json) {
-            let proposal;
-            try { proposal = JSON.parse(item.proposal_json); } catch { proposal = null; }
-            if (proposal) {
-              card.append(element("p", { text: proposal.proposition || proposal.summary }));
-            }
-          }
-          row.append(card);
-          consultationList.append(row);
-        }
-        if (!payload.items?.length) {
-          setState(consultationState, "No specialist consultations requested yet.");
-        } else {
-          consultationState.hidden = true;
-        }
-      } catch (error) {
-        setState(consultationState, `Could not load consultations: ${error.message}`, true);
-      }
-    }
-
-    consultationForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      consultationState.hidden = true;
-      try {
-        await getJSON("/api/workbench/consultations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            kind: consultationKind.value,
-            brief: consultationBrief.value,
-            analyst_context: analystContext.value,
-            journalist_context: journalistContext.value,
-            architect_context: architectContext.value,
-            markdown: consultationMarkdown.value,
-            html: consultationHtml.value,
-          }),
-        });
-        consultationBrief.value = "";
-        setState(consultationState, "Consultation requested and recorded.");
-        await loadConsultations();
-      } catch (error) {
-        setState(consultationState, `Could not request consultation: ${error.message}`, true);
-      }
-    });
     queueState.hidden = true;
     items.forEach((item) => {
       const row = element("li");

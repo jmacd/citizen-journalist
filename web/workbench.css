@@ -80,6 +80,48 @@ textarea:focus-visible {
   border-bottom: 1px solid var(--line);
   background: var(--panel);
 }
+.approval-board {
+  max-width: 1800px;
+  margin: 1rem auto;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.approval-board .pane-header { margin: 0; }
+.small-note { color: var(--muted); font-size: .8rem; }
+.approval-board-lanes {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(160px, 1fr));
+  gap: .65rem;
+  overflow-x: auto;
+}
+.approval-lane {
+  min-width: 160px;
+  padding: .65rem;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  background: #f8f9f6;
+}
+.approval-lane h3 { margin: 0; font-size: .9rem; }
+.approval-lane-track {
+  min-height: 2.5em;
+  margin: .2rem 0 .65rem;
+  color: var(--muted);
+  font-size: .75rem;
+}
+.approval-card {
+  display: grid;
+  gap: .35rem;
+  margin-top: .55rem;
+  padding: .6rem;
+  border: 1px solid #b8c1bd;
+  border-radius: .3rem;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.approval-card strong { font-size: .8rem; }
+.approval-card .item-meta { font-size: .72rem; }
+.approval-empty { color: var(--muted); font-size: .78rem; }
 .provenance-panel {
   max-width: 1800px;
   margin: 0 auto;

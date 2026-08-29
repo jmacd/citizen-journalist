@@ -1,8 +1,118 @@
 # Mendocino Government Observatory: high-level design
 
+For a Watershop-centered view of deployed services, durable state, and
+stateless Foundry role execution, see
+[the current system architecture diagram](system-architecture.svg).
+
 This diagram describes the current evidence-first architecture. Solid lines are
 implemented data or control paths. Dashed lines are planned cloud retrieval
 paths that must pass parity checks before they can replace SQLite.
+
+## Conversation graph and high-level pseudocode
+
+The system has two related conversations, not one unrestricted agent chat.
+The **evidence conversation** produces reviewable, source-grounded work. The
+**consultation conversation** starts only when the CIO asks a specialist to
+interpret or present already-recorded work. Both conversations are
+checkpointable and reload their state from Watershop storage.
+
+```text
+public_question(question) or cio_observation(observation):
+    run = create_or_resume_checkpointed_run(input)
+    run.skill_hashes = load_skill_hashes()
+    run.context = retrieve_corpus_context(run.input)
+
+    case_worker = intake_and_route(run)
+    scout_work = scout.propose_official_records(case_worker)
+    staged = scout.fetch_only_allowlisted_https(scout_work)
+    validated = archivist.validate_identity_mime_hash_version_ocr(staged)
+    analysis = analyst.write_atomic_claims(
+        context=run.context,
+        records=validated,
+        limits="what the records do not establish",
+    )
+    review = skeptic.check_citations_versions_contradictions_and_scope(analysis)
+
+    if review.rejects and run.review_rounds < 2:
+        run.review_rounds += 1
+        checkpoint(run, review)
+        goto analyst
+    if review.rejects:
+        return blocked(run, review, gaps=extract_evidence_gaps(review))
+
+    proposal = assemble_claims_gaps_and_dispositions(run, analysis, review)
+    if proposal.requires_registration_or_promotion:
+        wait_for_cio(proposal)
+    if proposal.is_public_answer and review.accepted:
+        return publish_scoped_answer(proposal)
+    return persist_proposal(proposal)
+```
+
+The implemented workflow graph is:
+
+```text
+Intake
+  -> Corpus Retrieval
+  -> Scout
+  -> Archivist
+  -> Analyst
+  -> Skeptic
+       ├─ rejected and revisions remain -> Analyst (bounded feedback edge)
+       └─ accepted or revision budget exhausted -> Approval/Disposition
+```
+
+`Skeptic` does not silently repair a claim. It either sends a structured review
+back to `Analyst`, or routes the run to an explicit terminal disposition.
+Deterministic validation errors, invalid locators, malformed model output, and
+unsupported conclusion classes fail closed.
+
+The consultation graph is intentionally separate:
+
+```text
+CIO consultation request
+  -> load case questions, approved claims, limitations, gaps, and records
+  -> invoke exactly one selected specialist with a bounded prompt
+  -> validate typed proposal
+  -> persist request, raw output, and proposal
+  -> CIO review
+       ├─ approve theorem follow-up / story / architecture / design
+       ├─ reject or request revision
+       └─ publication or canonical change gate, where applicable
+```
+
+The four consultative roles are not peers in an autonomous debate. Their
+intended dependencies are explicit inputs:
+
+```text
+Analyst claims + citations + limits
+              \
+               -> Theorem Builder -> scoped theorem -> CIO
+Journalist framing / public significance ----------------^
+Information Architect datasets / relationships ---------^
+Site Designer consumes approved facts, stories, and IA guidance -> front-page draft -> CIO
+```
+
+At present, the Theorem Builder is the only consultation executor. Journalist,
+Information Architect, and Site Designer have charters and request intake but
+do not yet have independent model workers or publication paths.
+
+### State and model calls
+
+```text
+for every role call:
+    durable = read(Watershop NFS + SQLite)
+    prompt = bound(input, durable, role_policy, budgets)
+    raw = Foundry_or_scripted_reasoner.respond(role, prompt)
+    typed = deterministic_schema_validation(raw)
+    append(raw, typed, status, timestamps, model_identity)
+    checkpoint(run)
+```
+
+Foundry agents are therefore operationally stateless with respect to the
+casebook: a role call does not own the authoritative conversation history.
+Watershop reloads the request, evidence context, prior outputs, approvals, and
+checkpoint on the next call or after restart. Foundry supplies judgment; the
+application supplies memory, authorization, validation, and continuity.
 
 The accepted target decomposition is documented separately in the
 [home-primary cloud architecture](home-cloud-design.md). That design keeps all

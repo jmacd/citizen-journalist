@@ -34,6 +34,15 @@ Consultations produce typed proposals—`theorem_proposal`, `story_update`,
 published conclusions and require the appropriate CIO approval before they
 change the public site, corpus organization, or public story layer.
 
+The conversation graph is documented in
+[`docs/high-level-design.md`](../docs/high-level-design.md). In brief, the
+evidence path is `intake -> retrieval -> Scout -> Archivist -> Analyst ->
+Skeptic -> disposition`, with bounded Skeptic-to-Analyst revision edges. CIO
+consultations are separate: the application loads durable case context,
+invokes one selected specialist, validates and stores the proposal, and pauses
+for CIO review. Foundry role calls do not own case history; Watershop NFS and
+SQLite provide continuity across restarts.
+
 Hashing, MIME checks, corpus search, indexing, and citation resolution are
 functions or deterministic executors—not simulated personalities. Repository
 skills under `.github/skills/` are loaded as procedural policy, and their

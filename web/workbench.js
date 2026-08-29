@@ -32,6 +32,8 @@ const consultationKind = document.getElementById("consultation-kind");
 const consultationBrief = document.getElementById("consultation-brief");
 const consultationState = document.getElementById("consultation-state");
 const consultationList = document.getElementById("consultation-list");
+const approvalBoardState = document.getElementById("approval-board-state");
+const approvalBoardLanes = document.getElementById("approval-board-lanes");
 const siteDesignFields = document.getElementById("site-design-fields");
 const analystContext = document.getElementById("analyst-context");
 const journalistContext = document.getElementById("journalist-context");
@@ -42,6 +44,7 @@ const consultationHtml = document.getElementById("consultation-html");
 let candidates = [];
 let researchDirectives = [];
 let queueItems = [];
+let currentConsultations = [];
 let progressSummary = null;
 let researchActivityLoadSequence = 0;
 const directiveActionsInFlight = new Set();
@@ -50,6 +53,16 @@ const decisionMessages = new Map();
 let provenanceQuestions = [];
 let selectedProvenanceQuestionId = null;
 let provenanceQuestionLoadSequence = 0;
+
+const approvalLanes = [
+  ["Archivist", "Evidence registration", "candidate"],
+  ["Scout / Triage", "Research dispatch", "research"],
+  ["Analyst", "Evidence gaps", "gap"],
+  ["Theorem Builder", "Theorem follow-up", "theorem"],
+  ["Journalist", "Story brief", "journalist"],
+  ["Information Architect", "Corpus structure", "architecture"],
+  ["Site Designer", "Front-page design", "design"],
+];
 
 const consultationLabels = {
   theorem_proposal: "Theorem Builder",
@@ -67,6 +80,7 @@ updateConsultationFields();
 async function loadConsultations() {
   try {
     const payload = await getJSON("/api/workbench/consultations");
+    currentConsultations = Array.isArray(payload.items) ? payload.items : [];
     consultationList.replaceChildren();
     for (const item of payload.items || []) {
       const row = element("li");
@@ -125,6 +139,7 @@ async function loadConsultations() {
     } else {
       consultationState.hidden = true;
     }
+    renderApprovalBoard();
   } catch (error) {
     setState(consultationState, `Could not load consultations: ${error.message}`, true);
   }
@@ -166,6 +181,70 @@ function setState(node, message, isError = false) {
   node.textContent = message;
   node.classList.toggle("error", isError);
   node.hidden = false;
+}
+
+function renderApprovalBoard() {
+  if (!approvalBoardLanes) return;
+  approvalBoardLanes.replaceChildren();
+  const consultations = currentConsultations;
+  const sources = [
+    ...(candidates || []).map((item) => ({
+      lane: "candidate",
+      title: item.title || item.id || "Evidence candidate",
+      detail: item.status || "reviewable",
+      meta: item.case_id || "",
+    })),
+    ...(researchDirectives || []).map((item) => ({
+      lane: "research",
+      title: item.title || item.id || "Research directive",
+      detail: item.status || "requested",
+      meta: item.case_id || "",
+    })),
+    ...(queueItems || []).map((item) => ({
+      lane: "gap",
+      title: item.deciding_record || item.description || item.id || "Evidence gap",
+      detail: item.status || "open",
+      meta: item.case_id || "",
+    })),
+    ...consultations.map((item) => ({
+      lane: {
+        theorem_proposal: "theorem",
+        story_update: "journalist",
+        information_architecture: "architecture",
+        site_design: "design",
+      }[item.kind],
+      title: item.brief,
+      detail: item.status,
+      meta: item.case_id,
+    })),
+  ];
+  let total = 0;
+  for (const [heading, track, lane] of approvalLanes) {
+    const column = element("section", { className: "approval-lane" });
+    column.append(
+      element("h3", { text: heading }),
+      element("p", { className: "approval-lane-track", text: track }),
+    );
+    const items = sources.filter((item) => item.lane === lane);
+    total += items.length;
+    for (const item of items) {
+      const card = element("article", { className: "approval-card" });
+      card.append(
+        element("strong", { text: item.title }),
+        element("span", { className: "status-pill", text: item.detail }),
+        element("span", { className: "item-meta", text: item.meta || "Case context recorded" }),
+      );
+      column.append(card);
+    }
+    if (!items.length) {
+      column.append(element("p", { className: "approval-empty", text: "No in-flight items" }));
+    }
+    approvalBoardLanes.append(column);
+  }
+  setState(
+    approvalBoardState,
+    total ? `${total} persisted item${total === 1 ? "" : "s"} across approval tracks.` : "No in-flight approval items.",
+  );
 }
 
 async function getJSON(url, options) {
@@ -969,6 +1048,7 @@ async function loadResearchActivity() {
     if (requestSequence !== researchActivityLoadSequence) return;
     const items = Array.isArray(payload.items) ? payload.items : [];
     researchDirectives = items;
+    renderApprovalBoard();
     updateActionCenter();
     researchActivityList.replaceChildren();
     if (!items.length) {
@@ -1117,6 +1197,7 @@ async function loadResearchActivity() {
   } catch (error) {
     if (requestSequence !== researchActivityLoadSequence) return;
     researchDirectives = [];
+    renderApprovalBoard();
     pendingSearchApprovals.hidden = true;
     updateActionCenter();
     setState(
@@ -1133,6 +1214,7 @@ async function loadQueue() {
     const payload = await getJSON("/api/workbench/queue");
     const items = Array.isArray(payload.items) ? payload.items : [];
     queueItems = items;
+    renderApprovalBoard();
     updateActionCenter();
     queueCount.textContent = String(items.length);
     queueList.replaceChildren();
@@ -1174,6 +1256,7 @@ async function loadQueue() {
     });
   } catch (error) {
     queueItems = [];
+    renderApprovalBoard();
     updateActionCenter();
     queueCount.textContent = "!";
     setState(queueState, `Could not load queue: ${error.message}`, true);
@@ -1233,6 +1316,7 @@ async function loadCandidates(preferredId = selectedCandidateId) {
   try {
     const payload = await getJSON("/api/workbench/candidates");
     candidates = sortCandidates(Array.isArray(payload.items) ? payload.items : []);
+    renderApprovalBoard();
     updateActionCenter();
     const validationErrors = Array.isArray(payload.validation_errors)
       ? payload.validation_errors

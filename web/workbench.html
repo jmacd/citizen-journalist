@@ -124,6 +124,24 @@
       </div>
     </details>
 
+    <section class="approval-board" aria-labelledby="approval-board-heading">
+      <header class="pane-header">
+        <div>
+          <p class="eyebrow">CIO control surface</p>
+          <h2 id="approval-board-heading">Approval board</h2>
+        </div>
+        <span class="small-note">Read-only · no model calls</span>
+      </header>
+      <p class="pane-explainer">
+        In-flight work is grouped by the role that produced it. Opening this
+        board only reads persisted Watershop state; it never dispatches an agent.
+      </p>
+      <div id="approval-board-state" class="state" role="status" aria-live="polite">
+        Loading approval board…
+      </div>
+      <div id="approval-board-lanes" class="approval-board-lanes"></div>
+    </section>
+
     <details class="provenance-panel" open>
       <summary>
         <span>
